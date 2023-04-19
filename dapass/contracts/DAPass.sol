@@ -16,6 +16,7 @@ contract DAPass {
     }
 
     struct Login {
+        uint256 index;
         string name;
         string website;
         string userName;
@@ -81,9 +82,12 @@ contract DAPass {
         login.website = website;
         login.userName = userName;
         login.password = password;
+        login.index = user.numLogins;
 
         user.logins.push(login);
         user.numLogins++;
+        
+        delete userLogins[totLoginCount];
         return true;
     }
 

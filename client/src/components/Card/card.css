@@ -1,0 +1,21 @@
+.card {
+    width: fit-content;
+    background-color: #000;
+    height: fit-content;
+    border-radius: 15px;
+    padding: 2rem;
+  }
+  
+  @media only screen and (max-width: 620px) {
+    .card {
+      width: 90vw;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  
+  @media only screen and (max-height: 670px) {
+    .card {
+      height: 650px;
+    }
+  }

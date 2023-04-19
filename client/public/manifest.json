@@ -1,0 +1,15 @@
+{
+  "short_name": "TSPL Admin Dashboard",
+  "name": "Techno SPL Admin Dashboard",
+  "icons": [
+    {
+      "src": "Tecno.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

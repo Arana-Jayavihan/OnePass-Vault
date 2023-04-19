@@ -9,16 +9,17 @@ import { getUserHashPass } from './contractController.js';
 dotenv.config()
 
 const sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-const contract = await sdk.getContract("0x45eAE5AC286d0511a38AeFC80ee23589b7E1B7ff");
+const contract = await sdk.getContract("0x832d795d7443B3120b1daE52e30C4A4Cf9d7B800");
 
 const tokenlist = {}
 
 export const signUp = async (req, res) => {
     try {
         const data = req.body
+        console.log(data)
         const chkUser = await contract.call("getUser", [data.email])
         if (chkUser[0] !== data.email) {
-            const hashPass = await hashy.hash(data.passwd)
+            const hashPass = await hashy.hash(data.password)
             const key = `${process.env.AES_SECRET}${hashPass}`
             const encFName = CryptoJS.AES.encrypt(data.firstName.toString(CryptoJS.enc.Utf8), key).toString()
             const encLName = CryptoJS.AES.encrypt(data.lastName.toString(CryptoJS.enc.Utf8), key).toString()
@@ -51,8 +52,8 @@ export const signIn = async (req, res) => {
     try {
         const user = req.body
         const userResult = await contract.call("getUser", [user.email])
-        console.log(userResult)
-        if (userResult[0] === "") {
+        console.log(userResult[0])
+        if (userResult[0] !== user.email) {
             res.status(404).json({
                 message: "User not found"
             })

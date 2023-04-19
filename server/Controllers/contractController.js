@@ -6,7 +6,7 @@ import CryptoJS from "crypto-js";
 dotenv.config()
 
 const sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-const contract = await sdk.getContract("0x45eAE5AC286d0511a38AeFC80ee23589b7E1B7ff");
+const contract = await sdk.getContract("0x832d795d7443B3120b1daE52e30C4A4Cf9d7B800");
 
 export const createContract = async (req, res) => {
     const testPhrase = req.body.testPhrase
@@ -38,6 +38,7 @@ const getAllUserAccs = async (email) => {
             const key = `${process.env.AES_SECRET}${hashPass}`
             for (let i = 0; i < result[1].length; i++) {
                 let loginObj = {
+                    'index': '',
                     'name': '',
                     'website': '',
                     'userName': '',
@@ -45,16 +46,19 @@ const getAllUserAccs = async (email) => {
                 }
                 for (let j = 0; j < result[1][i].length; j++) {
                     if (result[1][i][j] !== '') {
-                        if (j === 0) {
-                            loginObj['name'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
+                        if(j === 0){
+                            loginObj['index'] = result[1][i][j]
                         }
                         else if (j === 1) {
-                            loginObj['website'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
+                            loginObj['name'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
                         }
                         else if (j === 2) {
-                            loginObj['userName'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
+                            loginObj['website'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
                         }
                         else if (j === 3) {
+                            loginObj['userName'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
+                        }
+                        else if (j === 4) {
                             loginObj['password'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
                         }
                     }
@@ -91,6 +95,7 @@ export const addLogin = async (req, res) => {
     try {
         const user = req.user
         const data = req.body
+        console.log(user, data)
         if (data.email === user.email) {
             const hashPass = getUserHashPass(user.email)
             const key = `${process.env.AES_SECRET}${hashPass}`
@@ -145,6 +150,7 @@ export const getAllUserLogins = async (req, res) => {
                 const key = `${process.env.AES_SECRET}${hashPass}`
                 for (let i = 0; i < result[1].length; i++) {
                     let loginObj = {
+                        'index': '',
                         'name': '',
                         'website': '',
                         'userName': '',
@@ -152,16 +158,19 @@ export const getAllUserLogins = async (req, res) => {
                     }
                     for (let j = 0; j < result[1][i].length; j++) {
                         if (result[1][i][j] !== '') {
-                            if (j === 0) {
-                                loginObj['name'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
+                            if(j === 0){
+                                loginObj['index'] = result[1][i][j]
                             }
                             else if (j === 1) {
-                                loginObj['website'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
+                                loginObj['name'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
                             }
                             else if (j === 2) {
-                                loginObj['userName'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
+                                loginObj['website'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
                             }
                             else if (j === 3) {
+                                loginObj['userName'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
+                            }
+                            else if (j === 4) {
                                 loginObj['password'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
                             }
                         }
