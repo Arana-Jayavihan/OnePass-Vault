@@ -6,12 +6,11 @@ import CryptoJS from "crypto-js";
 dotenv.config()
 
 const sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-const contract = await sdk.getContract("0x832d795d7443B3120b1daE52e30C4A4Cf9d7B800");
+const contract = await sdk.getContract("0x156060dB3613f9b721ef1F8Cc220AA4d05e54936");
 
 export const createContract = async (req, res) => {
-    const testPhrase = req.body.testPhrase
 
-    const result = await contract.call("BlockchainPassword", [testPhrase])
+    const result = await contract.call("BlockchainPassword")
 
     console.log(result)
     if (result.receipt.confirmations != 0) {
@@ -141,54 +140,11 @@ export const getAllUserLogins = async (req, res) => {
         const data = req.body
         const user = req.user
         if (data.email === user.email) {
-            const result = await contract.call("getAllUserLogins", [user.email])
-            let resultArray = []
-
-            if (result) {
-                console.log(result[1][0])
-                const hashPass = getUserHashPass(user.email)
-                const key = `${process.env.AES_SECRET}${hashPass}`
-                for (let i = 0; i < result[1].length; i++) {
-                    let loginObj = {
-                        'index': '',
-                        'name': '',
-                        'website': '',
-                        'userName': '',
-                        'password': ''
-                    }
-                    for (let j = 0; j < result[1][i].length; j++) {
-                        if (result[1][i][j] !== '') {
-                            if(j === 0){
-                                loginObj['index'] = result[1][i][j]
-                            }
-                            else if (j === 1) {
-                                loginObj['name'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
-                            }
-                            else if (j === 2) {
-                                loginObj['website'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
-                            }
-                            else if (j === 3) {
-                                loginObj['userName'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
-                            }
-                            else if (j === 4) {
-                                loginObj['password'] = CryptoJS.AES.decrypt(result[1][i][j], key).toString(CryptoJS.enc.Utf8)
-                            }
-                        }
-                        else {
-                            continue
-                        }
-
-                    }
-                    if (loginObj.name !== '' || loginObj.website !== '' || loginObj.userName !== '' || loginObj.password !== '') {
-                        resultArray.push(loginObj)
-                    }
-                }
-                console.log(resultArray)
-                res.status(200).json({
-                    message: 'User logins fetch success',
-                    payload: resultArray
-                })
-            }
+            const resultArray = await getAllUserAccs(user.email)
+            res.status(200).json({
+                message: 'User Logins Fetch Success',
+                payload: resultArray
+            })
         }
         else {
             res.status(401).json({

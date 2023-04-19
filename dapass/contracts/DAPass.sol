@@ -29,9 +29,8 @@ contract DAPass {
     uint256 private totLoginCount = 0;
 
     //Constructor
-    function BlockchainPassword(string memory encTestPhrase) public {
+    function BlockchainPassword() public {
         owner = msg.sender;
-        testPhrase = encTestPhrase;
     }
 
     function addUser(
@@ -64,6 +63,15 @@ contract DAPass {
         User storage user = users[_email];
 
         return (user.email, user.fName, user.lName, user.contact);
+    }
+
+    function getAllUserLogins(
+        string memory _email
+    ) public view returns (string memory email, Login[] memory) {
+        User storage user = users[_email];
+
+        email = user.email;
+        return (email, user.logins);
     }
 
     function addUserLogin(
@@ -126,46 +134,12 @@ contract DAPass {
         return true;
     }
 
-    function getUserLogin(
-        string memory email,
-        uint256 id
-    )
-        public
-        view
-        returns (
-            string memory name,
-            string memory website,
-            string memory userName,
-            string memory password
-        )
-    {
-        User storage user = users[email];
-
-        name = user.logins[id].name;
-        website = user.logins[id].website;
-        userName = user.logins[id].userName;
-        password = user.logins[id].password;
-    }
-
-    function getAllUserLogins(
-        string memory _email
-    ) public view returns (string memory email, Login[] memory) {
-        User storage user = users[_email];
-
-        email = user.email;
-        return (email, user.logins);
-    }
-
     function getUserHashPass(
         string memory email
     ) public view returns (string memory hashPassPhrase) {
         User storage user = users[email];
 
         return user.hashPassPhrase;
-    }
-
-    function getTestPhrase() public view returns (string memory phrase) {
-        return testPhrase;
     }
 
     function getOwner() public view returns (address ownerAddress) {

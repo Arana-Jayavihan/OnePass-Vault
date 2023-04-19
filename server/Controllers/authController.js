@@ -9,7 +9,7 @@ import { getUserHashPass } from './contractController.js';
 dotenv.config()
 
 const sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-const contract = await sdk.getContract("0x832d795d7443B3120b1daE52e30C4A4Cf9d7B800");
+const contract = await sdk.getContract("0x156060dB3613f9b721ef1F8Cc220AA4d05e54936");
 
 const tokenlist = {}
 
