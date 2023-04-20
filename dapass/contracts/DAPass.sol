@@ -125,6 +125,7 @@ contract DAPass {
         User storage user = users[email];
 
         delete user.logins[index];
+        user.numLogins--;
         return true;
     }
 
