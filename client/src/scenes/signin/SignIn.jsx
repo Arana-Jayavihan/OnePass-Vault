@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import Card from "components/Card/Card";
 import {
     Typography,
@@ -14,6 +14,7 @@ import { motion } from 'framer-motion'
 const SignIn = () => {
     const theme = useTheme()
     const dispatch = useDispatch()
+    const navigate = useNavigate()
     const [resetMode, setResetMode] = useState(false);
     const [email, setEmail] = useState('');
     const [passwd, setPasswd] = useState('');
@@ -86,7 +87,7 @@ const SignIn = () => {
                                     </div>
                                     <input type="button" value="Send Request" className="login_button" onClick={(e) => passResetReq()} />
                                 </form>
-                                <div className="link_container">
+                                <div className="link_container1">
                                     <p className="small" onClick={() => setResetMode(false)} >Go to Signin</p>
                                 </div>
                             </Card>
@@ -126,9 +127,9 @@ const SignIn = () => {
                                 </form>
                                 <div className="link_container">
                                     <p className="small" onClick={() => setResetMode(true)} >Forgot Password?</p>
-                                    <a href="/signup" className="small">
+                                    <p onClick={() => navigate("/signup")} className="small">
                                         Create an Account
-                                    </a>
+                                    </p>
                                 </div>
 
                             </Card>

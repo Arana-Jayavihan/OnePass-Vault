@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { passReset } from "../../actions/authActions";
 import Card from "components/Card/Card";
 import { motion } from 'framer-motion'
@@ -15,6 +15,7 @@ const PassReset = () => {
     const { token } = useParams()
     const theme = useTheme()
     const dispatch = useDispatch()
+    const navigate = useNavigate()
     const [otp, setOtp] = useState(undefined);
     const [password, setPassword] = useState(undefined);
     const [confirmPassword, setConfirmPassword] = useState(undefined);
@@ -78,9 +79,9 @@ const PassReset = () => {
                         <input type="button" value="Reset Password" className="login_button" onClick={(e) => pwReset()} />
                     </form>
                     <div className="link_container">
-                        <a href="/" className="small">
+                        <p onClick={() => navigate("/")}  className="small">
                             Go to Signin
-                        </a>
+                        </p>
                     </div>
                 </Card>
             </div>

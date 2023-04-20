@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import Card from "components/Card/Card";
 import {
     Typography,
@@ -21,6 +21,7 @@ const Signup = () => {
     const [confirmPassword, setConfirmPassword] = useState(undefined);
     const dispatch = useDispatch()
     const theme = useTheme()
+    const navigate = useNavigate()
 
     const userSignup = () => {
         if (password === confirmPassword) {
@@ -108,9 +109,9 @@ const Signup = () => {
                             <input type="button" value="Sign Up" className="login_button" onClick={(e) => userSignup()} />
                         </form>
                         <div className="link_container1">
-                            <a href="/" className="small">
+                            <p onClick={() => navigate("/")} className="small">
                                 Go to Signin
-                            </a>
+                            </p>
                         </div>
                     </Card>
                 </div>

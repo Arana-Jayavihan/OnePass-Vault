@@ -32,7 +32,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(express.json())
 app.use(express.json({ limit: "5mb" }));
-app.use(express.static(path.join(dirName, "public")));
+app.use(express.static(path.join(dirName, "Public")));
 
 // HELMET
 app.use(helmet())
@@ -46,7 +46,7 @@ app.use(helmet.contentSecurityPolicy({
         childSrc: ["'none'"],
         objectSrc: ["'none'"],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'"],
         imgSrc: ["'self'"],
         fontSrc: ["'self'"],
         connectSrc: ["'self'"],
