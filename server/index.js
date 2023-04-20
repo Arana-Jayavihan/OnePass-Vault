@@ -23,7 +23,7 @@ const app = express()
 
 // CORS
 const corsOptions = {
-    origin: ["https://localhost:3000"]
+    origin: ["https://localhost:3000", "https://dapass-v1.netlify.app"]
 }
 app.use(cors(corsOptions))
 
