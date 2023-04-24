@@ -10,6 +10,9 @@ import { toast } from "react-hot-toast";
 import '../signin/signin.css'
 import { motion } from 'framer-motion'
 import { signup } from "actions/authActions";
+import CryptoJS from 'crypto-js'
+import sh from 'shortid'
+import { byteArrayToB64, b64ToByteArray, decryptRSA, encryptRSA, genRSAKeyPair, encryptAES, decryptAES } from 'encrypt';
 
 const Signup = () => {
     const loading = useSelector(state => state.auth.loading)
@@ -23,33 +26,49 @@ const Signup = () => {
     const theme = useTheme()
     const navigate = useNavigate()
 
-    const userSignup = () => {
+    const userSignup = async () => {
         if (password === confirmPassword) {
+            const keyPair = await genRSAKeyPair()
+            const privateKey = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
+            const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey)
+
+            const privExpB64 = byteArrayToB64(privateKey)
+            const pubExpB64 = byteArrayToB64(publicKey)
+
+            const encPrivate = await encryptAES(privExpB64, password)
+            const encPublic = await encryptAES(pubExpB64, password)
+
+            const encFirstName = await encryptRSA(firstName, keyPair.publicKey)
+            const encLastName = await encryptRSA(lastName, keyPair.publicKey)
+            const encContact = await encryptRSA(contact, keyPair.publicKey)
+            const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
+
             const form = {
-                email,
-                firstName,
-                lastName,
-                contact,
-                password
+                'email': hashEmail,
+                'firstName': encFirstName,
+                'lastName': encLastName,
+                'contact': encContact,
+                'encPrivateKey': encPrivate,
+                'encPublicKey': encPublic
             }
             console.log(form)
             dispatch(signup(form))
-            setEmail('')
-            setFirstName('')
-            setLastName('')
-            setContact('')
-            setPassword('')
-            setConfirmPassword('')
-            
+            // setEmail(undefined)
+            // setFirstName(undefined)
+            // setLastName(undefined)
+            // setContact(undefined)
+            // setPassword(undefined)
+            // setConfirmPassword(undefined)
         }
         else {
             toast.error("Passwords Mismatch")
         }
     }
 
-    if (loading) {
-        return <Navigate to='/' />
-    }
+
+    // if (loading) {
+    //     return <Navigate to='/' />
+    // }
     return (
         <>
             <motion.div className="container-div"

@@ -8,13 +8,14 @@ import Layout from "scenes/layout";
 import SignIn from "scenes/signin/SignIn";
 import { Toaster, toast } from "react-hot-toast";
 import { isLoggedIn, tokenRefresh } from "actions/authActions";
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import './App.css'
 import AuthVerify from "AuthVerify";
 import { signout } from "actions/authActions";
 import PassReset from "scenes/pwReset/PassReset";
 import Signup from "scenes/signup/Signup";
+import Test from "scenes/Test/Test";
 
 function App() {
 	const dispatch = useDispatch()
@@ -52,16 +53,16 @@ function App() {
 	}, [authenticating]);
 
 	useEffect(() => {
-        if (loading === true) {
-            toast.loading('Processing...', {
-                id: 'loading'
-            })
-        }
-        else if (loading === false) {
-            toast.dismiss('loading')
-        }
+		if (loading === true) {
+			toast.loading('Processing...', {
+				id: 'loading'
+			})
+		}
+		else if (loading === false) {
+			toast.dismiss('loading')
+		}
 
-    }, [loading]);
+	}, [loading]);
 
 	return (
 		<div className="app">
@@ -79,6 +80,7 @@ function App() {
 				/>
 				<Routes>
 					<Route path="/" element={<SignIn />} />
+					<Route path="/test" element={<Test />} />
 					<Route path="/signup" element={<Signup />} />
 					<Route path="pw-reset/:token" element={<PassReset />} />
 					<Route element={authenticated ? <Layout /> : <SignIn />}>

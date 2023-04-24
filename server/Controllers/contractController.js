@@ -6,7 +6,7 @@ import CryptoJS from "crypto-js";
 dotenv.config()
 
 const sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-const contract = await sdk.getContract("0x156060dB3613f9b721ef1F8Cc220AA4d05e54936");
+const contract = await sdk.getContract("0x991F18E3A03a1D93799077087733B8426A0fD65d");
 
 export const createContract = async (req, res) => {
 

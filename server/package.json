@@ -18,6 +18,7 @@
     "cors": "^2.8.5",
     "crypto-js": "^4.1.1",
     "dotenv": "^16.0.3",
+    "eccrypto-js": "^5.4.0",
     "ethers": "^5.7.2",
     "express": "^4.18.2",
     "express-rate-limit": "^6.7.0",
@@ -25,6 +26,7 @@
     "hashy": "^0.11.1",
     "helmet": "^6.0.1",
     "jsonwebtoken": "^9.0.0",
+    "lz-string": "^1.5.0",
     "method-override": "^3.0.0",
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.1",
@@ -32,6 +34,7 @@
     "path": "^0.12.7",
     "sanitize": "^2.1.2",
     "shortid": "^2.2.16",
+    "shrink-string": "^3.1.5",
     "slugify": "^1.6.5",
     "url": "^0.11.0",
     "validator": "^13.9.0"
