@@ -11,8 +11,7 @@ import '../signin/signin.css'
 import { motion } from 'framer-motion'
 import { signup } from "actions/authActions";
 import CryptoJS from 'crypto-js'
-import sh from 'shortid'
-import { byteArrayToB64, b64ToByteArray, decryptRSA, encryptRSA, genRSAKeyPair, encryptAES, decryptAES } from 'encrypt';
+import { encryptRSA, genRSAKeyPair, encryptAES, generateMasterEncryptionKey } from 'encrypt';
 
 const Signup = () => {
     const loading = useSelector(state => state.auth.loading)
@@ -28,20 +27,20 @@ const Signup = () => {
 
     const userSignup = async () => {
         if (password === confirmPassword) {
-            const keyPair = await genRSAKeyPair()
-            const privateKey = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
-            const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey)
-
-            const privExpB64 = byteArrayToB64(privateKey)
-            const pubExpB64 = byteArrayToB64(publicKey)
-
+            // Generate RSA Key Pair and Encrypt with Password
+            const {privExpB64, pubExpB64, keyPair} = await genRSAKeyPair()
             const encPrivate = await encryptAES(privExpB64, password)
             const encPublic = await encryptAES(pubExpB64, password)
 
-            const encFirstName = await encryptRSA(firstName, keyPair.publicKey)
-            const encLastName = await encryptRSA(lastName, keyPair.publicKey)
-            const encContact = await encryptRSA(contact, keyPair.publicKey)
+            // Generate Master Encryption Key and Encrypt with Password
+            const masterEncryptionKey = await generateMasterEncryptionKey(password)
+            const encryptedMasterEncKey = await encryptRSA(masterEncryptionKey, keyPair.publicKey)
+
+            const encFirstName = await encryptAES(firstName, masterEncryptionKey)
+            const encLastName = await encryptAES(lastName, masterEncryptionKey)
+            const encContact = await encryptAES(contact, masterEncryptionKey)
             const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
+            const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
 
             const form = {
                 'email': hashEmail,
@@ -49,7 +48,9 @@ const Signup = () => {
                 'lastName': encLastName,
                 'contact': encContact,
                 'encPrivateKey': encPrivate,
-                'encPublicKey': encPublic
+                'encPublicKey': encPublic,
+                'masterEncKey': encryptedMasterEncKey,
+                'passwordHash': hashPassword
             }
             console.log(form)
             dispatch(signup(form))

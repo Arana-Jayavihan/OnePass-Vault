@@ -26,7 +26,14 @@ export const genRSAKeyPair = async () => {
         true,
         ["encrypt", "decrypt"]
     )
-    return keyPair
+    const privateKey = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
+    const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey)
+
+    return {
+        'privExpB64': byteArrayToB64(privateKey),
+        'pubExpB64': byteArrayToB64(publicKey),
+        'keyPair': keyPair
+    }
 }
 
 export const encryptRSA = async (plainText, publicKey) => {
@@ -90,7 +97,7 @@ export const importRSAPrivKey = async (b64EncPrivKey) => {
 }
 
 export const encryptAES = async (plainText, key) => {
-    return CryptoJS.AES.encrypt(plainText, CryptoJS.SHA256(key).toString(CryptoJS.enc.Base64), {
+    return CryptoJS.AES.encrypt(plainText, key, {
         iv: CryptoJS.SHA256(sh.generate()).toString(),
         mode: CryptoJS.mode.CBC,
         padding: CryptoJS.pad.Pkcs7
@@ -98,5 +105,72 @@ export const encryptAES = async (plainText, key) => {
 }
 
 export const decryptAES = async (cipherText, key) => {
-    return CryptoJS.AES.decrypt(cipherText, CryptoJS.SHA256(key).toString(CryptoJS.enc.Base64))
+    return CryptoJS.AES.decrypt(cipherText, key)
+}
+//const decPrivate = (await decryptAES(encPrivate, password)).toString(CryptoJS.enc.Utf8)
+
+export const generateMasterEncryptionKey = async (password) => {
+    const enc = new TextEncoder()
+    const encodedPassword = enc.encode(password)
+    const salt = window.crypto.getRandomValues(new Uint8Array(12))
+    const key = await window.crypto.subtle.importKey(
+        "raw",
+        encodedPassword,
+        "PBKDF2",
+        false,
+        ["deriveBits", "deriveKey"]
+    )
+
+    const AESKey = await window.crypto.subtle.deriveKey(
+        {
+            name: "PBKDF2",
+            salt,
+            iterations: 100000,
+            hash: "SHA-512",
+        },
+        key,
+        { name: "AES-CBC", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+    );
+    const expAESKey = await window.crypto.subtle.exportKey("raw", AESKey)
+    return byteArrayToB64(expAESKey)
+}
+
+export const generateHMACKey = async (secret) => {
+    const enc = new TextEncoder()
+    const encodedSecret = enc.encode(secret)
+    const key = await window.crypto.subtle.importKey(
+        "raw",
+        encodedSecret,
+        { name: "HMAC", hash: "SHA-512" },
+        true,
+        ["sign", "verify"]
+    )
+    return key
+}
+
+export const generateHMAC = async (message, secret) => {
+    const enc = new TextEncoder()
+    const encodedMsg = enc.encode(message)
+    const key = await generateHMACKey(secret)
+    const signature = await window.crypto.subtle.sign(
+        "HMAC",
+        key,
+        encodedMsg
+    )
+    return byteArrayToB64(signature)
+}
+
+export const verifyHMAC = async (secret, signature, message) => {
+    const enc = new TextEncoder()
+    const encodedMsg = enc.encode(message)
+    const key = await generateHMACKey(secret)
+    const result = await window.crypto.subtle.verify(
+        "HMAC",
+        key,
+        b64ToByteArray(signature),
+        encodedMsg
+    )
+    return result
 }

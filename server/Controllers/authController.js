@@ -12,7 +12,7 @@ import LZString from 'lz-string'
 dotenv.config()
 
 const sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-const contract = await sdk.getContract("0x991F18E3A03a1D93799077087733B8426A0fD65d");
+const contract = await sdk.getContract("0xef256eE0FD34fbA949A1F3aab64D5FFc3F1C4cd6");
 hashy.options.bcrypt.cost = 13
 
 const tokenlist = {}
@@ -20,26 +20,28 @@ const tokenlist = {}
 export const signUp = async (req, res) => {
     try {
         const data = req.body
-        const email = LZString.compress(data.email).toString(CryptoJS.enc.Utf8)
-        console.log(email)
-        const firstName = LZString.compress(data.firstName)
-        const lastName = LZString.compress(data.lastName)
-        const contact = LZString.compress(data.contact)
+        console.log(data)
         const encPrivateKey = LZString.compress(data.encPrivateKey)
         const encPublicKey = LZString.compress(data.encPublicKey)
+        const masterEncKey = LZString.compress(data.masterEncKey)
+
+        console.log(encPrivateKey.length, data.encPrivateKey.length)
+        console.log(encPublicKey.length, data.encPublicKey.length)
+        console.log(masterEncKey.length, data.masterEncKey.length)
 
 
         const chkUser = await contract.call("getUser", [data.email])
         if (chkUser[0] !== data.email) {
             
-            // const result = await contract.call("addUser", [email, firstName, lastName, contact, 'hash', encPrivateKey, encPublicKey])
-
-            // if (result) {
-            //     console.log(result)
-            //     res.status(201).json({
-            //         message: 'User added'
-            //     })
-            // }
+            const result1 = await contract.call("addUserKeys", [data.email, data.encPrivateKey, data.encPublicKey, data.masterEncKey])
+            const result2 = await contract.call("addUserData", [data.email, data.firstName, data.lastName, data.contact, data.passwordHash])
+            console.log(result1)
+            console.log(result2)
+            if (result1 && result2) {
+                res.status(201).json({
+                    message: 'User added'
+                })
+            }
         }
         else{
             res.status(401).json({
@@ -47,27 +49,6 @@ export const signUp = async (req, res) => {
             })
         }
 
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({
-            message: 'Something went wrong...',
-            error: error
-        })
-    }
-}
-
-export const signup1 = async (req, res) => {
-    try {
-        const data = req.body
-        const chkUser = await contract.call("getUser", [data.email])
-        if (chkUser[0] !== data.email) {
-
-        }
-        else{
-            res.status(401).json({
-                message: 'User already registered'
-            })
-        }
     } catch (error) {
         console.log(error)
         res.status(500).json({

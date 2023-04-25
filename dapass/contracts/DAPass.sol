@@ -13,6 +13,7 @@ contract DAPass {
         string hashPassPhrase;
         string encPrivateKey;
         string encPublicKey;
+        string masterEncKey;
         uint256 numVaults;
         Vault[] vaults;
     }
@@ -44,30 +45,40 @@ contract DAPass {
     }
 
     // Require Owner
-    function requireOwner() view private {
+    function requireOwner() private view {
         require(msg.sender == owner, "You are not the user");
     }
 
     // User Functions
-    function addUser(
+    function addUserKeys(
+        string memory email,
+        string memory encPrivateKey,
+        string memory encPublicKey,
+        string memory masterEncKey
+    ) public returns (bool success) {
+        requireOwner();
+        User storage user = users[email];
+
+        user.encPrivateKey = encPrivateKey;
+        user.encPublicKey = encPublicKey;
+        user.masterEncKey = masterEncKey;
+        return true;
+    }
+
+    function addUserData(
         string memory email,
         string memory fName,
         string memory lName,
         string memory contact,
-        string memory hashPassPhrase,
-        string memory encPrivateKey,
-        string memory encPublicKey
+        string memory hashPassPhrase
     ) public returns (bool success) {
         requireOwner();
         User storage user = users[email];
 
         user.fName = fName;
         user.lName = lName;
-        user.email = email;
         user.numVaults = 0;
         user.contact = contact;
-        user.encPublicKey = encPublicKey;
-        user.encPrivateKey = encPrivateKey;
         user.hashPassPhrase = hashPassPhrase;
 
         return true;
@@ -89,7 +100,15 @@ contract DAPass {
         return user.encPublicKey;
     }
 
-    function getUser(
+    function getMasterEncKEy(
+        string memory email
+    ) public view returns (string memory masterEncKey) {
+        User storage user = users[email];
+
+        return user.masterEncKey;
+    }
+
+    function getUserData(
         string memory _email
     )
         public

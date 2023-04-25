@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { JSEncrypt } from 'jsencrypt'
 import CryptoJS from 'crypto-js'
 import sh from 'shortid'
 import { toast } from 'react-hot-toast'
@@ -88,18 +87,19 @@ const Test = () => {
         // }
 
         const generateKeys = async () => {
-            const keyPair = await genRSAKeyPair()
+            const {keyPair} = await genRSAKeyPair()
             const privateKey = await window.crypto.subtle.exportKey("pkcs8", keyPair.privateKey)
             const publicKey = await window.crypto.subtle.exportKey("spki", keyPair.publicKey)
             const privExpB64 = byteArrayToB64(privateKey)
             const pubExpB64 = byteArrayToB64(publicKey)
-
+            console.log(privExpB64, 'priv')
             const encPrivate = (await encryptAES(privExpB64, password)).toString()
-            console.log(encPrivate)
+            //console.log(encPrivate, 'encpriv')
 
             const encPublic = await encryptAES(pubExpB64, password)
 
             const decPrivate = await decryptAES(encPrivate, password)
+            console.log(decPrivate.toString(CryptoJS.enc.Base64), 'decpriv')
 
             const importedPrivKey = await importRSAPrivKey(decPrivate.toString(CryptoJS.enc.Utf8))
 
