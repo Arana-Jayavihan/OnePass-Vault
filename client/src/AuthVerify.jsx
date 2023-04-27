@@ -17,19 +17,24 @@ const AuthVerify = (props) => {
     let location = useLocation()
 
     useEffect(() => {
-        const token = cookies.get('token');
-        if (token) {
-            const decodedJwt = parseJwt(token);
-            console.log(decodedJwt.exp * 1000, Date.now(), decodedJwt.exp * 1000 < Date.now(), decodedJwt.exp * 1000 - Date.now(), decodedJwt.exp * 1000 - Date.now() < 2500000)
-            
-            // Handle automatic log out
-            if (decodedJwt.exp * 1000 < Date.now()) {
-                props.logOut();
+        try {
+            const token = cookies.get('token');
+            if (token) {
+                const decodedJwt = parseJwt(token);
+                console.log(decodedJwt.exp * 1000, Date.now(), decodedJwt.exp * 1000 < Date.now(), decodedJwt.exp * 1000 - Date.now(), decodedJwt.exp * 1000 - Date.now() < 2500000)
+
+                // Handle automatic log out
+                if (decodedJwt.exp * 1000 < Date.now()) {
+                    props.logOut();
+                }
+                // Handle keep logged in
+                if (decodedJwt.exp * 1000 - Date.now() < 2500000) {
+                    props.refreshToken();
+                }
             }
-            // Handle keep logged in
-            if ( decodedJwt.exp * 1000 - Date.now() < 2500000 ){
-                props.refreshToken();
-            }
+        }
+        catch (err) {
+            console.log(err)
         }
     }, [location, props]);
 }

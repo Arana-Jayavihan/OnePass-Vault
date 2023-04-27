@@ -16,15 +16,23 @@ import { signout } from "actions/authActions";
 import PassReset from "scenes/pwReset/PassReset";
 import Signup from "scenes/signup/Signup";
 import Test from "scenes/Test/Test";
+import Transactions from "scenes/transactions/Transactions";
+import Vaults from "scenes/vaults/Vaults";
+import Billing from "scenes/billing/Billing";
+import Profile from "scenes/profile/Profile";
+import { switchMode } from "actions/generalActions";
 
 function App() {
 	const dispatch = useDispatch()
 	const loading = useSelector(state => state.auth.loading)
+	const verifying = useSelector(state => state.auth.verifying)
 	const mode = useSelector(state => state.general.mode)
 	const authenticated = useSelector(state => state.auth.authenticated);
 	const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);
 
 	useEffect(() => {
+		const mode1 = localStorage.getItem('mode')
+		dispatch(switchMode(mode1))
 		if (!authenticated) {
 			dispatch(isLoggedIn());
 		}
@@ -51,6 +59,18 @@ function App() {
 		}
 
 	}, [authenticating]);
+
+	useEffect(() => {
+		if (verifying === true) {
+			toast.loading('Verifying user...', {
+				id: 'verify'
+			})
+		}
+		else if (verifying === false) {
+			toast.dismiss('verify')
+		}
+
+	}, [verifying]);
 
 	useEffect(() => {
 		if (loading === true) {
@@ -80,11 +100,17 @@ function App() {
 				/>
 				<Routes>
 					<Route path="/" element={<SignIn />} />
-					<Route path="/test" element={<Test />} />
 					<Route path="/signup" element={<Signup />} />
-					<Route path="pw-reset/:token" element={<PassReset />} />
+
+					{/* <Route path="/test" element={<Test />} />
+					<Route path="pw-reset/:token" element={<PassReset />} /> */}
+
 					<Route element={authenticated ? <Layout /> : <SignIn />}>
 						<Route path="/dashboard" element={<Dashboard />} />
+						<Route path="/transactions" element={<Transactions />} />
+						<Route path="/vaults" element={<Vaults />} />
+						<Route path="/billing" element={<Billing />} />
+						<Route path="/profile" element={<Profile />} />
 					</Route>
 				</Routes>
 			</ThemeProvider>

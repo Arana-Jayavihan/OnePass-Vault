@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
     "@mui/icons-material": "^5.11.0",
     "@mui/material": "^5.11.6",
     "@mui/x-data-grid": "^5.17.20",
     "axios": "^1.2.6",
-    "bcrypt": "^5.1.0",
     "crypto-js": "^4.1.1",
     "framer-motion": "^8.5.2",
     "react": "^18.2.0",
@@ -24,7 +25,6 @@
     "redux-devtools-extension": "^2.13.9",
     "redux-thunk": "^2.4.2",
     "shortid": "^2.2.16",
-    "stream": "^0.0.2",
     "universal-cookie": "^4.0.4",
     "web-vitals": "^2.1.4"
   },

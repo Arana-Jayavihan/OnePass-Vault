@@ -2,7 +2,7 @@ import { toast } from "react-hot-toast"
 import { generalConstatnts } from "../actions/constants"
 
 const initState = {
-    mode: 'light',
+    mode: 'dark',
     loading: false
 }
 export default (state = initState, action) => {
@@ -30,6 +30,7 @@ export default (state = initState, action) => {
                 mode: 'dark',
                 loading: false
             }
+            localStorage.setItem('mode', 'dark')
             break
 
         case generalConstatnts.SET_MODE_LIGHT:
@@ -49,6 +50,7 @@ export default (state = initState, action) => {
                 mode: 'light',
                 loading: false
             }
+            localStorage.setItem('mode', 'light')
             break
     }
 

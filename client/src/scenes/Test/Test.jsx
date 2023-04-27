@@ -145,6 +145,8 @@ const Test = () => {
 
 
     }
+    const hashpass = CryptoJS.SHA256('aranajayavihan@gmail.com').toString(CryptoJS.enc.Base64)
+    console.log(hashpass)
     return (
         <>
             test

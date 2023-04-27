@@ -55,7 +55,7 @@ axiosInstance.interceptors.response.use((res) => {
         cookies.remove('refreshToken', {
             path: '/'
         })
-        localStorage.clear()
+        sessionStorage.clear()
         store.dispatch({ type: authConsts.LOGOUT_SUCCESS })
     }
     if (status === 429){

@@ -5,13 +5,13 @@ import {
     Menu as MenuIcon,
     ArrowDropDownOutlined,
 } from '@mui/icons-material';
-import { MdNotificationsActive } from 'react-icons/md'
-import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FlexBetween from './FlexBetween';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppBar, IconButton, Toolbar, useTheme, Box, Button, Typography, Menu, MenuItem } from '@mui/material';
 import { switchMode } from '../actions/generalActions';
 import { signout } from 'actions/authActions';
+import './style.css'
 
 const Navbar = (props) => {
     const mode = useSelector(state => state.general.mode)
@@ -29,11 +29,12 @@ const Navbar = (props) => {
             position: 'static',
             background: 'none',
             boxShadow: 'none',
-        }}>
+            backgroundImage: "linear-gradient(to right, #cc00ee , #6d4aff)"
+        }}  >
             <Toolbar sx={{ justifyContent: 'space-between' }}>
                 <FlexBetween>
                     <IconButton onClick={() => props.setIsSidebarOpen(!props.isSidebarOpen)} >
-                        <MenuIcon />
+                        <MenuIcon sx={{ color:'#fff' }} />
                     </IconButton>
                 </FlexBetween>
 
@@ -43,14 +44,11 @@ const Navbar = (props) => {
                     <IconButton onClick={() => mode === 'light' ? dispatch(switchMode("light")) : mode === 'dark' ? dispatch(switchMode("dark")) : {}}>
                         {
                             theme.palette.mode === "dark" ? (
-                                <DarkModeOutlined sx={{ fontSize: '25px' }} />
+                                <DarkModeOutlined sx={{ fontSize: '25px', color: '#fff' }} />
                             ) : (
-                                <LightModeOutlined sx={{ fontSize: '25px' }} />
+                                <LightModeOutlined sx={{ fontSize: '25px', color: '#fff' }} />
                             )
                         }
-                    </IconButton>
-                    <IconButton>
-                        <MdNotificationsActive sx={{ fontSize: '25px' }} />
                     </IconButton>
                     <FlexBetween>
                         <Button
@@ -63,26 +61,30 @@ const Navbar = (props) => {
                                 gap: "1rem",
                             }}
                         >
-                            <ManageAccountsOutlinedIcon
-                                sx={{ color: theme.palette.secondary[300], fontSize: "35px" }}
+                            <AccountCircleIcon
+                                sx={{ color: "#fff", fontSize: "35px" }}
                             />
                             <Box textAlign="left">
                                 <Typography
                                     fontWeight="bold"
                                     fontSize="0.85rem"
-                                    sx={{ color: theme.palette.secondary[100] }}
+                                    sx={{ color: "#fff" }}
                                 >
-                                    {user.firstName}
+                                    {
+                                        user ? 
+                                            user.firstName + " " + user.lastName
+                                        : null
+                                    }
                                 </Typography>
                                 <Typography
                                     fontSize="0.75rem"
-                                    sx={{ color: theme.palette.secondary[200] }}
+                                    sx={{ color: "#fff" }}
                                 >
                                     {user.role}
                                 </Typography>
                             </Box>
                             <ArrowDropDownOutlined
-                                sx={{ color: theme.palette.secondary[300], fontSize: "25px" }}
+                                sx={{ color: "#fff", fontSize: "25px" }}
                             />
                         </Button>
                         <Menu

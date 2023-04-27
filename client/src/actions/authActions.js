@@ -2,39 +2,118 @@ import { toast } from "react-hot-toast"
 import axiosInstance from "../helpers/axios"
 import { authConsts } from "./constants"
 import Cookies from 'universal-cookie'
+import { decryptAES, decryptRSA, importRSAPrivKey } from "encrypt"
+import CryptoJS from "crypto-js"
 
 const cookies = new Cookies()
 
-export const signup = (form) => {
+export const genKeys = (form) => {
     return async dispatch => {
         dispatch({
-            type: authConsts.SIGNUP_REQUEST
+            type: authConsts.KEY_GEN_REQUEST
         })
-        const res = await axiosInstance.post("/auth/signup", form)
-        if(res.status === 201){
-            toast.success("Sign Up Success")
+        
+        const res = await axiosInstance.post("/auth/genkeys", form)
+
+        if(res.status === 201) {
+            toast.success("Key Generation Success")
             dispatch({
-                type: authConsts.SIGNUP_SUCCESS
+                type: authConsts.KEY_GEN_SUCCESS
             })
+            return true
         }
-        else if(res.response){
+        else if (res.response) {
             toast.error(res.response.data.message)
             dispatch({
-                type: authConsts.SIGNUP_FAILED
+                type: authConsts.KEY_GEN_FAILED
             })
+            return false
         }
     }
 }
 
-export const login = (form) => {
+export const addData = (form) => {
+    return async dispatch => {
+        dispatch({
+            type: authConsts.USER_DATA_ADD_REQUEST
+        })
+        const res = await axiosInstance.post("/auth/add-user-data", form)
+        if(res.status === 201) {
+            toast.success("Registered")
+            dispatch({
+                type: authConsts.USER_DATA_ADD_SUCCESS
+            })
+            return true
+        }
+        else if (res.response) {
+            toast.error(res.response.data.message)
+            dispatch({
+                type: authConsts.USER_DATA_ADD_FAILED
+            })
+            return false
+        }
+    }
+}
+
+export const signInReq = (form) => {
+    return async dispatch => {
+        dispatch({
+            type: authConsts.USER_LOGIN_REQUEST
+        })
+        const res = await axiosInstance.post("/auth/signin-request", form)
+
+        if(res.status === 200){
+            toast.success("User verification success")
+            dispatch({
+                type: authConsts.USER_LOGIN_REQUEST_SUCCESS,
+                payload: res.data.payload
+            })
+            return true
+        }
+        else if (res.response) {
+            toast.error(res.response.data.message)
+            dispatch({
+                type: authConsts.USER_LOGIN_REQUEST_FAILED
+            })
+            return false
+        }
+    }
+}
+
+export const login = (form, password) => {
     return async (dispatch) => {
+        
         dispatch({ type: authConsts.LOGIN_REQUEST })
         const res = await axiosInstance.post('/auth/signin', form)
         if (res.status === 200) {
             const user = res.data.user
             const token = res.data.token
             const refreshToken = res.data.refreshToken
-            toast.success(`Login Success, Welcome ${user.firstName}`, {
+
+            const decPrivate = (await decryptAES(user.privateKey, password)).toString(CryptoJS.enc.Utf8)
+            const importedPrivKey = await importRSAPrivKey(decPrivate)
+
+            const masterKey = await decryptRSA(user.masterKey, importedPrivKey)
+            const firstName = (await decryptAES(user.firstName, masterKey)).toString(CryptoJS.enc.Utf8)
+            const lastName = (await decryptAES(user.lastName, masterKey)).toString(CryptoJS.enc.Utf8)
+            const contact = (await decryptAES(user.contact, masterKey)).toString(CryptoJS.enc.Utf8)
+
+            const decUser = {
+                'firstName': firstName,
+                'lastName':lastName,
+                'email':user.email,
+                'contact': contact
+            }
+
+            const decUserState = {
+                'firstName': firstName,
+                'lastName':lastName,
+                'email':user.email,
+                'contact': contact,
+                'masterKey': masterKey
+            }
+    
+            toast.success(`Login Success, Welcome ${decUser.firstName}`, {
                 id: 'login'
             })
             cookies.set("token", token, {
@@ -52,33 +131,21 @@ export const login = (form) => {
                 httpOnly: false
             })
 
-            localStorage.setItem('user', JSON.stringify(user))
+            sessionStorage.setItem('user', JSON.stringify(decUser))
             dispatch({
                 type: authConsts.LOGIN_SUCCESS,
                 payload: {
-                    user,
+                    'user':decUserState,
                     token
                 }
             })
-        } else {
-            if (res.response.status === 400) {
-                toast.error("Something Went Wrong!")
-                dispatch({
-                    type: authConsts.LOGIN_FALIURE
-                })
-            }
-            else if (res.response.status === 402) {
-                toast.error("Invalid Credentials...")
-                dispatch({
-                    type: authConsts.LOGIN_FALIURE
-                })
-            }
-            else if (res.response.status === 404) {
-                toast.error("User Not Found...")
-                dispatch({
-                    type: authConsts.LOGIN_FALIURE
-                })
-            }
+        } 
+        else if (res.response) {
+            toast.error(res.response.data.message)
+            dispatch({
+                type: authConsts.LOGIN_FALIURE
+            })
+            return false
         }
     }
 }
@@ -87,13 +154,13 @@ export const isLoggedIn = () => {
     return async (dispatch) => {
         const token = cookies.get('token')
         if (token) {
-            const user = JSON.parse(localStorage.getItem('user'))
+            const user = JSON.parse(sessionStorage.getItem('user'))
             if (user) {
                 dispatch({
                     type: authConsts.LOGIN_SUCCESS,
                     payload: {
                         token,
-                        user
+                        'user':user
                     }
                 })
             }
@@ -120,7 +187,7 @@ export const signout = () => {
 
         if (res.status === 200) {
             toast.success("Logged Out Successfully!", { id: 'lOut' })
-            localStorage.clear()
+            sessionStorage.clear()
             cookies.remove('token', {
                 path: '/'
             })
@@ -141,7 +208,7 @@ export const signout = () => {
 }
 
 export const tokenRefresh = () => {
-    const user = JSON.parse(localStorage.getItem('user'))
+    const user = JSON.parse(sessionStorage.getItem('user'))
     let refreshToken = cookies.get('refreshToken')
     let token = cookies.get('token')
     const form = {
@@ -178,11 +245,11 @@ export const passReset = (form) => {
 
         if (res.status === 201) {
             toast.success("Password Reset Success")
-            window.location.href='/'
+            window.location.href = '/'
         }
         else if (res.response) {
             toast.error(res.response.data.message)
-            window.location.href='/'
+            window.location.href = '/'
         }
     }
 
@@ -192,10 +259,10 @@ export const passResetRequest = (form) => {
     return async dispatch => {
         const res = await axiosInstance.post("/auth/pass-reset-request", form)
 
-        if(res.status === 201){
+        if (res.status === 201) {
             toast.success("Password Reset Email Sent")
         }
-        else if(res.response){
+        else if (res.response) {
             console.log(res.response)
             toast.error(res.response.data.message)
         }

@@ -3,10 +3,7 @@ import React from 'react'
 import { Modal, Button } from 'react-bootstrap'
 import { useTheme } from '@mui/material'
 import './modalStyle.css'
-/**
-* @author
-* @function NewModel
-**/
+import { motion } from "framer-motion"
 
 export const NewModel = (props) => {
     const theme = useTheme()
@@ -14,7 +11,7 @@ export const NewModel = (props) => {
         <Modal className='modal-dialog-centered' size={props.size} show={props.show} onHide={props.close} modalC aria-labelledby="contained-modal-title-vcenter" centered>
             <Modal.Header closeButton>
                 <Modal.Title>
-                    <Typography sx={{ color: theme.palette.secondary[500], fontSize: '1.5rem', fontWeight: 'bold' }}>
+                    <Typography sx={{ color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', fontSize: '1.5rem', fontWeight: 'bold' }}>
                         {props.ModalTitle}
                     </Typography>
 
@@ -28,23 +25,44 @@ export const NewModel = (props) => {
                 {
                     props.buttons ? props.buttons.map(button => (
                         button.color === 'primary' ?
-                            <Button type={button.type ? button.type : 'button'} key={button.label} variant={button.color} style={{ color: 'black', border: 'none', backgroundColor: theme.palette.secondary[500], margin: '0 10px' }} onClick={button.onClick} >
+                            <motion.button
+                                className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                whileHover={{ scale: [1, 1.1] }}
+                                type={button.type ? button.type : 'button'}
+                                key={button.label}
+                                onClick={button.onClick}
+                            >
                                 {button.label}
-                            </Button>
+                            </motion.button>
                             :
-                            <Button key={button.label} variant={button.color} onClick={button.onClick} >
+                            <motion.button
+                                key={button.label}
+                                variant={button.color}
+                                onClick={button.onClick}
+                                className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                whileHover={{ scale: [1, 1.1] }}
+                            >
                                 {button.label}
-                            </Button>
+                            </motion.button>
                     )
+                    
 
                     ) :
-                        <div>
-                            <Button variant="secondary" style={{ margin: '0 10px' }} onClick={props.close}>
+                        <div style={{ display: 'flex' }}>
+                            <motion.button
+                                className='form-control'
+                                style={{ width: 'fit-content', backgroundColor: theme.palette.neutral[200] }}
+                                whileHover={{ scale: [1, 1.1] }}
+                                onClick={props.close}>
                                 Close
-                            </Button>
-                            <Button variant='primary' style={{ color: 'black', border: 'none', backgroundColor: theme.palette.secondary[500], margin: '0 10px' }} onClick={props.handleClose}>
+                            </motion.button>
+                            <motion.button
+                                className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                whileHover={{ scale: [1, 1.1] }}
+                                onClick={props.handleClose}
+                            >
                                 Save Changes
-                            </Button>
+                            </motion.button>
                         </div>
                 }
             </Modal.Footer>

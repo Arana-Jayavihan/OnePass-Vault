@@ -2,13 +2,35 @@ import { authConsts } from "../actions/constants"
 
 const initState = {
     user: {},
+    verifying: false,
     authenticated: false,
     authenticating: false,
     loading: false,
+    generating: false,
+    hashPass: undefined
 }
 
 export default (state = initState, action) => {
     switch (action.type) {
+        case authConsts.USER_LOGIN_REQUEST:
+            state = {
+                ...state,
+                verifying: true
+            }
+            break
+        case authConsts.USER_LOGIN_REQUEST_SUCCESS:
+            state = {
+                ...state,
+                verifying: false,
+                hashPass: action.payload
+            }
+            break
+        case authConsts.USER_LOGIN_REQUEST_FAILED:
+            state = {
+                ...state,
+                verifying: false
+            }
+            break
         case authConsts.LOGIN_REQUEST:
             state = {
                 ...state,
@@ -51,19 +73,37 @@ export default (state = initState, action) => {
                 loading: false
             }
             break
-        case authConsts.SIGNUP_REQUEST:
+        case authConsts.KEY_GEN_REQUEST:
+            state = {
+                ...state,
+                generating: true
+            }
+            break
+        case authConsts.KEY_GEN_SUCCESS:
+            state = {
+                ...state,
+                generating: false
+            }
+            break
+        case authConsts.KEY_GEN_FAILED:
+            state = {
+                ...state,
+                generating: false
+            }
+            break
+        case authConsts.USER_DATA_ADD_REQUEST:
             state = {
                 ...state,
                 loading: true
             }
             break
-        case authConsts.SIGNUP_SUCCESS:
+        case authConsts.USER_DATA_ADD_SUCCESS:
             state = {
                 ...state,
                 loading: false
             }
             break
-        case authConsts.SIGNUP_FAILED:
+        case authConsts.USER_DATA_ADD_FAILED:
             state = {
                 ...state,
                 loading: false

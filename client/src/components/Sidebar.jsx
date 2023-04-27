@@ -16,9 +16,9 @@ import {
     ChevronLeft,
     ChevronRightOutlined,
     HomeOutlined,
-    Groups2Outlined,
     AdminPanelSettingsOutlined,
 } from "@mui/icons-material";
+import KeyIcon from '@mui/icons-material/Key';
 import SwapHorizOutlinedIcon from '@mui/icons-material/SwapHorizOutlined';
 
 import { useEffect, useState } from "react";
@@ -29,7 +29,8 @@ import { MdLogout } from 'react-icons/md'
 import { signout } from "../actions/authActions";
 import { useDispatch, useSelector } from "react-redux";
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined';
-import InventoryOutlinedIcon from '@mui/icons-material/InventoryOutlined';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 const navItems = [
     {
@@ -37,20 +38,20 @@ const navItems = [
         icon: <HomeOutlined />,
     },
     {
-        text: "Client Facing",
+        text: "Data",
         icon: null,
     },
     {
-        text: "Inquiries",
-        icon: <InventoryOutlinedIcon />,
+        text: "Vaults",
+        icon: <KeyIcon />,
     },
     {
-        text: "Customers",
-        icon: <Groups2Outlined />,
-    },
-    {
-        text: "Orders",
+        text: "Transactions",
         icon: <SwapHorizOutlinedIcon />,
+    },
+    {
+        text: "Billing",
+        icon: <MonetizationOnIcon />,
     },
     
     {
@@ -58,7 +59,7 @@ const navItems = [
         icon: null,
     },
     {
-        text: "Administrators",
+        text: "Profile",
         icon: <AdminPanelSettingsOutlined />,
     }
 ];
@@ -115,8 +116,8 @@ const Sidebar = (props) => {
                         <Box m="1.5rem 2rem 2rem 3rem">
                             <FlexBetween color={theme.palette.secondary[400]} sx={{ justifyContent: 'center' }} >
                                 <Box display="flex" alignItems="center" gap="0.5rem" >
-                                    <Typography variant="h4" fontWeight="bold" sx={{ textAlign: 'center' }} >
-                                        ADMIN PANEL
+                                    <Typography variant="h3"  fontWeight="bold" sx={{ textAlign: 'center', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%' , backgroundClip: 'text', backgroundRepeat: 'repeat', color: 'transparent' }} >
+                                        DAPass Vault
                                     </Typography>
                                 </Box>
                                 {!props.isNonMobile && (
@@ -146,14 +147,14 @@ const Sidebar = (props) => {
                                                 props.setIsSidebarOpen(false)
                                             }}
                                             sx={{
-                                                backgroundColor:
+                                                backgroundImage:
                                                     active === lcText
-                                                        ? theme.palette.secondary[400]
+                                                        ? "linear-gradient(to right, #cc00ee , #6d4aff)"
                                                         : "transparent",
                                                 color:
                                                     active === lcText
-                                                        ? theme.palette.primary[600]
-                                                        : theme.palette.secondary[100],
+                                                        ? theme.palette.neutral[0]
+                                                        : theme.palette.neutral[100],
                                             }}
                                         >
                                             <ListItemIcon
@@ -186,26 +187,20 @@ const Sidebar = (props) => {
                     >
                         <Divider />
                         <FlexBetween textTransform="none" gap="1rem" m="1.5rem 2rem 0 3rem">
-                        <ManageAccountsOutlinedIcon
+                        <AccountCircleIcon
                                 sx={{ color: theme.palette.secondary[300], fontSize: "25px" }}
                             />
                             <Box textAlign="left">
                                 <Typography
                                     fontWeight="bold"
                                     fontSize="0.9rem"
-                                    sx={{ color: theme.palette.secondary[100] }}
+                                    sx={{ backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%' , backgroundClip: 'text', backgroundRepeat: 'repeat', color: 'transparent' }}
                                 >
                                     {
                                         user ? 
                                             user.firstName + " " + user.lastName
                                         : null
                                     }
-                                </Typography>
-                                <Typography
-                                    fontSize="0.8rem"
-                                    sx={{ color: theme.palette.secondary[300] }}
-                                >
-                                    {user ? user.role : null}
                                 </Typography>
                             </Box>
                             <IconButton onClick={signOut} >

@@ -30,9 +30,9 @@ const Dashboard = () => {
     const form = {
         email: user.email
     }
-    useEffect(() => {
-        dispatch(getAllUserLogins(form))
-    }, [mode]);
+    // useEffect(() => {
+    //     dispatch(getAllUserLogins(form))
+    // }, [mode]);
 
     // Toasts
     useEffect(() => {
@@ -85,35 +85,35 @@ const Dashboard = () => {
 
     // Handle Pages
     const [loginArray, setLoginArray] = useState([]);
-	const [page, setPage] = useState(1);
-	const handleChange = (e, v) => {
-		setPage(v)
-	}
+    const [page, setPage] = useState(1);
+    const handleChange = (e, v) => {
+        setPage(v)
+    }
 
-	useEffect(() => {
-		if (page === 1) {
-			if (logins.length < 11) {
-				const logArr = logins.slice(0, logins.length)
-				setLoginArray(logArr)
-			}
-			else {
-				const logArr = logins.slice(0, 10)
-				setLoginArray(logArr)
-			}
+    useEffect(() => {
+        if (page === 1) {
+            if (logins.length < 11) {
+                const logArr = logins.slice(0, logins.length)
+                setLoginArray(logArr)
+            }
+            else {
+                const logArr = logins.slice(0, 10)
+                setLoginArray(logArr)
+            }
 
-		}
-		else {
-			if ((page - 1) * 10 + 10 > logins.length) {
-				const logArr = logins.slice((page - 1) * 10, logins.length)
-				setLoginArray(logArr)
-			}
-			{
-				const logArr = logins.slice((page - 1) * 10, (page - 1) * 10 + 10)
-				setLoginArray(logArr)
-			}
+        }
+        else {
+            if ((page - 1) * 10 + 10 > logins.length) {
+                const logArr = logins.slice((page - 1) * 10, logins.length)
+                setLoginArray(logArr)
+            }
+            {
+                const logArr = logins.slice((page - 1) * 10, (page - 1) * 10 + 10)
+                setLoginArray(logArr)
+            }
 
-		}
-	}, [page, logins]);
+        }
+    }, [page, logins]);
 
     // Handle Search
     const [searchText, setSearchText] = useState('');
@@ -324,10 +324,10 @@ const Dashboard = () => {
                     </tbody>
                 </Table>
                 <div style={{ width: '100%', display: 'flex', justifyContent: 'center', paddingBottom: '1rem' }} >
-					<Stack spacing={2} >
-						<Pagination count={Math.ceil(logins.length / 10)} color="secondary" page={page} onChange={handleChange} />
-					</Stack>
-				</div>
+                    <Stack spacing={2} >
+                        <Pagination count={Math.ceil(logins.length / 10)} color="secondary" page={page} onChange={handleChange} />
+                    </Stack>
+                </div>
             </>
         )
     }
@@ -345,7 +345,12 @@ const Dashboard = () => {
                                 Manage Logins
                             </Typography>
 
-                            <button className='form-control' style={{ width: 'auto', margin: '0 10px' }} onClick={() => setShowAddModal(true)} >Add Login</button>
+                            <motion.button
+                                className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff', "&hover": { background: '#fff' } }}
+                                whileHover={{ scale: [1, 1.1] }}
+                            >
+                                Add Vault
+                            </motion.button>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                             <div style={{ display: 'flex', height: '2rem', alignItems: 'center' }}>
