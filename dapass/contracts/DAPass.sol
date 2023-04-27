@@ -18,15 +18,19 @@ contract DAPass {
     }
 
     struct VaultUser {
+        bool isOwner;
+        uint256 index;
         string email;
         string encVaultPass;
     }
 
     struct Vault {
-        string id;
+        uint256 index;
         string name;
         string note;
+        string owner;
         uint256 numLogins;
+        uint256 numUsers;
         string vaultKeyHash;
         VaultUser[] vaultUsers;
         Login[] logins;
@@ -34,6 +38,7 @@ contract DAPass {
 
     struct Login {
         uint256 index;
+        string owner;
         string name;
         string website;
         string userName;
@@ -44,12 +49,13 @@ contract DAPass {
         string tHash;
     }
 
-    mapping(uint256 => TxnHash) private txnHashes;
     uint256 private numTxnHashes = 0;
+    uint256 private vaultCount = 0;
+    mapping(uint256 => TxnHash) private txnHashes;
     mapping(string => Login) private vaultLogins;
     mapping(string => User) private users;
-    mapping(string => Vault) private vaults;
-    mapping(string => UserVault) private userVaults;
+    mapping(string => VaultUser) private vaultUsers;
+    Vault[] private vaults;
 
     //Constructor
     function InitiateContract(string memory contHash) public {
@@ -60,6 +66,19 @@ contract DAPass {
     // Require Owner
     function requireOwner() private view {
         require(msg.sender == owner, "You are not the user");
+    }
+
+    // Compare Strings
+    function compareStrings(
+        string memory str1,
+        string memory str2
+    ) public pure returns (bool success) {
+        if (bytes(str1).length != bytes(str2).length) {
+            return false;
+        }
+        return
+            keccak256(abi.encodePacked(str1)) ==
+            keccak256(abi.encodePacked(str2));
     }
 
     // User Functions
@@ -89,7 +108,6 @@ contract DAPass {
 
         users[email].fName = fName;
         users[email].lName = lName;
-        users[email].numVaults = 0;
         users[email].contact = contact;
         users[email].hashPassPhrase = hashPassPhrase;
 
@@ -109,41 +127,45 @@ contract DAPass {
     function getAllTxnHashes(
         string memory _email
     ) public view returns (string memory email, string[] memory) {
-        
         return (users[_email].email, users[_email].transactionHashes);
     }
 
     function getPrivateKey(
         string memory email
     ) public view returns (string memory encPrivateKey) {
-
         return users[email].encPrivateKey;
     }
 
     function getPublicKey(
         string memory email
     ) public view returns (string memory publicKey) {
-
         return users[email].publicKey;
     }
 
-    function getMasterEncKEy(
+    function getMasterEncKey(
         string memory email
     ) public view returns (string memory masterEncKey) {
-
         return users[email].masterEncKey;
     }
 
     function getUserData(
         string memory _email
-    ) public view returns (
+    )
+        public
+        view
+        returns (
             string memory email,
             string memory fName,
             string memory lName,
             string memory contact
         )
     {
-        return (users[_email].email, users[_email].fName, users[_email].lName, users[_email].contact);
+        return (
+            users[_email].email,
+            users[_email].fName,
+            users[_email].lName,
+            users[_email].contact
+        );
     }
 
     function removeUser(string memory email) public returns (bool success) {
@@ -155,13 +177,20 @@ contract DAPass {
     function getUserHashPass(
         string memory email
     ) public view returns (string memory hashPassPhrase) {
-
         return users[email].hashPassPhrase;
     }
 
     // Vault Functions
+    function getVault(uint256 index) public view returns (Vault memory) {
+        return vaults[index];
+    }
+
+    function getVaults() public view returns (Vault[] memory) {
+        return vaults;
+    }
+
     function createVault(
-        string memory id,
+        uint256 index,
         string memory email,
         string memory name,
         string memory note,
@@ -170,144 +199,154 @@ contract DAPass {
     ) public returns (bool sucess) {
         requireOwner();
 
-        vaults[id].id = id;
-        vaults[id].name = name;
-        vaults[id].note = note;
-        vaults[id].numLogins = 0;
-        vaults[id].vaultKeyHash = vaultKeyHash;
+        vaults[index].index = index;
+        vaults[index].name = name;
+        vaults[index].note = note;
+        vaults[index].owner = email;
+        vaults[index].numLogins = 0;
+        vaults[index].vaultKeyHash = vaultKeyHash;
 
         VaultUser memory user;
         user.email = email;
+        user.isOwner = true;
         user.encVaultPass = encVaultKey;
-        vaults[id].vaultUsers.push(user);
+        user.index = vaults[index].numUsers;
 
-        users[email].vaults.push(userVaults[id]);
-        delete user
+        vaults[index].vaultUsers.push(user);
+        vaults[index].numUsers++;
 
+        delete user;
         return true;
     }
 
-    function getVaults(
-        string memory email
-    ) public view returns (Vault[] memory) {
+    function updateVault(
+        string memory userEmail,
+        uint256 index,
+        string memory name,
+        string memory note
+    ) public returns (bool success) {
         requireOwner();
-        mapping(uint256 => Vault) tempVaults = vaults;
-        for(uint256 i = 0; i < vaults.vaultUsers.length; i++){
-            
+        if (compareStrings(userEmail, vaults[index].owner)) {
+            vaults[index].name = name;
+            vaults[index].note = note;
+            return true;
         }
-        
-        return();
+        return false;
     }
 
-    // function updateVault(
-    //     string memory email,
-    //     uint256 index,
-    //     string memory name,
-    //     string memory note
-    // ) public returns (bool success) {
-    //     requireOwner();
+    function addVaultUser(
+        uint256 index,
+        string memory userEmail,
+        string memory addUserEmail,
+        string memory encVaultKey
+    ) public returns (bool success) {
+        requireOwner();
+        if (compareStrings(userEmail, vaults[index].owner)) {
+            VaultUser storage user = vaultUsers[addUserEmail];
+            user.email = addUserEmail;
+            user.isOwner = false;
+            user.encVaultPass = encVaultKey;
+            user.index =  vaults[index].numUsers;
 
-    //     User storage user = users[email];
+            vaults[index].vaultUsers.push(user);
+            vaults[index].numUsers++;
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-    //     user.vaults[index].name = name;
-    //     user.vaults[index].note = note;
-    //     return true;
-    // }
+    function removeUserVault(
+        string memory email,
+        uint256 index,
+        uint256 userIndex
 
-    // function addVaultKeyHash(
-    //     string memory email,
-    //     string memory vaultKeyHash,
-    //     uint256 index
-    // ) public returns (bool success) {
-    //     requireOwner();
+    ) public returns (bool success){
+        if (compareStrings(email, vaults[index].owner)){
+            delete vaults[index].vaultUsers[userIndex];
+        }
+        return false;
+    }
 
-    //     User storage user = users[email];
-
-    //     user.vaults[index].vaultKeyHashes.push(vaultKeyHash);
-    //     return true;
-    // }
-
-    // function removeVault(
-    //     string memory email,
-    //     uint256 index
-    // ) public returns (bool success) {
-    //     requireOwner();
-
-    //     User storage user = users[email];
-    //     delete user.vaults[index];
-    //     user.numVaults--;
-    //     return true;
-    // }
+    function removeVault(
+        string memory userEmail,
+        uint256 index
+    ) public returns (bool success) {
+        requireOwner();
+        if (compareStrings(userEmail, vaults[index].owner)) {
+            delete vaults[index];
+            vaultCount--;
+            return true;
+        }
+        return false;
+    }
 
     // Login Functions
-    // function addVaultLogin(
-    //     string memory email,
-    //     string memory name,
-    //     string memory website,
-    //     string memory userName,
-    //     string memory password,
-    //     uint256 index
-    // ) public returns (bool success) {
-    //     requireOwner();
-    //     User storage user = users[email];
+    function addVaultLogin(
+        string memory email,
+        string memory name,
+        string memory website,
+        string memory userName,
+        string memory password,
+        string memory loginId,
+        uint256 index
+    ) public returns (bool success) {
+        requireOwner();
+        Login storage login = vaultLogins[loginId];
 
-    //     Login storage login = vaultLogins[0];
+        login.owner = email;
+        login.name = name;
+        login.website = website;
+        login.userName = userName;
+        login.password = password;
+        login.index = index;
 
-    //     login.name = name;
-    //     login.website = website;
-    //     login.userName = userName;
-    //     login.password = password;
+        vaults[index].logins.push(login);
+        vaults[index].numLogins++;
+        delete vaultLogins[loginId];
+        return true;
+    }
 
-    //     user.vaults[index].logins.push(login);
-    //     user.vaults[index].numLogins++;
+    function getAllVaultLogins(
+        uint256 index
+    ) public view returns (Login[] memory) {
+        return vaults[index].logins;
+    }
 
-    //     delete vaultLogins[0];
-    //     return true;
-    // }
+    function updateVaultLogin(
+        uint256 index,
+        uint256 loginId,
+        string memory email,
+        string memory name,
+        string memory website,
+        string memory userName,
+        string memory password
+    ) public returns (bool success) {
+        requireOwner();
+        if (compareStrings(email, vaults[index].logins[loginId].owner)) {
+            vaults[index].logins[loginId].name = name;
+            vaults[index].logins[loginId].website = website;
+            vaults[index].logins[loginId].userName = userName;
+            vaults[index].logins[loginId].password = password;
+            return true;
+        }
+        return false;
+    }
 
-    // function getAllVaultLogins(
-    //     string memory _email,
-    //     uint256 index
-    // ) public view returns (string memory email, Login[] memory) {
-    //     User storage user = users[_email];
+    function removeVaultLogin(
+        string memory email,
+        uint256 index,
+        uint256 loginId
+    ) public returns (bool success) {
+        requireOwner();
+        if (compareStrings(email, vaults[index].logins[loginId].owner)) {
+            delete vaults[index].logins[loginId];
+            vaults[index].numLogins--;
 
-    //     email = user.email;
-    //     return (email, user.vaults[index].logins);
-    // }
-
-    // function updateVaultLogin(
-    //     uint256 vaultIndex,
-    //     uint256 loginIndex,
-    //     string memory email,
-    //     string memory name,
-    //     string memory website,
-    //     string memory userName,
-    //     string memory password
-    // ) public returns (bool success) {
-    //     requireOwner();
-
-    //     User storage user = users[email];
-
-    //     user.vaults[vaultIndex].logins[loginIndex].name = name;
-    //     user.vaults[vaultIndex].logins[loginIndex].website = website;
-    //     user.vaults[vaultIndex].logins[loginIndex].userName = userName;
-    //     user.vaults[vaultIndex].logins[loginIndex].password = password;
-    //     return true;
-    // }
-
-    // function removeUserLogin(
-    //     uint256 vaultIndex,
-    //     uint256 loginIndex,
-    //     string memory email
-    // ) public returns (bool success) {
-    //     requireOwner();
-    //     User storage user = users[email];
-
-    //     delete user.vaults[vaultIndex].logins[loginIndex];
-    //     user.vaults[vaultIndex].numLogins--;
-
-    //     return true;
-    // }
+            return true;
+        }
+        return false;
+    }
 
     function getOwner() public view returns (address ownerAddress) {
         return owner;
