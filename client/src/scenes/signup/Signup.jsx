@@ -61,7 +61,6 @@ const Signup = () => {
                 // Generate RSA Key Pair and Encrypt with Password
                 const { privExpB64, pubExpB64, keyPair } = await genRSAKeyPair()
                 const encPrivate = await encryptAES(privExpB64, password)
-                const encPublic = await encryptAES(pubExpB64, password)
 
                 // Generate Master Encryption Key and Encrypt with Password
                 const masterEncryptionKey = await generateMasterEncryptionKey(password)
@@ -73,13 +72,12 @@ const Signup = () => {
                 const form = {
                     'email': hashEmail,
                     'encPrivateKey': encPrivate,
-                    'encPublicKey': encPublic,
+                    'encPublicKey': pubExpB64,
                     'masterEncKey': encryptedMasterEncKey
                 }
                 dispatch(genKeys(form)).then(result => {
                     if (result) {
                         setKeyGenMode(false)
-
                     }
                 })
             }
@@ -190,7 +188,6 @@ const Signup = () => {
     }
 
     const renderAddData = () => {
-        //040738
         return (
             <motion.div className="container-div"
                 whileInView={{ opacity: [0, 1] }}

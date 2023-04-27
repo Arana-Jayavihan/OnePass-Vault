@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 contract DAPass {
     address private owner;
     string private contractHash;
+    uint256 private vaultCount = 0;
+    uint256 private loginCount = 0;
 
     struct User {
         string fName;
@@ -49,13 +51,11 @@ contract DAPass {
         string tHash;
     }
 
-    uint256 private numTxnHashes = 0;
-    uint256 private vaultCount = 0;
-    mapping(uint256 => TxnHash) private txnHashes;
-    mapping(string => Login) private vaultLogins;
+    mapping(uint256 => Vault) private vaults;
+    mapping(uint256 => Login) private vaultLogins;
     mapping(string => User) private users;
     mapping(string => VaultUser) private vaultUsers;
-    Vault[] private vaults;
+    
 
     //Constructor
     function InitiateContract(string memory contHash) public {
@@ -76,9 +76,32 @@ contract DAPass {
         if (bytes(str1).length != bytes(str2).length) {
             return false;
         }
-        return
-            keccak256(abi.encodePacked(str1)) ==
-            keccak256(abi.encodePacked(str2));
+        return keccak256(abi.encodePacked(str1)) == keccak256(abi.encodePacked(str2));
+    }
+
+    // Find Vault User
+    function findVaultUser(
+        string memory email,
+        uint256 vaultIndex
+    ) private view returns (bool success){
+        for(uint256 i = 0; i < vaults[vaultIndex].numUsers; i++ ){
+            if(compareStrings(email, vaults[vaultIndex].vaultUsers[i].email) == true){
+                return true;
+            }
+            else {
+                continue;
+            }
+        }
+        return false;
+    }
+
+    // Require object owner
+    function requireObjOwner(
+        string memory str1,
+        string memory str2
+    ) private pure {
+        require(bytes(str1).length == bytes(str2).length, "You are not the owner of the object");
+        require(keccak256(abi.encodePacked(str1)) == keccak256(abi.encodePacked(str2)), "You are not the owner of the object");
     }
 
     // User Functions
@@ -105,7 +128,8 @@ contract DAPass {
         string memory hashPassPhrase
     ) public returns (bool success) {
         requireOwner();
-
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
+        requireObjOwner(email, users[email].email);
         users[email].fName = fName;
         users[email].lName = lName;
         users[email].contact = contact;
@@ -119,7 +143,7 @@ contract DAPass {
         string memory txnHash
     ) public returns (bool success) {
         requireOwner();
-
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
         users[email].transactionHashes.push(txnHash);
         return true;
     }
@@ -127,24 +151,28 @@ contract DAPass {
     function getAllTxnHashes(
         string memory _email
     ) public view returns (string memory email, string[] memory) {
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
         return (users[_email].email, users[_email].transactionHashes);
     }
 
     function getPrivateKey(
         string memory email
     ) public view returns (string memory encPrivateKey) {
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
         return users[email].encPrivateKey;
     }
 
     function getPublicKey(
         string memory email
     ) public view returns (string memory publicKey) {
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
         return users[email].publicKey;
     }
 
     function getMasterEncKey(
         string memory email
     ) public view returns (string memory masterEncKey) {
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
         return users[email].masterEncKey;
     }
 
@@ -181,16 +209,7 @@ contract DAPass {
     }
 
     // Vault Functions
-    function getVault(uint256 index) public view returns (Vault memory) {
-        return vaults[index];
-    }
-
-    function getVaults() public view returns (Vault[] memory) {
-        return vaults;
-    }
-
     function createVault(
-        uint256 index,
         string memory email,
         string memory name,
         string memory note,
@@ -198,124 +217,150 @@ contract DAPass {
         string memory vaultKeyHash
     ) public returns (bool sucess) {
         requireOwner();
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
+        Vault storage tempVault = vaults[vaultCount];
 
-        vaults[index].index = index;
-        vaults[index].name = name;
-        vaults[index].note = note;
-        vaults[index].owner = email;
-        vaults[index].numLogins = 0;
-        vaults[index].vaultKeyHash = vaultKeyHash;
+        tempVault.index = vaultCount;
+        tempVault.name = name;
+        tempVault.note = note;
+        tempVault.owner = email;
+        tempVault.numLogins = 0;
+        tempVault.numUsers = 0;
+        tempVault.vaultKeyHash = vaultKeyHash;
 
-        VaultUser memory user;
+        VaultUser storage user = vaultUsers[email];
         user.email = email;
         user.isOwner = true;
         user.encVaultPass = encVaultKey;
-        user.index = vaults[index].numUsers;
+        user.index = tempVault.numUsers;
 
-        vaults[index].vaultUsers.push(user);
-        vaults[index].numUsers++;
+        tempVault.vaultUsers.push(user);
+        tempVault.numUsers++;
+        vaultCount++;
 
-        delete user;
+        delete vaultUsers[email];
         return true;
     }
 
+    function getVault(uint256 index) public view returns (Vault memory) {
+        return vaults[index];
+    }
+
+    function getUserVaults(
+        string memory email
+    ) public view returns(
+        Vault[] memory
+    ){
+        Vault[] memory userVaults = new Vault[](vaultCount);
+        uint256 counter = 0;
+        for(uint256 i = 0; i  < vaultCount; i++){
+            for(uint256 j = 0; j < vaults[i].numUsers; j++){
+                if(compareStrings(email, vaults[i].vaultUsers[j].email) == true){
+                    userVaults[counter] = vaults[i];
+                    counter++;
+                }
+            }
+        }
+        return userVaults;
+    }
+
     function updateVault(
+        uint256 vaultIndex,
         string memory userEmail,
-        uint256 index,
         string memory name,
         string memory note
     ) public returns (bool success) {
         requireOwner();
-        if (compareStrings(userEmail, vaults[index].owner)) {
-            vaults[index].name = name;
-            vaults[index].note = note;
-            return true;
-        }
-        return false;
+        require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
+        requireObjOwner(userEmail, vaults[vaultIndex].owner);
+        vaults[vaultIndex].name = name;
+        vaults[vaultIndex].note = note;
+        return true;
     }
 
     function addVaultUser(
-        uint256 index,
+        uint256 vaultIndex,
         string memory userEmail,
         string memory addUserEmail,
         string memory encVaultKey
     ) public returns (bool success) {
         requireOwner();
-        if (compareStrings(userEmail, vaults[index].owner)) {
-            VaultUser storage user = vaultUsers[addUserEmail];
-            user.email = addUserEmail;
-            user.isOwner = false;
-            user.encVaultPass = encVaultKey;
-            user.index =  vaults[index].numUsers;
+        require(compareStrings(users[addUserEmail].email, "") == false, "User Not Found");
+        requireObjOwner(userEmail, vaults[vaultIndex].owner);
+        
+        VaultUser storage user = vaultUsers[addUserEmail];
+        user.email = addUserEmail;
+        user.isOwner = false;
+        user.encVaultPass = encVaultKey;
+        user.index = vaults[vaultIndex].numUsers;
 
-            vaults[index].vaultUsers.push(user);
-            vaults[index].numUsers++;
-            return true;
-        } else {
-            return false;
-        }
+        vaults[vaultIndex].vaultUsers.push(user);
+        vaults[vaultIndex].numUsers++;
+        delete vaultUsers[addUserEmail];
+        return true;
     }
 
-    function removeUserVault(
+    function removeVaultUser(
         string memory email,
-        uint256 index,
+        uint256 vaultIndex,
         uint256 userIndex
-
-    ) public returns (bool success){
-        if (compareStrings(email, vaults[index].owner)){
-            delete vaults[index].vaultUsers[userIndex];
-        }
-        return false;
+    ) public returns (bool success) {
+        requireOwner();
+        requireObjOwner(email, vaults[vaultIndex].owner);
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
+        
+        delete vaults[vaultIndex].vaultUsers[userIndex];
+        return true;
     }
 
     function removeVault(
         string memory userEmail,
-        uint256 index
+        uint256 vaultIndex
     ) public returns (bool success) {
         requireOwner();
-        if (compareStrings(userEmail, vaults[index].owner)) {
-            delete vaults[index];
-            vaultCount--;
-            return true;
-        }
-        return false;
+        require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
+        requireObjOwner(userEmail, vaults[vaultIndex].owner);
+        delete vaults[vaultIndex];
+        return true;
     }
 
-    // Login Functions
+    // // Login Functions
     function addVaultLogin(
         string memory email,
         string memory name,
         string memory website,
         string memory userName,
         string memory password,
-        string memory loginId,
-        uint256 index
+        uint256 vaultIndex
     ) public returns (bool success) {
         requireOwner();
-        Login storage login = vaultLogins[loginId];
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(findVaultUser(email, vaultIndex) == true, "User not authorized");
+        Login storage login = vaultLogins[loginCount];
 
         login.owner = email;
         login.name = name;
         login.website = website;
         login.userName = userName;
         login.password = password;
-        login.index = index;
+        login.index = vaults[vaultIndex].numLogins;
 
-        vaults[index].logins.push(login);
-        vaults[index].numLogins++;
-        delete vaultLogins[loginId];
+        vaults[vaultIndex].logins.push(login);
+        vaults[vaultIndex].numLogins++;
+        loginCount++;
+        delete vaultLogins[loginCount];
         return true;
     }
 
     function getAllVaultLogins(
-        uint256 index
+        uint256 vaultIndex
     ) public view returns (Login[] memory) {
-        return vaults[index].logins;
+        return vaults[vaultIndex].logins;
     }
 
     function updateVaultLogin(
-        uint256 index,
-        uint256 loginId,
+        uint256 loginIndex,
+        uint256 vaultIndex,
         string memory email,
         string memory name,
         string memory website,
@@ -323,29 +368,26 @@ contract DAPass {
         string memory password
     ) public returns (bool success) {
         requireOwner();
-        if (compareStrings(email, vaults[index].logins[loginId].owner)) {
-            vaults[index].logins[loginId].name = name;
-            vaults[index].logins[loginId].website = website;
-            vaults[index].logins[loginId].userName = userName;
-            vaults[index].logins[loginId].password = password;
-            return true;
-        }
-        return false;
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
+        requireObjOwner(email, vaults[vaultIndex].logins[loginIndex].owner);
+
+        vaults[vaultIndex].logins[loginIndex].name = name;
+        vaults[vaultIndex].logins[loginIndex].website = website;
+        vaults[vaultIndex].logins[loginIndex].userName = userName;
+        vaults[vaultIndex].logins[loginIndex].password = password;
+        return true;
     }
 
     function removeVaultLogin(
         string memory email,
-        uint256 index,
-        uint256 loginId
+        uint256 vaultIndex,
+        uint256 loginIndex
     ) public returns (bool success) {
         requireOwner();
-        if (compareStrings(email, vaults[index].logins[loginId].owner)) {
-            delete vaults[index].logins[loginId];
-            vaults[index].numLogins--;
-
-            return true;
-        }
-        return false;
+        require(compareStrings(users[email].email, "") == false, "User Not Found");
+        requireObjOwner(email, vaults[vaultIndex].logins[loginIndex].owner);
+        delete vaults[vaultIndex].logins[loginIndex];
+        return true;
     }
 
     function getOwner() public view returns (address ownerAddress) {
