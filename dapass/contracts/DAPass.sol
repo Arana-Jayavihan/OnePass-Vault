@@ -14,15 +14,12 @@ contract DAPass {
         string encPrivateKey;
         string publicKey;
         string masterEncKey;
-        uint256 numVaults;
-        UserVault[] vaults;
         string[] transactionHashes;
     }
 
-    struct UserVault {
-        string id;
-        string ownership;
-        string encVaultKey;
+    struct VaultUser {
+        string email;
+        string encVaultPass;
     }
 
     struct Vault {
@@ -31,6 +28,7 @@ contract DAPass {
         string note;
         uint256 numLogins;
         string vaultKeyHash;
+        VaultUser[] vaultUsers;
         Login[] logins;
     }
 
@@ -172,20 +170,20 @@ contract DAPass {
     ) public returns (bool sucess) {
         requireOwner();
 
-        userVaults[id].id = id;
-        userVaults[id].ownership = 'owner';
-        userVaults[id].encVaultKey = encVaultKey;
-
         vaults[id].id = id;
         vaults[id].name = name;
         vaults[id].note = note;
         vaults[id].numLogins = 0;
         vaults[id].vaultKeyHash = vaultKeyHash;
 
-        users[email].vaults.push(userVaults[id]);
-        delete userVaults[id];
+        VaultUser memory user;
+        user.email = email;
+        user.encVaultPass = encVaultKey;
+        vaults[id].vaultUsers.push(user);
 
-        users[email].numVaults++;
+        users[email].vaults.push(userVaults[id]);
+        delete user
+
         return true;
     }
 
@@ -193,6 +191,10 @@ contract DAPass {
         string memory email
     ) public view returns (Vault[] memory) {
         requireOwner();
+        mapping(uint256 => Vault) tempVaults = vaults;
+        for(uint256 i = 0; i < vaults.vaultUsers.length; i++){
+            
+        }
         
         return();
     }

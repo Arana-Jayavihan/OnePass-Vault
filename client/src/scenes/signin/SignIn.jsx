@@ -52,9 +52,17 @@ const SignIn = () => {
                     'hashEmail': hashEmail,
                     'hashPass': passwordHash,
                 }
-                dispatch(login(form, password))
-                setEmail(undefined)
-                setPassword(undefined)
+                dispatch(login(form, password)).then(result => {
+                    if (result === false){
+                        setEmailVerified(false)
+                    }
+                })
+                setEmail('')
+                setPassword('')
+            }
+            else{
+                toast.error("Invalid Password...")
+                setPassword('')
             }
         }
     }
