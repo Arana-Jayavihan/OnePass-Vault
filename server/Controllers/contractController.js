@@ -7,7 +7,7 @@ let sdk = undefined
 let contract = undefined
 try {
     sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-    contract = await sdk.getContract("0xA1BA41aCBc2723a800c40d0E62D05591a176FaE6");
+    contract = await sdk.getContract("0x5EC299eE61622898a031c06B1440DaD07aE76594");
 } catch (error) {
     console.log(error)
 }
@@ -30,15 +30,6 @@ export const InitiateContract = async (req, res) => {
     }
 }
 
-export const addTransactionHash = async (email, txnHash) => {
-    try {
-        const result = await contract.call("addTxnHash", [email, txnHash])
-        console.log('Transaction added to user', result)
-    } catch (error) {
-        console.log(error)
-    }
-}
-
 // User Functions
 export const addUserKeys = async (user) => {
     try {
@@ -47,6 +38,7 @@ export const addUserKeys = async (user) => {
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
@@ -57,6 +49,7 @@ export const addUserData = async (user) => {
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
@@ -66,6 +59,7 @@ export const getUser = async (email) => {
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
@@ -75,6 +69,7 @@ export const getUserHashPass = async (email) => {
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
@@ -84,6 +79,7 @@ export const getPrivateKey = async (email) => {
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
@@ -93,15 +89,37 @@ export const getPublicKey = async (email) => {
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
-export const getMasterEncKEy = async (email) => {
+export const getMasterEncKey = async (email) => {
     try {
-        const result = await contract.call("getMasterEncKEy", [email])
+        const result = await contract.call("getMasterEncKey", [email])
         return result
     } catch (error) {
         console.log(error)
+        return false
+    }
+}
+
+export const addTransactionHash = async (email, txnHash) => {
+    try {
+        const result = await contract.call("addTxnHash", [email, txnHash])
+        console.log('Transaction added to user', result)
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
+export const getUserTransactionHash = async (email) => {
+    try {
+        const result = await contract.call("getAllTxnHashes", [email])
+        return result
+    } catch (error) {
+        console.log(error)
+        return false
     }
 }
 
@@ -112,95 +130,107 @@ export const removeUser = async (email) => {
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
 // Vault Functions
-export const createVault = async (vault) => {
+export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyHash) => {
     try {
-        const result = await contract.call("createVault", [vault.email, vault.name, vault.note, vault.vaultKeyHash])
-        addTransactionHash(vault.email, result.receipt.transactionHash)
+        const result = await contract.call("createVault", [email, vaultName, note, encVaultKey, vaultKeyHash])
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
-export const getVaults = async (email) => {
+export const updateVault = async (vaultIndex, ownerEmail, vaultName, note) => {
     try {
-        const result = await contract.call("getVaults", [email])
+        const result = await contract.call("updateVault", [vaultIndex, ownerEmail, vaultName, note])
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
-export const updateVault = async (vault) => {
+export const addVaultUser = async (vaultIndex, ownerEmail, addUserEmail, encVaultKey) => {
     try {
-        const result = await contract.call("updateVault", [vault.email, vault.index, vault.name, vault.note])
-        addTransactionHash(vault.email, result.receipt.transactionHash)
+        const result = await contract.call("addVaultUser", [vaultIndex, ownerEmail, addUserEmail, encVaultKey])
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
-export const addVaultKeyHash = async (vault) => {
+export const removeVaultUser = async (email, vaultIndex, userIndex) => {
     try {
-        const result = await contract.call("addVaultKeyHash", [vault.email, vault.vaultKeyHash, vault.index])
-        addTransactionHash(vault.email, result.receipt.transactionHash)
+        const result = await contract.call("removeVaultUser", [email, vaultIndex, userIndex])
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
-export const removeVault = async (vault) => {
+export const removeVault = async (ownerEmail, vaultIndex) => {
     try {
-        const result = await contract.call("removeVault", [vault.email, vault.index])
-        addTransactionHash(vault.email, result.receipt.transactionHash)
+        const result = await contract.call("removeVault", [ownerEmail, vaultIndex])
         return result
     } catch (error) {
         console.log(error)
+        return false
+    }
+}
+
+export const getUserVaults = async (email) => {
+    try {
+        const result = await contract.call("getUserVaults", [email])
+        return result
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
+export const getVault = async (vaultIndex) => {
+    try {
+        const result = await contract.call("getVault", [email])
+        return result
+    } catch (error) {
+        console.log(error)
+        return false
     }
 }
 
 // Login Functions
-export const addVaultLogin = async (login) => {
+export const addVaultLogin = async (email, loginName, url, userName, password, vaultIndex) => {
     try {
-        const result = await contract.call("addVaultLogin", [login.email, login.name, login.website, login.userName, login.password, login.vaultIndex])
-        addTransactionHash(login.email, result.receipt.transactionHash)
+        const result = await contract.call("addVaultLogin", [email, loginName, url, userName, password, vaultIndex])
         return result
-    } catch (error) {
-        console.log(error)
+    } catch (c) {
+        
     }
 }
 
-export const updateVaultLogin = async (login) => {
+export const updateVaultLogin = async (loginIndex, vaultIndex, ownerEmail, loginName, url, userName, password) => {
     try {
-        const result = await contract.call("updateVaultLogin", [login.vaultIndex, login.loginIndex, login.email, login.name, login.website, login.userName, login.password])
-        addTransactionHash(login.email, result.receipt.transactionHash)
+        const result = await contract.call("updateVaultLogin", [loginIndex, vaultIndex, ownerEmail, loginName, url, userName, password])
         return result
     } catch (error) {
         console.log(error)
+        return false
     }
 }
 
-export const getAllVaultLogins = async (login) => {
+export const removeVaultLogin = async (ownerEmail, vaultIndex, loginIndex) => {
     try {
-        const result = await contract.call("getAllVaultLogins", [login.vaultIndex, login.loginIndex, login.email])
+        const result = await contract.call("removeVaultLogin", [ownerEmail, vaultIndex, loginIndex])
         return result
     } catch (error) {
         console.log(error)
-    }
-}
-
-export const removeUserLogin = async (data) => {
-    try {
-        const result = await contract.call("removeUserLogin", [data.email, data.vaultIndex])
-        addTransactionHash(data.email, result.receipt.transactionHash)
-        return result
-    } catch (error) {
-        console.log(error)
+        return false
     }
 }

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { addUserData, addUserKeys, getMasterEncKEy, getPrivateKey, getUser, getUserHashPass } from './contractController.js';
+import { addUserData, addUserKeys, getMasterEncKey, getPrivateKey, getUser, getUserHashPass } from './contractController.js';
 
 const tokenlist = {}
 
@@ -17,6 +17,11 @@ export const userKeyGeneration = async (req, res) => {
                     message: 'User Key Generation Success'
                 })
             }
+            else if(result === false) {
+                res.status(500).json({
+                    message: 'Something went wrong...'
+                })
+            }
             else {
                 res.status(500).json({
                     message: 'User Key Generation Unsuccessful',
@@ -28,7 +33,7 @@ export const userKeyGeneration = async (req, res) => {
             // })
         }
         else {
-            res.status(404).json({
+            res.status(401).json({
                 message: 'User Already Registerd'
             })
         }
@@ -51,6 +56,16 @@ export const addData = async (req, res) => {
             if (result.receipt.confirmations != 0) {
                 res.status(201).json({
                     message: "User Data Added"
+                })
+            }
+            else if(result === "You are not the owner of the object") {
+                res.status(401).json({
+                    message: 'Unauthorized...'
+                })
+            }
+            else if(result === false) {
+                res.status(500).json({
+                    message: 'Something went wrong...'
                 })
             }
             else {
@@ -79,16 +94,23 @@ export const addData = async (req, res) => {
 export const signInRequest = async (req, res) => {
     try {
         const email = req.body.email
-        console.log(req.body)
         const chkUser = await getUser(email)
-        console.log(chkUser)
         if (chkUser[0] === email) {
             const hashPass = await getUserHashPass(email)
-            console.log(hashPass)
             if (hashPass) {
                 res.status(200).json({
                     message: "User Hash Fetch Success",
                     payload: hashPass
+                })
+            }
+            else if(hashPass === "User Not Found") {
+                res.status(500).json({
+                    message: 'User Not Found...'
+                })
+            }
+            else if(result === false) {
+                res.status(500).json({
+                    message: 'Something went wrong...'
                 })
             }
         }
@@ -109,7 +131,6 @@ export const signInRequest = async (req, res) => {
 export const signIn = async (req, res) => {
     try {
         const user = req.body
-        console.log(req.body)
         const userResult = await getUser(user.hashEmail)
         if (userResult[0] !== user.hashEmail) {
             res.status(404).json({
@@ -121,7 +142,7 @@ export const signIn = async (req, res) => {
 
             if (hashPass === user.hashPass) {
                 const encPrivate = await getPrivateKey(user.hashEmail)
-                const encMasterKey = await getMasterEncKEy(user.hashEmail)
+                const encMasterKey = await getMasterEncKey(user.hashEmail)
                 const token = jwt.sign({ email: user.hashEmail }, process.env.JWT_SECRET, { expiresIn: '1h' })
                 const refreshToken = jwt.sign({ email: user.hashEmail }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
 
@@ -143,9 +164,10 @@ export const signIn = async (req, res) => {
                     token: token,
                     refreshToken: refreshToken
                 })
+                console.log(user)
             }
             else {
-                res.status(402).json({
+                res.status(401).json({
                     message: 'Authentication Failed'
                 })
             }

@@ -17,6 +17,14 @@ contract DAPass {
         string publicKey;
         string masterEncKey;
         string[] transactionHashes;
+        uint256 numVaults;
+        AssignedVault[] assignedVaults;
+    }
+
+    struct AssignedVault {
+        uint256 vaultIndex;
+        string vaultName;
+        string note;
     }
 
     struct VaultUser {
@@ -53,9 +61,9 @@ contract DAPass {
 
     mapping(uint256 => Vault) private vaults;
     mapping(uint256 => Login) private vaultLogins;
+    mapping (string => AssignedVault) private assignedVaults;
     mapping(string => User) private users;
     mapping(string => VaultUser) private vaultUsers;
-    
 
     //Constructor
     function InitiateContract(string memory contHash) public {
@@ -151,7 +159,7 @@ contract DAPass {
     function getAllTxnHashes(
         string memory _email
     ) public view returns (string memory email, string[] memory) {
-        require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(compareStrings(users[_email].email, "") == false, "User Not Found");
         return (users[_email].email, users[_email].transactionHashes);
     }
 
@@ -185,14 +193,16 @@ contract DAPass {
             string memory email,
             string memory fName,
             string memory lName,
-            string memory contact
+            string memory contact,
+            AssignedVault[] memory
         )
     {
         return (
             users[_email].email,
             users[_email].fName,
             users[_email].lName,
-            users[_email].contact
+            users[_email].contact,
+            users[_email].assignedVaults
         );
     }
 
@@ -218,6 +228,7 @@ contract DAPass {
     ) public returns (bool sucess) {
         requireOwner();
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+        User storage tempUser = users[email];
         Vault storage tempVault = vaults[vaultCount];
 
         tempVault.index = vaultCount;
@@ -234,16 +245,33 @@ contract DAPass {
         user.encVaultPass = encVaultKey;
         user.index = tempVault.numUsers;
 
+        AssignedVault storage asVault = assignedVaults[vaultKeyHash];
+        asVault.vaultName = name;
+        asVault.vaultIndex = tempUser.numVaults;
+        asVault.note = note;
+
+        tempUser.assignedVaults.push(asVault);
+        tempUser.numVaults++;
+
         tempVault.vaultUsers.push(user);
         tempVault.numUsers++;
         vaultCount++;
 
+        delete assignedVaults[vaultKeyHash];
         delete vaultUsers[email];
         return true;
     }
 
     function getVault(uint256 index) public view returns (Vault memory) {
         return vaults[index];
+    }
+
+    function getVaultKeyHash(uint256 vaultIndex) public view returns(string memory vaultKeyHash){
+        return vaults[vaultIndex].vaultKeyHash;
+    }
+
+    function getAssignVaults(string memory email) public view returns(AssignedVault[] memory){
+        return users[email].assignedVaults;
     }
 
     function getUserVaults(
@@ -287,6 +315,14 @@ contract DAPass {
         requireOwner();
         require(compareStrings(users[addUserEmail].email, "") == false, "User Not Found");
         requireObjOwner(userEmail, vaults[vaultIndex].owner);
+        User storage tempUser = users[addUserEmail];
+
+        AssignedVault storage tempVault = assignedVaults[encVaultKey];
+        tempVault.vaultIndex = tempUser.numVaults;
+        tempVault.vaultName = vaults[vaultIndex].name;
+        tempVault.note = vaults[vaultIndex].note;
+
+        tempUser.assignedVaults.push(tempVault);
         
         VaultUser storage user = vaultUsers[addUserEmail];
         user.email = addUserEmail;
@@ -297,6 +333,7 @@ contract DAPass {
         vaults[vaultIndex].vaultUsers.push(user);
         vaults[vaultIndex].numUsers++;
         delete vaultUsers[addUserEmail];
+        delete assignedVaults[encVaultKey];
         return true;
     }
 
@@ -308,7 +345,25 @@ contract DAPass {
         requireOwner();
         requireObjOwner(email, vaults[vaultIndex].owner);
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+
+        Vault storage tempVault = vaults[vaultIndex];
+        User storage tempUser = users[email];
         
+        for(uint256 i = 0; i < tempUser.numVaults; i++){
+            if(compareStrings(tempUser.assignedVaults[i].vaultName, tempVault.name) == true){
+                tempUser.assignedVaults[i].vaultName = '';
+                tempUser.assignedVaults[i].note = '';
+                break;
+            }
+        }
+        
+        for(uint256 i = 0; i < tempVault.numUsers; i++){
+            if(compareStrings(tempVault.vaultUsers[i].email, vaults[vaultIndex].vaultUsers[userIndex].email) == true){
+                tempVault.vaultUsers[i].isOwner = false;
+                tempVault.vaultUsers[i].encVaultPass = "";
+                tempVault.vaultUsers[i].email = "";
+            }
+        }
         delete vaults[vaultIndex].vaultUsers[userIndex];
         return true;
     }

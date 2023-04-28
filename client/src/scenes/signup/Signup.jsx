@@ -55,7 +55,7 @@ const Signup = () => {
     const theme = useTheme()
     const navigate = useNavigate()
 
-    const generateKeys = async () => {
+    const generateKeys = async (e) => {
         try {
             if (password === confirmPassword) {
                 // Generate RSA Key Pair and Encrypt with Password
@@ -75,6 +75,7 @@ const Signup = () => {
                     'encPublicKey': pubExpB64,
                     'masterEncKey': encryptedMasterEncKey
                 }
+                console.log(form)
                 dispatch(genKeys(form)).then(result => {
                     if (result) {
                         setKeyGenMode(false)
@@ -88,7 +89,7 @@ const Signup = () => {
             console.log(error)
         }
     }
-    const userSignup = async () => {
+    const userSignup = async (e) => {
         if (password === confirmPassword) {
             const encFirstName = await encryptAES(firstName, masterEncKey)
             const encLastName = await encryptAES(lastName, masterEncKey)
@@ -140,7 +141,6 @@ const Signup = () => {
                     <p className="subtitle">
                         Please enter your email and password
                     </p>
-                    <form onSubmit={generateKeys}>
                         <div className="inputs_container">
                             <input
                                 placeholder="example@mail.com"
@@ -174,8 +174,6 @@ const Signup = () => {
                                 Generate Keys
                             </motion.button>
                         </div>
-
-                    </form>
                     <div className="link_container1">
                         <p onClick={() => navigate("/")} className="small">
                             Go to Signin
@@ -199,7 +197,6 @@ const Signup = () => {
                     <p className="subtitle">
                         Please fill account details
                     </p>
-                    <form onSubmit={userSignup}>
                         <div className="inputs_container">
                             <div className="inputs_container1">
                                 <input
@@ -230,7 +227,6 @@ const Signup = () => {
                                 Sign Up
                             </motion.button>
                         </div>
-                    </form>
                     <div className="link_container1">
                         <p onClick={() => navigate("/")} className="small">
                             Go to Signin
