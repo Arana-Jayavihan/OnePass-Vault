@@ -13,10 +13,61 @@ import { Input } from 'components/input/input'
 import { Col, Container, Row, Table } from 'react-bootstrap'
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
+import { initVaultsParser } from 'parsers';
+import Vault from 'components/Vault/Vault';
+import { getUserAssignedVaults } from 'actions/vaultActions';
 
 const Vaults = () => {
+    const vaults = useSelector(state => state.vault.vaults)
+    const loading = useSelector(state => state.vault.loading)
+    const email = useSelector(state => state.auth.user.email)
+    const form = {
+        'email': email
+    }
+    const vaultArr = initVaultsParser(vaults)
     const theme = useTheme()
     const dispatch = useDispatch()
+
+    useEffect(() => {
+        dispatch(getUserAssignedVaults(form))
+    }, []);
+
+    // Vault Grid
+    const renderVaultGrid = () => {
+        return (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
+                {
+                    vaults && vaultArr.length > 0 ?
+                        vaultArr.map((vault, index) => (
+                            <div>
+                                <Vault key={index} >
+                                    <div style={{ display: 'flex', flexDirection: 'column', margin: '1rem', alignSelf: 'center' }} >
+                                        <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'left', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
+                                            {vault.vaultName}
+                                        </Typography>
+                                        <p className="subtitle">
+                                            {vault.desctiption}
+                                        </p>
+                                    </div>
+                                    <motion.button
+                                        className='form-control' style={{ alignSelf: 'center', padding: '.5rem 2rem', width: 'fit-content', height: 'fit-content', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                        whileHover={{ scale: [1, 1.1] }}
+                                    >
+                                        Unlock
+                                    </motion.button>
+                                </Vault>
+
+                            </div>
+                        )) :
+                        <div style={{ height: '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: theme.palette.secondary[400] }} >
+                                No Vaults
+                            </Typography>
+                        </div>
+                }
+            </div>
+        )
+    }
 
     // Add Vault
     const [showAddModal, setShowAddModal] = useState(false);
@@ -72,7 +123,7 @@ const Vaults = () => {
             whileInView={{ opacity: [0, 1] }}
             transition={{ duration: .75, ease: 'easeInOut' }}
             initial={{ opacity: 0 }}
-
+            style={{marginTop: '5rem', marginBottom: '2rem', paddingBottom: '2rem'}}
         >
             <Container>
                 <Row>
@@ -92,10 +143,10 @@ const Vaults = () => {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                             <div style={{ display: 'flex', height: '2rem', alignItems: 'center' }}>
-                                <IconButton >
+                                <IconButton onClick={() => dispatch(getUserAssignedVaults(form))} >
                                     <MdRefresh />
                                 </IconButton>
-                                <Typography style={{ cursor: 'pointer' }} >Refresh</Typography>
+                                <Typography style={{ cursor: 'pointer' }} onClick={() => dispatch(getUserAssignedVaults(form))}>Refresh</Typography>
                             </div>
                             <FlexBetween
                                 backgroundColor={theme.palette.background.alt}
@@ -115,7 +166,7 @@ const Vaults = () => {
                     </Col>
                 </Row>
                 <Row>
-                    {/* <Col>
+                    <Col>
                         {
                             loading ?
                                 <div style={{ height: '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -131,23 +182,9 @@ const Vaults = () => {
                                     />
                                 </div>
                                 :
-                                loginArray.length ?
-                                    <motion.div
-                                        whileInView={{ opacity: [0, 1] }}
-                                        transition={{ duration: .75, ease: 'easeInOut' }}
-                                        initial={{ opacity: 0 }}
-                                    >
-                                        {renderLoginsTable()}
-                                    </motion.div>
-
-                                    :
-                                    <div style={{ height: '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: theme.palette.secondary[400] }} >
-                                            No Logins
-                                        </Typography>
-                                    </div>
+                                renderVaultGrid()
                         }
-                    </Col> */}
+                    </Col>
                 </Row>
             </Container>
             {renderAddNewVault()}

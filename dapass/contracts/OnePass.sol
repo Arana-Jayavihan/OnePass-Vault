@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-contract DAPass {
+contract OnePass {
     address private owner;
     string private contractHash;
     uint256 private vaultCount = 0;

@@ -158,6 +158,7 @@ export const signIn = async (req, res) => {
                         firstName: userResult[1],
                         lastName: userResult[2],
                         contact: userResult[3],
+                        vaults: userResult[4],
                         masterKey: encMasterKey,
                         privateKey: encPrivate
                     },

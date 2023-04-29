@@ -5,10 +5,12 @@ import Card from "components/Card/Card";
 import {
     Typography,
     useTheme,
+    IconButton
 } from "@mui/material";
 import { toast } from "react-hot-toast";
 import './signin.css'
 import { passResetRequest, login, signInReq } from "actions/authActions";
+import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
 import { motion } from 'framer-motion'
 import CryptoJS from "crypto-js";
 
@@ -53,14 +55,14 @@ const SignIn = () => {
                     'hashPass': passwordHash,
                 }
                 dispatch(login(form, password)).then(result => {
-                    if (result === false){
+                    if (result === false) {
                         setEmailVerified(false)
                     }
                 })
                 setEmail('')
                 setPassword('')
             }
-            else{
+            else {
                 toast.error("Invalid Password...")
                 setPassword('')
             }
@@ -81,9 +83,21 @@ const SignIn = () => {
             setEmail('')
         }
     }
+    const [showPassword, setShowPassword] = useState(false);
+    const [passType, setPassType] = useState('password');
+    const showPasswords = () => {
+        if (passType === 'password') {
+            setPassType('text')
+            setShowPassword(true)
+        }
+        else {
+            setPassType('password')
+            setShowPassword(false)
+        }
+    }
 
     if (authenticated) {
-        return <Navigate to='/dashboard' />
+        return <Navigate to='/vaults' />
     }
 
     const renderSignin = () => {
@@ -98,18 +112,26 @@ const SignIn = () => {
                         >
                             <div className="overlay">
                                 <Card>
-                                    <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'center', margin: '3rem', marginBottom: '1.5rem', marginTop: 0, color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >DAPass Vault</Typography>
+                                    <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'center', margin: '3rem', marginBottom: '1.5rem', marginTop: 0, color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >OnePass Vault</Typography>
                                     <p className="subtitle">
                                         Please enter your password
                                     </p>
-                                    <div className="inputs_container">
+                                    <div className="inputs_container1">
                                         <input
-                                            type="password"
+                                            type={passType}
                                             placeholder="Password"
                                             value={password}
                                             autoFocus
                                             onChange={(e) => setPassword(e.target.value)}
                                         />
+                                        <IconButton sx={{ width: 'fit-content', height: 'fit-content' }} onClick={() => showPasswords()} >
+                                            {
+                                                showPassword ?
+                                                    <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                                                    :
+                                                    <AiFillEyeInvisible style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                                            }
+                                        </IconButton>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
                                         <motion.button
@@ -139,7 +161,7 @@ const SignIn = () => {
                         >
                             <div className="overlay">
                                 <Card>
-                                    <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'center', margin: '3rem', marginBottom: '1.5rem', marginTop: 0, color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >DAPass Vault</Typography>
+                                    <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'center', margin: '3rem', marginBottom: '1.5rem', marginTop: 0, color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >OnePass Vault</Typography>
                                     <p className="subtitle">
                                         Please enter your email to continue
                                     </p>
@@ -162,7 +184,6 @@ const SignIn = () => {
                                             Verify
                                         </motion.button>
                                     </div>
-
                                     <div className="link_container1">
                                         <p onClick={() => navigate("/signup")} className="small">
                                             Create an Account

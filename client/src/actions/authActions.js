@@ -103,15 +103,8 @@ export const login = (form, password) => {
                 'firstName': firstName,
                 'lastName':lastName,
                 'email':user.email,
-                'contact': contact
-            }
-
-            const decUserState = {
-                'firstName': firstName,
-                'lastName':lastName,
-                'email':user.email,
                 'contact': contact,
-                'masterKey': masterKey
+                'vaults': user.vaults
             }
     
             toast.success(`Login Success, Welcome ${decUser.firstName}`, {
@@ -136,7 +129,7 @@ export const login = (form, password) => {
             dispatch({
                 type: authConsts.LOGIN_SUCCESS,
                 payload: {
-                    'user':decUserState,
+                    'user': decUser,
                     token
                 }
             })
@@ -161,7 +154,7 @@ export const isLoggedIn = () => {
                     type: authConsts.LOGIN_SUCCESS,
                     payload: {
                         token,
-                        'user':user
+                        'user': user
                     }
                 })
             }

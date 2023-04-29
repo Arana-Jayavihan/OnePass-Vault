@@ -117,7 +117,7 @@ const Sidebar = (props) => {
                             <FlexBetween color={theme.palette.secondary[400]} sx={{ justifyContent: 'center' }} >
                                 <Box display="flex" alignItems="center" gap="0.5rem" >
                                     <Typography variant="h3"  fontWeight="bold" sx={{ textAlign: 'center', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%' , backgroundClip: 'text', backgroundRepeat: 'repeat', color: 'transparent' }} >
-                                        DAPass Vault
+                                        OnePass Vault
                                     </Typography>
                                 </Box>
                                 {!props.isNonMobile && (

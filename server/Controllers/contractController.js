@@ -7,7 +7,7 @@ let sdk = undefined
 let contract = undefined
 try {
     sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-    contract = await sdk.getContract("0x5EC299eE61622898a031c06B1440DaD07aE76594");
+    contract = await sdk.getContract("0xc6Ce79770bb8f607A31EE20Fb2006C41E248f07c");
 } catch (error) {
     console.log(error)
 }
@@ -56,6 +56,16 @@ export const addUserData = async (user) => {
 export const getUser = async (email) => {
     try {
         const result = await contract.call("getUserData", [email])
+        return result
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
+export const getAssignVaults = async (email) => {
+    try {
+        const result = await contract.call("getAssignVaults", [email])
         return result
     } catch (error) {
         console.log(error)

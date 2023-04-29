@@ -1,0 +1,24 @@
+.card2 {
+  display: flex;
+  background-color: #0d1136;
+  height: 200px;
+  border-radius: 15px;
+}
+
+@media screen and (max-width: 620px) {
+  .card2 {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media screen and (max-height: 670px) {
+  .card2 {
+    height: 200px;
+  }
+}
+
+.subtitle {
+  color: rgb(218, 218, 218);
+  text-align: left;
+}

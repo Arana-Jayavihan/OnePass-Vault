@@ -90,53 +90,53 @@ app.use((req, res, next) => {
 });
 
 // SANITIZE REQUEST
-// app.use(middleware)
-// app.use((req, res, next) => {
-//     try {
-//         const body = req.body
-//         const headers = req.headers
-//         const params = req.params
-//         const query = req.query
+app.use(middleware)
+app.use((req, res, next) => {
+    try {
+        // const body = req.body
+        const headers = req.headers
+        const params = req.params
+        const query = req.query
 
-//         if (Object.keys(body).length > 0 && body.constructor === Object) {
-//             let sanitizedBody = {}
-//             for (let key in body) {
-//                 const value = vd.escape(req.bodyString(`${key}`))
-//                 sanitizedBody[`${key}`] = value
-//             }
-//             sanitizedBody['sanitized'] = true
-//             req.body = sanitizedBody
-//         }
-//         if (Object.keys(headers).length > 0 && headers.constructor === Object) {
-//             let sanitizedHeaders = {}
-//             for (let key in headers) {
-//                 const value = req.headerString(`${key}`)
-//                 sanitizedHeaders[`${key}`] = value
-//             }
-//             req.headers = sanitizedHeaders
-//         }
-//         if (Object.keys(params).length > 0 && params.constructor === Object) {
-//             let sanitizedParams = {}
-//             for (let key in params) {
-//                 const value = vd.escape(req.paramString(`${key}`))
-//                 sanitizedParams[`${key}`] = value
-//             }
-//             req.params = sanitizedParams
-//         }
-//         if (Object.keys(query).length > 0 && query.constructor === Object) {
-//             let sanitizedQueries = {}
-//             for (let key in query) {
-//                 const value = vd.escape(req.queryString(`${key}`))
-//                 sanitizedQueries[`${key}`] = value
-//             }
-//             req.query = sanitizedQueries
-//         }
-//         next()
-//     }
-//     catch (error) {
-//         console.log(error)
-//     }
-// })
+        // if (Object.keys(body).length > 0 && body.constructor === Object) {
+        //     let sanitizedBody = {}
+        //     for (let key in body) {
+        //         const value = vd.escape(req.bodyString(`${key}`))
+        //         sanitizedBody[`${key}`] = value
+        //     }
+        //     sanitizedBody['sanitized'] = true
+        //     req.body = sanitizedBody
+        // }
+        if (Object.keys(headers).length > 0 && headers.constructor === Object) {
+            let sanitizedHeaders = {}
+            for (let key in headers) {
+                const value = req.headerString(`${key}`)
+                sanitizedHeaders[`${key}`] = value
+            }
+            req.headers = sanitizedHeaders
+        }
+        if (Object.keys(params).length > 0 && params.constructor === Object) {
+            let sanitizedParams = {}
+            for (let key in params) {
+                const value = vd.escape(req.paramString(`${key}`))
+                sanitizedParams[`${key}`] = value
+            }
+            req.params = sanitizedParams
+        }
+        if (Object.keys(query).length > 0 && query.constructor === Object) {
+            let sanitizedQueries = {}
+            for (let key in query) {
+                const value = vd.escape(req.queryString(`${key}`))
+                sanitizedQueries[`${key}`] = value
+            }
+            req.query = sanitizedQueries
+        }
+        next()
+    }
+    catch (error) {
+        console.log(error)
+    }
+})
 
 // ROUTES
 app.use("/api", authRoutes)
@@ -148,7 +148,7 @@ app.get('/', (req, res) => {
         `
         <html lang="en">
             <head>
-                <title>DAPass Server</title>
+                <title>OnePass Server</title>
 
                 <meta charset="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -157,7 +157,7 @@ app.get('/', (req, res) => {
             </head>
             <body>
                 <div>
-                    <h1>DAPass Server SAYS HELLOOOO</h1>
+                    <h1>OnePass Server SAYS HELLOOOO</h1>
                 </div>
             </body>
         </html>

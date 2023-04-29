@@ -26,7 +26,8 @@ const Navbar = (props) => {
     const menuOnClick = () => dispatch(signout())
     return (
         <AppBar sx={{
-            position: 'static',
+            top: 0,
+            position: 'fixed',
             background: 'none',
             boxShadow: 'none',
             backgroundImage: "linear-gradient(to right, #cc00ee , #6d4aff)"
