@@ -1,9 +1,34 @@
 .card2 {
   display: flex;
   background-color: #0d1136;
+  justify-content: space-between;
   height: 200px;
   border-radius: 15px;
 }
+
+.padlockOverlay {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background-image: url("../../assets/padlock.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.padlockOverlay::before {
+  background-color: rgba(0,0,0,.25);
+}
+
+/* .padlockOverlay::before {
+  
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  left: 0px;
+  opacity: 0.75;
+} */
 
 @media screen and (max-width: 620px) {
   .card2 {

@@ -15,12 +15,14 @@ import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import { initVaultsParser } from 'parsers';
 import Vault from 'components/Vault/Vault';
-import { getUserAssignedVaults } from 'actions/vaultActions';
+import { addUserVault, getUserAssignedVaults } from 'actions/vaultActions';
+import "../../components/Vault/vault.css"
 
 const Vaults = () => {
     const vaults = useSelector(state => state.vault.vaults)
     const loading = useSelector(state => state.vault.loading)
     const email = useSelector(state => state.auth.user.email)
+    const publicKey = useSelector(state => state.auth.user.pubKey)
     const form = {
         'email': email
     }
@@ -49,12 +51,15 @@ const Vaults = () => {
                                             {vault.desctiption}
                                         </p>
                                     </div>
+                                    <div className='padlockOverlay'>
                                     <motion.button
-                                        className='form-control' style={{ alignSelf: 'center', padding: '.5rem 2rem', width: 'fit-content', height: 'fit-content', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                        className='form-control' style={{ alignSelf: 'center', padding: '.5rem 2rem', width: 'fit-content', height: 'fit-content', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff', opacity: '1' }}
                                         whileHover={{ scale: [1, 1.1] }}
                                     >
                                         Unlock
                                     </motion.button>
+                                    </div>
+                                    
                                 </Vault>
 
                             </div>
@@ -81,7 +86,16 @@ const Vaults = () => {
     }
 
     const addVault = () => {
-
+        const form = {
+            email: email,
+            vName: vaultName,
+            vDesc: vaultDescription,
+            publicKey: publicKey
+        }
+        dispatch(addUserVault(form))
+        setShowAddModal(false)
+        setVaultDescription(undefined)
+        setVaultName(undefined)
     }
 
     const renderAddNewVault = () => {
@@ -92,7 +106,7 @@ const Vaults = () => {
                 handleClose={addVault}
                 ModalTitle="Create New Vault">
                 <Row>
-                    <Col md={6}>
+                    <Col md={12}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
                                 label="Vault Name"
@@ -102,7 +116,7 @@ const Vaults = () => {
                             />
                         </Typography>
                     </Col>
-                    <Col md={6}>
+                    <Col md={12}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
                                 label="Description"

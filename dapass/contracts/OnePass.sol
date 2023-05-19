@@ -375,6 +375,8 @@ contract OnePass {
         requireOwner();
         require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
         requireObjOwner(userEmail, vaults[vaultIndex].owner);
+        User storage assigUsers = vaults[vaultIndex].vaultUsers;
+
         delete vaults[vaultIndex];
         return true;
     }

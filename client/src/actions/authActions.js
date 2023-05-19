@@ -92,7 +92,6 @@ export const login = (form, password) => {
 
             const decPrivate = (await decryptAES(user.privateKey, password)).toString(CryptoJS.enc.Utf8)
             const importedPrivKey = await importRSAPrivKey(decPrivate)
-            console.log(importedPrivKey)
 
             const masterKey = await decryptRSA(user.masterKey, importedPrivKey)
             const firstName = (await decryptAES(user.firstName, masterKey)).toString(CryptoJS.enc.Utf8)
@@ -104,7 +103,7 @@ export const login = (form, password) => {
                 'lastName':lastName,
                 'email':user.email,
                 'contact': contact,
-                'vaults': user.vaults
+                'pubKey': user.publicKey
             }
     
             toast.success(`Login Success, Welcome ${decUser.firstName}`, {

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { addUserData, addUserKeys, getMasterEncKey, getPrivateKey, getUser, getUserHashPass } from './contractController.js';
+import { addUserData, addUserKeys, getMasterEncKey, getPrivateKey, getPublicKey, getUser, getUserHashPass } from './contractController.js';
 
 const tokenlist = {}
 
@@ -143,6 +143,7 @@ export const signIn = async (req, res) => {
             if (hashPass === user.hashPass) {
                 const encPrivate = await getPrivateKey(user.hashEmail)
                 const encMasterKey = await getMasterEncKey(user.hashEmail)
+                const publicKey = await getPublicKey(user.hashEmail)
                 const token = jwt.sign({ email: user.hashEmail }, process.env.JWT_SECRET, { expiresIn: '1h' })
                 const refreshToken = jwt.sign({ email: user.hashEmail }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
 
@@ -151,6 +152,7 @@ export const signIn = async (req, res) => {
                     token
                 }
                 console.log(tokenlist, "New Signin")
+                console.log(userResult)
                 res.status(200).json({
                     message: "Authentication successful",
                     user: {
@@ -158,9 +160,9 @@ export const signIn = async (req, res) => {
                         firstName: userResult[1],
                         lastName: userResult[2],
                         contact: userResult[3],
-                        vaults: userResult[4],
                         masterKey: encMasterKey,
-                        privateKey: encPrivate
+                        privateKey: encPrivate,
+                        publicKey: publicKey
                     },
                     token: token,
                     refreshToken: refreshToken
