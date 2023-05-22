@@ -1,13 +1,16 @@
+import { assignVaultParser } from "../Parsers/parsers.js"
 import { createVault, getAssignVaults } from "./contractController.js"
 
 export const addVault = async (req, res) => {
     try {
         const vault = req.body
-        console.log(vault)
-        const result = createVault(vault.email, vault.vName, vault.vDesc, vault.encVaultKey, vault.vaultKeyHash)
+        const result = await createVault(vault.email, vault.vName, vault.vDesc, vault.encVaultKey, vault.vaultKeyHash)
+        const vaults = await getAssignVaults(vault.email)
+        const validVaults = assignVaultParser(vaults)
         if (result !== false){
             res.status(201).json({
-                message: "Vault Added Successfully"
+                message: "Vault Added Successfully",
+                payload: validVaults
             })
         }
         else {
@@ -28,11 +31,11 @@ export const getUserAssignedVaults = async (req, res) => {
     try {
         const email = req.body.email
         const result = await getAssignVaults(email)
-        console.log(result)
+        const validVaults = assignVaultParser(result)
         if(result) {
             res.status(200).json({
                 message: "User vault data fetched",
-                payload: result
+                payload: validVaults
             })
         }
         else if(result === false){

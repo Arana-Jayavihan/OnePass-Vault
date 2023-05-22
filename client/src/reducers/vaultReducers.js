@@ -1,6 +1,9 @@
 import { vaultConsts } from "actions/constants"
 
 const initState = {
+    creating: false,
+    updatung: false,
+    deleteing: false,
     loading: false,
     vaults: []
 }
@@ -24,6 +27,25 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 loading: false
+            }
+            break
+        case vaultConsts.ADD_USER_VAULT_REQUEST:
+            state = {
+                ...state,
+                creating: true
+            }
+            break
+        case vaultConsts.ADD_USER_VAULT_SUCCESS:
+            state = {
+                ...state,
+                creating: false,
+                vaults: action.payload
+            }
+            break
+        case vaultConsts.ADD_USER_VAULT_FAILED:
+            state = {
+                ...state,
+                creating: false
             }
             break
     }

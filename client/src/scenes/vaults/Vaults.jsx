@@ -13,20 +13,66 @@ import { Input } from 'components/input/input'
 import { Col, Container, Row, Table } from 'react-bootstrap'
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
-import { initVaultsParser } from 'parsers';
 import Vault from 'components/Vault/Vault';
 import { addUserVault, getUserAssignedVaults } from 'actions/vaultActions';
 import "../../components/Vault/vault.css"
 
 const Vaults = () => {
-    const vaults = useSelector(state => state.vault.vaults)
+    const vaultArr = useSelector(state => state.vault.vaults)
     const loading = useSelector(state => state.vault.loading)
+    const creating = useSelector(state => state.vault.creating)
+    const deleting = useSelector(state => state.vault.deleting)
+    const updating = useSelector(state => state.vault.updating)
     const email = useSelector(state => state.auth.user.email)
     const publicKey = useSelector(state => state.auth.user.pubKey)
+    useEffect(() => {
+        if (creating === true) {
+            toast.loading('Creating...', {
+                id: 'Creating'
+            })
+        }
+        else if (creating === false) {
+            toast.dismiss('Creating')
+        }
+
+    }, [creating]);
+    useEffect(() => {
+        if (deleting === true) {
+            toast.loading('Removing...', {
+                id: 'Removing'
+            })
+        }
+        else if (deleting === false) {
+            toast.dismiss('Removing')
+        }
+
+    }, [deleting]);
+    useEffect(() => {
+        if (loading === true) {
+            toast.loading('Loading...', {
+                id: 'Loading'
+            })
+        }
+        else if (loading === false) {
+            toast.dismiss('Loading')
+        }
+
+    }, [loading]);
+    useEffect(() => {
+        if (updating === true) {
+            toast.loading('Updating...', {
+                id: 'Updating'
+            })
+        }
+        else if (updating === false) {
+            toast.dismiss('Updating')
+        }
+
+    }, [updating]);
+
     const form = {
         'email': email
     }
-    const vaultArr = initVaultsParser(vaults)
     const theme = useTheme()
     const dispatch = useDispatch()
 
@@ -39,8 +85,9 @@ const Vaults = () => {
         return (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
                 {
-                    vaults && vaultArr.length > 0 ?
+                    vaultArr && vaultArr.length > 0 ?
                         vaultArr.map((vault, index) => (
+                            vault.vaultName !== '' ?
                             <div>
                                 <Vault key={index} >
                                     <div style={{ display: 'flex', flexDirection: 'column', margin: '1rem', alignSelf: 'center' }} >
@@ -63,6 +110,8 @@ const Vaults = () => {
                                 </Vault>
 
                             </div>
+                            :
+                            null
                         )) :
                         <div style={{ height: '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: theme.palette.secondary[400] }} >

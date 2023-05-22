@@ -375,7 +375,20 @@ contract OnePass {
         requireOwner();
         require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
         requireObjOwner(userEmail, vaults[vaultIndex].owner);
-        User storage assigUsers = vaults[vaultIndex].vaultUsers;
+        Vault storage tempVault = vaults[vaultIndex];
+        for(uint256 i = 0; i < tempVault.numUsers; i++){
+            if(compareStrings(tempVault.vaultUsers[i].email, "") == false){
+                User storage tempUser = users[tempVault.vaultUsers[i].email];
+                for(uint256 j = 0; j < tempUser.numVaults; j++){
+                    if(compareStrings(tempUser.assignedVaults[j].vaultName, tempVault.name) == true){
+                        tempUser.assignedVaults[j].vaultName = "";
+                        tempUser.assignedVaults[j].note = "";
+                        break;
+                    }
+                }
+                break;
+            }
+        }
 
         delete vaults[vaultIndex];
         return true;
