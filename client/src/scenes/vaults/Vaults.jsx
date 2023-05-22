@@ -8,6 +8,7 @@ import FlexBetween from 'components/FlexBetween'
 import { Search } from '@mui/icons-material';
 import { ThreeDots } from 'react-loader-spinner'
 import { MdDelete, MdRemoveRedEye, MdEdit, MdRefresh } from 'react-icons/md'
+import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
 import { NewModel } from 'components/Modal'
 import { Input } from 'components/input/input'
 import { Col, Container, Row, Table } from 'react-bootstrap'
@@ -102,6 +103,7 @@ const Vaults = () => {
                                     <motion.button
                                         className='form-control' style={{ alignSelf: 'center', padding: '.5rem 2rem', width: 'fit-content', height: 'fit-content', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff', opacity: '1' }}
                                         whileHover={{ scale: [1, 1.1] }}
+                                        onClick={() => renderShowUnlockModal(vault)}
                                     >
                                         Unlock
                                     </motion.button>
@@ -181,6 +183,85 @@ const Vaults = () => {
             </NewModel>
         )
     }
+
+    // Unlock Vault
+    const [showUnlockModal, setShowUnlockModal] = useState(false);
+    const [password, setPassword] = useState(undefined)
+    const [showPassword, setShowPassword] = useState(false)
+    const [passType, setPassType] = useState('password');
+    const [selectedVault, setSelectedVault] = useState(undefined)
+
+    const renderShowUnlockModal = (vault) => {
+        setShowUnlockModal(true)
+        setSelectedVault(vault)
+    }
+    const showPasswords = () => {
+            if (passType === 'password') {
+                setPassType('text')
+                setShowPassword(true)
+            }
+            else {
+                setPassType('password')
+                setShowPassword(false)
+            }
+        }
+
+    const closeUnlockModal = () => {
+        setShowUnlockModal(false)
+        setPassword(undefined)
+        setPassType("password")
+        setShowPassword(false)
+    }
+
+    const unlockVault = () => {
+        const form = {
+            vaultIndex: selectedVault.vaultIndex,
+            password: password,
+            email: email
+        }
+        console.log(form)
+    }
+    const renderUnlockVault = () => {
+        return (
+            <NewModel
+                show={showUnlockModal}
+                close={closeUnlockModal}
+                handleClose={unlockVault}
+                ModalTitle="Enter Password"
+                size="sm"
+                buttons={[
+                    {
+                        label: 'Unlock',
+                        color: 'primary',
+                        onClick: unlockVault
+                    }
+                ]}
+                >
+                <Row>
+                    <Col md={12} style={{display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
+                        <Typography sx={{ color: theme.palette.primary[500] }} >
+                            <Input
+                                label="Password"
+                                value={password}
+                                type={passType}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                            
+                        </Typography>
+                        <IconButton sx={{ width: 'fit-content', height: 'fit-content' }} onClick={() => showPasswords()} >
+                            {
+                                showPassword ?
+                                    <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                                    :
+                                    <AiFillEyeInvisible style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                            }
+                        </IconButton>
+                    </Col>
+                </Row>
+
+            </NewModel>
+        )
+    }
     return (
         <motion.div
             whileInView={{ opacity: [0, 1] }}
@@ -251,6 +332,7 @@ const Vaults = () => {
                 </Row>
             </Container>
             {renderAddNewVault()}
+            {renderUnlockVault()}
         </motion.div>
     );
 }

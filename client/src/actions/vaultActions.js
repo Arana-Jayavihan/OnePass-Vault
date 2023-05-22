@@ -29,34 +29,55 @@ export const getUserAssignedVaults = (form) => {
 
 export const addUserVault = (form) => {
     return async dispatch => {
-
-        const tempVaultSecret = shortid.generate()
-        const vaultKey = await generateMasterEncryptionKey(tempVaultSecret)
-        const pubKey = await importRSAPubKey(form.publicKey)
-        const encVaultKey = await encryptRSA(vaultKey, pubKey)
-        const vaultKeyHash = CryptoJS.SHA512(vaultKey).toString()
-
-        form = {
-            ...form,
-            encVaultKey,
-            vaultKeyHash
+        const getMasterKeyForm = {
+            email: form.email
         }
+        const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getMasterKeyForm)
+        if (masterKeyRes.status === 200) {
+            const tempVaultSecret = shortid.generate()
+			const vaultKey = await generateMasterEncryptionKey(tempVaultSecret)
+			const pubKey = await importRSAPubKey(form.publicKey)
+			
+			const encVaultKey = await encryptRSA(vaultKey, pubKey)
+			const vaultKeyHash = CryptoJS.SHA512(vaultKey).toString()
+
+			form = {
+				...form,
+				encVaultKey,
+				vaultKeyHash
+			}
+			dispatch({
+				type: vaultConsts.ADD_USER_VAULT_REQUEST
+			})
+			const res = await axiosInstance.post("/vault/add-vault", form)
+			if (res.status === 201){
+				toast.success(res.data.message, {id: 'vas'})
+				dispatch({
+					type: vaultConsts.ADD_USER_VAULT_SUCCESS,
+					payload: res.data.payload
+				})
+			}
+			else if (res.response) {
+				toast.error(res.response.data.message, { id: 'vaf' })
+				dispatch({
+					type: vaultConsts.GET_USER_ASSIGN_VAULTS_FAILED
+				})
+			}
+        }
+		else if (res.response) {
+			toast.error(res.response.data.message, { id: 'vaf' })
+			dispatch({
+				type: vaultConsts.GET_USER_ASSIGN_VAULTS_FAILED
+			})
+		}
+    }
+}
+
+export const unlockVault = (form) => {
+    return async dispatch => {
         dispatch({
-            type: vaultConsts.ADD_USER_VAULT_REQUEST
+            type: vaultConsts.UNLOCK_VAULT_REQUEST
         })
-        const res = await axiosInstance.post("/vault/add-vault", form)
-        if (res.status === 201){
-            toast.success(res.data.message, {id: 'vas'})
-            dispatch({
-                type: vaultConsts.ADD_USER_VAULT_SUCCESS,
-                payload: res.data.payload
-            })
-        }
-        else if (res.response) {
-            toast.error(res.response.data.message, { id: 'vaf' })
-            dispatch({
-                type: vaultConsts.GET_USER_ASSIGN_VAULTS_FAILED
-            })
-        }
+
     }
 }
