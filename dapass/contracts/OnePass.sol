@@ -274,6 +274,17 @@ contract OnePass {
         return users[email].assignedVaults;
     }
 
+    function getUserEncVaultKey(
+        string memory email, 
+        uint256 vaultIndex
+        ) public view returns(string memory encVaultKey){
+            for(uint256 i; i < vaults[vaultIndex].numUsers; i++){
+                if(compareStrings(vaults[vaultIndex].vaultUsers[i].email, email) == true){
+                    return vaults[vaultIndex].vaultUsers[i].encVaultPass;
+                }
+            }
+        }
+
     function getUserVaults(
         string memory email
     ) public view returns(

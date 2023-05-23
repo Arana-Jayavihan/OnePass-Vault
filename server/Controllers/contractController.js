@@ -7,7 +7,7 @@ let sdk = undefined
 let contract = undefined
 try {
     sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-    contract = await sdk.getContract("0xE9f6eF16EbbFA2cfdB53f552348778a9b9DE6289");
+    contract = await sdk.getContract("0x4d09Df7E9fcc25194549fe56869281842D34A097");
 } catch (error) {
     console.log(error)
 }
@@ -207,7 +207,27 @@ export const getUserVaults = async (email) => {
 
 export const getVault = async (vaultIndex) => {
     try {
-        const result = await contract.call("getVault", [email])
+        const result = await contract.call("getVault", [vaultIndex])
+        return result
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
+export const getVaultHash = async (vaultIndex) => {
+    try {
+        const result = await contract.call("getVaultKeyHash", [vaultIndex])
+        return result
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
+export const getUserVaultEncKey = async (vaultIndex, email) => {
+    try {
+        const result = await contract.call("getUserEncVaultKey", [email, vaultIndex])
         return result
     } catch (error) {
         console.log(error)

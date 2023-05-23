@@ -15,7 +15,7 @@ import { Col, Container, Row, Table } from 'react-bootstrap'
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import Vault from 'components/Vault/Vault';
-import { addUserVault, getUserAssignedVaults } from 'actions/vaultActions';
+import { addUserVault, getUserAssignedVaults, unlockUserVault } from 'actions/vaultActions';
 import "../../components/Vault/vault.css"
 
 const Vaults = () => {
@@ -134,6 +134,7 @@ const Vaults = () => {
         setShowAddModal(false)
         setVaultName(undefined)
         setVaultDescription(undefined)
+        setPassword(undefined)
     }
 
     const addVault = () => {
@@ -141,12 +142,15 @@ const Vaults = () => {
             email: email,
             vName: vaultName,
             vDesc: vaultDescription,
-            publicKey: publicKey
+            publicKey: publicKey,
+            pass: password
         }
         dispatch(addUserVault(form))
         setShowAddModal(false)
         setVaultDescription(undefined)
         setVaultName(undefined)
+        setPassword(undefined)
+        setPassType('password')
     }
 
     const renderAddNewVault = () => {
@@ -155,7 +159,8 @@ const Vaults = () => {
                 show={showAddModal}
                 close={closeAddModal}
                 handleClose={addVault}
-                ModalTitle="Create New Vault">
+                ModalTitle="Create New Vault"
+                size='sm'>
                 <Row>
                     <Col md={12}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
@@ -177,7 +182,25 @@ const Vaults = () => {
                             />
                         </Typography>
                     </Col>
-
+                    <Col md={12} style={{display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
+                        <Typography sx={{ color: theme.palette.primary[500] }} >
+                            <Input
+                                label="Password"
+                                value={password}
+                                type={passType}
+                                onChange={(e) => setPassword(e.target.value)}
+                            />
+                            
+                        </Typography>
+                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
+                            {
+                                showPassword ?
+                                    <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                                    :
+                                    <AiFillEyeInvisible style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                            }
+                        </IconButton>
+                    </Col>
                 </Row>
 
             </NewModel>
@@ -216,10 +239,10 @@ const Vaults = () => {
     const unlockVault = () => {
         const form = {
             vaultIndex: selectedVault.vaultIndex,
-            password: password,
+            pass: password,
             email: email
         }
-        console.log(form)
+        dispatch(unlockUserVault(form))
     }
     const renderUnlockVault = () => {
         return (
@@ -248,7 +271,7 @@ const Vaults = () => {
                             />
                             
                         </Typography>
-                        <IconButton sx={{ width: 'fit-content', height: 'fit-content' }} onClick={() => showPasswords()} >
+                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
                             {
                                 showPassword ?
                                     <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
