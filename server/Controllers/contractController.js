@@ -264,3 +264,13 @@ export const removeVaultLogin = async (ownerEmail, vaultIndex, loginIndex) => {
         return false
     }
 }
+
+export const getAllVaultLogins = async (vaultIndex) => {
+    try {
+        const result = await contract.call("getAllVaultLogins", [vaultIndex])
+        return result
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}

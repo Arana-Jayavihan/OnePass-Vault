@@ -130,34 +130,46 @@ export const unlockUserVault = (form) => {
                         const privateKey = await importRSAPrivKey(encodedPrivateKey)
                         const masterEncKey = await decryptRSA(encMasterKey, privateKey)
                         const getVaultKeyForm = {
-                            vaultIndex: form.vaultIndex
+                            vaultIndex: form.vaultIndex,
+                            email: form.email
                         }
-                        const vaultKeyRes = await axiosInstance.post("/vault/get-vault-key-hash", getVaultKeyForm)
-                        if(vaultKeyRes.status === 200){
-                            getVaultKeyForm["email"] = form.email
+                        const vaultUnlockRes = await axiosInstance.post("/vault/get-vault-unlock-token", getVaultKeyForm)
+                        if (vaultUnlockRes.status === 200) {
+                            const vaultUnlockToken = vaultUnlockRes.data.payload
+                            getVaultKeyForm["vaultUnlockToken"] = vaultUnlockToken
                             const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", getVaultKeyForm)
-                            if(vaultKeyRes.status === 200){
+                            if (vaultKeyRes.status === 200) {
                                 const encVaultKey = vaultKeyRes.data.payload
                                 const vaultKey = (await decryptAES(encVaultKey, masterEncKey)).toString(CryptoJS.enc.Utf8)
                                 toast.success("Vault Unlocked", { id: 'vus' })
                                 dispatch({
                                     type: vaultConsts.UNLOCK_VAULT_SUCCESS,
-                                    payload: []
+                                    payload: {
+                                        vaultKey,
+                                        vaultUnlockToken
+                                    }
                                 })
-                                //
+                                const result = {
+                                    vaultUnlockToken,
+                                    status: true
+                                }
+                                return result
+
                             }
-                            else if(vaultKeyRes.response){
+                            else if (vaultKeyRes.response) {
                                 toast.error(vaultKeyRes.response.data.message, { id: 'vuf' })
                                 dispatch({
                                     type: vaultConsts.UNLOCK_VAULT_FAILED
                                 })
+                                return false
                             }
                         }
-                        else if(vaultKeyRes.response){
-                            toast.error(vaultKeyRes.response.data.message, { id: 'vuf' })
+                        else if (vaultUnlockRes.response) {
+                            toast.error(vaultUnlockRes.response.data.message, { id: 'vuf' })
                             dispatch({
                                 type: vaultConsts.UNLOCK_VAULT_FAILED
                             })
+                            return false
                         }
                     }
                     else if (privKeyRes.response) {
@@ -165,6 +177,7 @@ export const unlockUserVault = (form) => {
                         dispatch({
                             type: vaultConsts.UNLOCK_VAULT_FAILED
                         })
+                        return false
                     }
                 }
                 else if (masterKeyRes.response) {
@@ -172,6 +185,7 @@ export const unlockUserVault = (form) => {
                     dispatch({
                         type: vaultConsts.UNLOCK_VAULT_FAILED
                     })
+                    return false
                 }
             }
             else {
@@ -179,6 +193,7 @@ export const unlockUserVault = (form) => {
                 dispatch({
                     type: vaultConsts.UNLOCK_VAULT_FAILED
                 })
+                return false
             }
 
         }
@@ -187,6 +202,37 @@ export const unlockUserVault = (form) => {
             dispatch({
                 type: vaultConsts.UNLOCK_VAULT_FAILED
             })
+            return false
         }
     }
+}
+
+export const decryptVaultLogins = async (logins, vaultKey) => {
+    try {
+        let loginArr = []
+        for (let i = 0; i < logins.length; i++) {
+            const login = {}
+            login["loginName"] = (await decryptAES(logins[i].loginName, vaultKey)).toString(CryptoJS.enc.Utf8)
+            login["loginUrl"] = (await decryptAES(logins[i].loginUrl, vaultKey)).toString(CryptoJS.enc.Utf8)
+            login["loginUsername"] = (await decryptAES(logins[i].loginUsername, vaultKey)).toString(CryptoJS.enc.Utf8)
+            login["loginPassword"] = (await decryptAES(logins[i].loginPassword, vaultKey)).toString(CryptoJS.enc.Utf8)
+            loginArr.push(login)
+        }
+        return loginArr
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+const testEncrypt = async (vaultKey) => {
+    const loginName = "Instagram"
+    const loginUrl = "https://www.instagram.com"
+    const loginUsername = "_.arana._"
+    const loginPassword = "123456789"
+
+    const encLoginName = await encryptAES(loginName, vaultKey)
+    const encLoginUrl = await encryptAES(loginUrl, vaultKey)
+    const encLoginUsername = await encryptAES(loginUsername, vaultKey)
+    const encLoginPassword = await encryptAES(loginPassword, vaultKey)
+    console.log(encLoginName, encLoginUrl, encLoginUsername, encLoginPassword)
 }

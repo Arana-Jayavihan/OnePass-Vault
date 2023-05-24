@@ -11,3 +11,20 @@ export const assignVaultParser = (vaults) => {
     }
     return vaultArr
 }
+
+export const vaultLoginParser = (logins) => {
+    let loginArr = []
+    for (let i = 0; i < logins.length; i++) {
+        let loginObj = {}
+        loginObj['loginIndex'] = parseInt(logins[i][0]._hex)
+        loginObj['ownerEmail'] = logins[i][1]
+        loginObj['loginName'] = logins[i][2]
+        loginObj['loginUrl'] = logins[i][3]
+        loginObj['loginUsername'] = logins[i][4]
+        loginObj['loginPassword'] = logins[i][5]
+        if(logins[i][1] !== '' && logins[i][2] !== '' && logins[i][3] !== '' && logins[i][4] !== '' && logins[i][5] !== '') {
+            loginArr.push(loginObj)
+        }
+    }
+    return loginArr
+}

@@ -21,6 +21,7 @@ import Vaults from "scenes/vaults/Vaults";
 import Billing from "scenes/billing/Billing";
 import Profile from "scenes/profile/Profile";
 import { switchMode } from "actions/generalActions";
+import UnlockedVault from "scenes/unlockedVault/UnlockedVault";
 
 function App() {
 	const dispatch = useDispatch()
@@ -112,6 +113,7 @@ function App() {
 						<Route path="/vaults" element={<Vaults />} />
 						<Route path="/billing" element={<Billing />} />
 						<Route path="/profile" element={<Profile />} />
+						<Route path="/vault/:id" element={<UnlockedVault />} />
 					</Route>
 				</Routes>
 			</ThemeProvider>

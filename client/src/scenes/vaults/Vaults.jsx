@@ -17,8 +17,10 @@ import Stack from '@mui/material/Stack';
 import Vault from 'components/Vault/Vault';
 import { addUserVault, getUserAssignedVaults, unlockUserVault } from 'actions/vaultActions';
 import "../../components/Vault/vault.css"
+import { useNavigate } from 'react-router-dom';
 
 const Vaults = () => {
+    const navigate = useNavigate()
     const vaultArr = useSelector(state => state.vault.vaults)
     const loading = useSelector(state => state.vault.loading)
     const creating = useSelector(state => state.vault.creating)
@@ -255,6 +257,16 @@ const Vaults = () => {
             email: email
         }
         dispatch(unlockUserVault(form))
+        .then((result) => {
+            if (result.status === true) {
+                setShowUnlockModal(false)
+                setPassword(undefined)
+                setPassType("password")
+                setShowPassword(false)
+
+                navigate(`/vault/${result.vaultUnlockToken}`)
+            }
+        })
     }
     const renderUnlockVault = () => {
         return (
@@ -297,6 +309,8 @@ const Vaults = () => {
             </NewModel>
         )
     }
+
+    // const renderUnlockedVault = ()
     return (
         <motion.div
             whileInView={{ opacity: [0, 1] }}
