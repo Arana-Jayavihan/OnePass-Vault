@@ -139,7 +139,11 @@ export const unlockUserVault = (form) => {
                             if(vaultKeyRes.status === 200){
                                 const encVaultKey = vaultKeyRes.data.payload
                                 const vaultKey = (await decryptAES(encVaultKey, masterEncKey)).toString(CryptoJS.enc.Utf8)
-                                
+                                toast.success("Vault Unlocked", { id: 'vus' })
+                                dispatch({
+                                    type: vaultConsts.UNLOCK_VAULT_SUCCESS,
+                                    payload: []
+                                })
                                 //
                             }
                             else if(vaultKeyRes.response){

@@ -5,6 +5,8 @@ const initState = {
     updatung: false,
     deleteing: false,
     loading: false,
+    unlocking: false,
+    logins: [],
     vaults: []
 }
 
@@ -46,6 +48,31 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 creating: false
+            }
+            break
+        case vaultConsts.UNLOCK_VAULT_REQUEST:
+            state = {
+                ...state,
+                unlocking: true
+            }
+            break
+        case vaultConsts.UNLOCK_VAULT_SUCCESS:
+            state = {
+                ...state,
+                unlocking: false,
+                logins: action.payload
+            }
+            break
+        case vaultConsts.UNLOCK_VAULT_FAILED:
+            state = {
+                ...state,
+                unlocking: false
+            }
+            break
+        case vaultConsts.LOCK_VAULT:
+            state = {
+                ...state,
+                logins: []
             }
             break
     }

@@ -23,9 +23,21 @@ const Vaults = () => {
     const loading = useSelector(state => state.vault.loading)
     const creating = useSelector(state => state.vault.creating)
     const deleting = useSelector(state => state.vault.deleting)
+    const unlocking = useSelector(state => state.vault.unlocking)
     const updating = useSelector(state => state.vault.updating)
     const email = useSelector(state => state.auth.user.email)
     const publicKey = useSelector(state => state.auth.user.pubKey)
+    useEffect(() => {
+        if (unlocking === true) {
+            toast.loading('Unlocking...', {
+                id: 'Unlocking'
+            })
+        }
+        else if (unlocking === false) {
+            toast.dismiss('Unlocking')
+        }
+
+    }, [unlocking]);
     useEffect(() => {
         if (creating === true) {
             toast.loading('Creating...', {
