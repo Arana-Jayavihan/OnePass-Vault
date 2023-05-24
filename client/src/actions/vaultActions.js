@@ -2,7 +2,7 @@ import axiosInstance from "helpers/axios"
 import { vaultConsts } from "./constants"
 import { toast } from "react-hot-toast"
 import shortid from "shortid"
-import { decryptAES, decryptRSA, encryptAES, encryptRSA, generateMasterEncryptionKey, importRSAPrivKey, importRSAPubKey } from "encrypt"
+import { decryptAES, decryptRSA, encryptAES, generateMasterEncryptionKey, importRSAPrivKey } from "encrypt"
 import CryptoJS from "crypto-js"
 
 export const getUserAssignedVaults = (form) => {
@@ -51,7 +51,6 @@ export const addUserVault = (form) => {
 
                         const tempVaultSecret = shortid.generate()
                         const vaultKey = await generateMasterEncryptionKey(tempVaultSecret)
-
                         const encVaultKey = await encryptAES(vaultKey, masterEncKey)
                         const vaultKeyHash = CryptoJS.SHA512(vaultKey).toString()
 
@@ -135,10 +134,13 @@ export const unlockUserVault = (form) => {
                         }
                         const vaultKeyRes = await axiosInstance.post("/vault/get-vault-key-hash", getVaultKeyForm)
                         if(vaultKeyRes.status === 200){
-                            getKeysForm["email"] = form.email
+                            getVaultKeyForm["email"] = form.email
                             const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", getVaultKeyForm)
                             if(vaultKeyRes.status === 200){
-                                console.log(vaultKeyRes.data.payload)
+                                const encVaultKey = vaultKeyRes.data.payload
+                                const vaultKey = (await decryptAES(encVaultKey, masterEncKey)).toString(CryptoJS.enc.Utf8)
+                                
+                                //
                             }
                             else if(vaultKeyRes.response){
                                 toast.error(vaultKeyRes.response.data.message, { id: 'vuf' })

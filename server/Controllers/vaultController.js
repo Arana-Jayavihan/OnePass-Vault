@@ -91,8 +91,7 @@ export const getEncVaultKey = async (req, res) => {
         }
         else if(result === false || result === ""){
             res.status(500).json({
-                message: "Something Went Wrong!",
-                error: error
+                message: "Something Went Wrong!"
             })
         }
     } catch (error) {
