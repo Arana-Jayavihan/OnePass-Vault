@@ -8,6 +8,7 @@ import Cookies from "universal-cookie";
 const cookies = new Cookies()
 
 const axiosInstance = axios.create({
+    // withCredentials: true,
     baseURL: api,
     headers: {
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
@@ -23,6 +24,14 @@ axiosInstance.interceptors.request.use((req) => {
     const token = cookies.get('token')
     if (token) {
         req.headers.Authorization = `${token}`
+    }
+    const encToken = cookies.get('encToken')
+    if (encToken) {
+        req.data["encToken"] = encToken
+    }
+    const encVaultUnlockToken = cookies.get('encVaultUnlockToken')
+    if (encVaultUnlockToken) {
+        req.data["encVaultUnlockToken"] = encVaultUnlockToken
     }
     return req
 })
@@ -55,6 +64,9 @@ axiosInstance.interceptors.response.use((res) => {
         cookies.remove('refreshToken', {
             path: '/'
         })
+        cookies.remove('encToken', {
+            path: '/'
+        })
         sessionStorage.clear()
         store.dispatch({ type: authConsts.LOGOUT_SUCCESS })
     }
@@ -63,6 +75,23 @@ axiosInstance.interceptors.response.use((res) => {
     }
     if (status === 408){
         toast.error("Request timed out, Try again later...", {id: 'timeout'})
+    }
+
+    if (status === 401 && error.response.data.message === "Potential Malicious Atempt"){
+        toast.error(`${error.response.data.message}`, {
+            id: 'sessiontout'
+        })
+        cookies.remove('token', {
+            path: '/'
+        })
+        cookies.remove('refreshToken', {
+            path: '/'
+        })
+        cookies.remove('encToken', {
+            path: '/'
+        })
+        sessionStorage.clear()
+        store.dispatch({ type: authConsts.LOGOUT_SUCCESS })
     }
     return error
 })

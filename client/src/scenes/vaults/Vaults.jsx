@@ -98,12 +98,12 @@ const Vaults = () => {
     // Vault Grid
     const renderVaultGrid = () => {
         return (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
                 {
                     vaultArr && vaultArr.length > 0 ?
                         vaultArr.map((vault, index) => (
                             vault.vaultName !== '' ?
-                            <div>
+                            <div key={index}>
                                 <Vault key={index} >
                                     <div style={{ display: 'flex', flexDirection: 'column', margin: '1rem', alignSelf: 'center' }} >
                                         <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'left', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >

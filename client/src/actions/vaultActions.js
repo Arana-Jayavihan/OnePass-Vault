@@ -4,6 +4,8 @@ import { toast } from "react-hot-toast"
 import shortid from "shortid"
 import { decryptAES, decryptRSA, encryptAES, generateMasterEncryptionKey, importRSAPrivKey } from "encrypt"
 import CryptoJS from "crypto-js"
+import Cookies from 'universal-cookie'
+const cookies = new Cookies()
 
 export const getUserAssignedVaults = (form) => {
     return async dispatch => {
@@ -135,8 +137,10 @@ export const unlockUserVault = (form) => {
                         }
                         const vaultUnlockRes = await axiosInstance.post("/vault/get-vault-unlock-token", getVaultKeyForm)
                         if (vaultUnlockRes.status === 200) {
-                            const vaultUnlockToken = vaultUnlockRes.data.payload
+                            const vaultUnlockToken = vaultUnlockRes.data.payload.vaultUnlockToken
+                            const encVaultUnlockToken = vaultUnlockRes.data.payload.encVaultUnlockToken
                             getVaultKeyForm["vaultUnlockToken"] = vaultUnlockToken
+                            getVaultKeyForm["encVaultUnlockToken"] = encVaultUnlockToken
                             const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", getVaultKeyForm)
                             if (vaultKeyRes.status === 200) {
                                 const encVaultKey = vaultKeyRes.data.payload
@@ -147,6 +151,13 @@ export const unlockUserVault = (form) => {
                                     payload: {
                                         vaultKey
                                     }
+                                })
+                                cookies.set("encVaultUnlockToken", encVaultUnlockToken, {
+                                    path: "/",
+                                    maxAge: '600000',
+                                    sameSite: "lax",
+                                    secure: true,
+                                    httpOnly: false
                                 })
                                 const result = {
                                     vaultUnlockToken,
@@ -214,28 +225,54 @@ export const getVaultData = (form, vaultKey) => {
             })
             const res = await axiosInstance.post("/vault/get-vault-data", form)
             if (res.status === 200) {
+                cookies.remove("encVaultUnlockToken", {
+                    path: "/",
+                })
                 toast.success("Vault Data Fetched", { id: 'vds' })
                 const vaultData = res.data.payload
-                vaultData["vaultLogins"] = await decryptVaultLogins(vaultData.vaultLogins, vaultKey)
-                dispatch({
-                    type: vaultConsts.GET_VAULT_DATA_SUCCESS,
-                    payload: vaultData
-                })
+                const decLogins = await decryptVaultLogins(vaultData.vaultLogins, vaultKey)
+                if (decLogins !== false) {
+                    vaultData["vaultLogins"] = decLogins
+                    dispatch({
+                        type: vaultConsts.GET_VAULT_DATA_SUCCESS,
+                        payload: vaultData
+                    })
+                }
+                else if (decLogins === false) {
+                    cookies.remove("encVaultUnlockToken", {
+                        path: "/",
+                    })
+                    toast.error("Error Fetching Vault Data", { id: 'gvf' })
+                    dispatch({
+                        type: vaultConsts.GET_VAULT_DATA_FAILED
+                    })
+                    return false
+                }
+
             }
             else if (res.response) {
-                toast.error(res.response.data.message, { id: 'gvf' })
+                cookies.remove("encVaultUnlockToken", {
+                    path: "/",
+                })
+                toast.error("Vault Locked!", { id: 'gvf' })
                 dispatch({
                     type: vaultConsts.GET_VAULT_DATA_FAILED
                 })
+                return false
             }
 
         }
     } catch (error) {
         console.log(error)
         return async dispatch => {
+            cookies.remove("encVaultUnlockToken", {
+                path: "/",
+            })
+            toast.error("Error Fetching Vault Data", { id: 'gvf' })
             dispatch({
                 type: vaultConsts.GET_VAULT_DATA_FAILED
             })
+            return false
         }
     }
 }
@@ -271,7 +308,7 @@ export const decryptVaultLogins = async (logins, vaultKey) => {
         return loginArr
     } catch (error) {
         console.log(error)
-        return []
+        return false
     }
 }
 

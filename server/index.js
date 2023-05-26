@@ -25,6 +25,7 @@ const app = express()
 // CORS
 const corsOptions = {
     origin: ["https://localhost:3000", "https://onepass-vault-v2.netlify.app"]
+    // credentials: true,
 }
 app.use(cors(corsOptions))
 
@@ -108,14 +109,14 @@ app.use((req, res, next) => {
         //     sanitizedBody['sanitized'] = true
         //     req.body = sanitizedBody
         // }
-        if (Object.keys(headers).length > 0 && headers.constructor === Object) {
-            let sanitizedHeaders = {}
-            for (let key in headers) {
-                const value = req.headerString(`${key}`)
-                sanitizedHeaders[`${key}`] = value
-            }
-            req.headers = sanitizedHeaders
-        }
+        // if (Object.keys(headers).length > 0 && headers.constructor === Object) {
+        //     let sanitizedHeaders = {}
+        //     for (let key in headers) {
+        //         const value = req.headerString(`${key}`)
+        //         sanitizedHeaders[`${key}`] = value
+        //     }
+        //     req.headers = sanitizedHeaders
+        // }
         if (Object.keys(params).length > 0 && params.constructor === Object) {
             let sanitizedParams = {}
             for (let key in params) {

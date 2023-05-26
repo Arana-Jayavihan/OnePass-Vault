@@ -108,11 +108,11 @@ function App() {
 					<Route path="/" element={<SignIn />} />
 					<Route path="/signup" element={<Signup />} />
 
-					<Route path="/test" element={<Test />} />
+					{/* <Route path="/test" element={<Test />} /> */}
 					{/* <Route path="pw-reset/:token" element={<PassReset />} /> */}
 
 					<Route element={authenticated ? <Layout /> : <SignIn />}>
-						<Route path="/dashboard" element={<Test />} />
+						{/* <Route path="/dashboard" element={<Test />} /> */}
 						<Route path="/dashboard1" element={<Dashboard />} />
 						<Route path="/transactions" element={<Transactions />} />
 						<Route path="/vaults" element={<Vaults />} />

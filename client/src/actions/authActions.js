@@ -89,6 +89,7 @@ export const login = (form, password) => {
             const user = res.data.user
             const token = res.data.token
             const refreshToken = res.data.refreshToken
+            const encToken = res.data.encToken
 
             const decPrivate = (await decryptAES(user.privateKey, password)).toString(CryptoJS.enc.Utf8)
             const importedPrivKey = await importRSAPrivKey(decPrivate)
@@ -119,6 +120,14 @@ export const login = (form, password) => {
             cookies.set("refreshToken", refreshToken, {
                 path: '/',
                 maxAge: '86400000',
+                sameSite: "lax",
+                secure: true,
+                httpOnly: false
+            })
+
+            cookies.set("encToken", encToken, {
+                path: '/',
+                maxAge: '3600000',
                 sameSite: "lax",
                 secure: true,
                 httpOnly: false
@@ -187,6 +196,9 @@ export const signout = () => {
             cookies.remove('refreshToken', {
                 path: '/'
             })
+            cookies.remove('encToken', {
+                path: '/'
+            })
             dispatch(
                 { type: authConsts.LOGOUT_SUCCESS }
             )
@@ -212,8 +224,10 @@ export const tokenRefresh = () => {
 
     return async () => {
         const res = await axiosInstance.post('/auth/token', form)
-        token = res.data.token
+        if(res.status === 200){
+            token = res.data.token
         refreshToken = res.data.refreshToken
+        const encToken = res.data.encToken
         cookies.set("token", token, {
             path: '/',
             maxAge: '3600000',
@@ -228,7 +242,15 @@ export const tokenRefresh = () => {
             secure: true,
             httpOnly: false
         })
+        cookies.set("encToken", encToken, {
+            path: '/',
+            maxAge: '3600000',
+            sameSite: "lax",
+            secure: true,
+            httpOnly: false
+        })
         toast.success("Session Extended!", { id: 'token' })
+        }
     }
 }
 

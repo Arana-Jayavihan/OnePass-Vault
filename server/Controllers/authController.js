@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken'
 import { addUserData, addUserKeys, getMasterEncKey, getPrivateKey, getPublicKey, getUser, getUserHashPass } from './contractController.js';
+import CryptoJS from 'crypto-js'
+import sh from 'shortid'
 
-const tokenlist = {}
+let tokenlist = {}
 
 // User SignUp Functions
 export const userKeyGeneration = async (req, res) => {
@@ -93,8 +95,6 @@ export const addData = async (req, res) => {
 // User SignIn Functions
 export const signInRequest = async (req, res) => {
     try {
-        const IP = req.headers['x-forwarded-for']
-        console.log(req.headers['x-forwarded-for'], "IP")
         const email = req.body.email
         const chkUser = await getUser(email)
         if (chkUser[0] === email) {
@@ -150,7 +150,11 @@ export const signIn = async (req, res) => {
                 const publicKey = await getPublicKey(user.hashEmail)
                 const token = jwt.sign({ email: user.hashEmail, ip: IP }, process.env.JWT_SECRET, { expiresIn: '1h' })
                 const refreshToken = jwt.sign({ email: user.hashEmail, ip: IP }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
-
+                const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
+                    iv: CryptoJS.SHA256(sh.generate()).toString(),
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                }).toString()
                 tokenlist[refreshToken] = {
                     refreshToken,
                     token,
@@ -158,6 +162,27 @@ export const signIn = async (req, res) => {
                 }
                 console.log(tokenlist, "New Signin")
                 console.log(userResult)
+                // res.cookie('token', token, {
+                //     path: '/',
+                //     maxAge: 3600000,
+                //     sameSite: "lax",
+                //     secure: false,
+                //     httpOnly: true
+                // })
+                // res.cookie('refreshToken', refreshToken, {
+                //     path: '/',
+                //     maxAge: 86400000,
+                //     sameSite: "lax",
+                //     secure: false,
+                //     httpOnly: true
+                // })
+                // res.cookie('encToken', encToken, {
+                //     path: '/',
+                //     maxAge: 3600000,
+                //     sameSite: "lax",
+                //     secure: false,
+                //     httpOnly: true
+                // })
                 res.status(200).json({
                     message: "Authentication successful",
                     user: {
@@ -170,7 +195,8 @@ export const signIn = async (req, res) => {
                         publicKey: publicKey
                     },
                     token: token,
-                    refreshToken: refreshToken
+                    refreshToken: refreshToken,
+                    encToken: encToken
                 })
                 console.log(user)
             }
@@ -195,29 +221,44 @@ export const tokenRefresh = async (req, res) => {
         let refreshToken = req.body.refreshToken
         let token = req.body.token
         let email = req.body.email
+        let ip = req.headers['x-forwarded-for']
         console.log(req.body)
         console.log(tokenlist, "TokenRefresh")
         if (Object.keys(tokenlist).length > 0 && tokenlist.constructor === Object) {
-            if (token === tokenlist[refreshToken].token) {
-                try {
-                    delete tokenlist[refreshToken]
-                    token = jwt.sign({ email: email }, process.env.JWT_SECRET, { expiresIn: '1h' })
-                    refreshToken = jwt.sign({ email: email }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
-
-                    tokenlist[refreshToken] = {
-                        refreshToken,
-                        token
+            if(tokenlist[refreshToken].IP === ip) {
+                if (token === tokenlist[refreshToken].token) {
+                    try {
+                        delete tokenlist[refreshToken]
+                        token = jwt.sign({ email: email }, process.env.JWT_SECRET, { expiresIn: '1h' })
+                        refreshToken = jwt.sign({ email: email }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
+                        const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
+                            iv: CryptoJS.SHA256(sh.generate()).toString(),
+                            mode: CryptoJS.mode.CBC,
+                            padding: CryptoJS.pad.Pkcs7
+                        }).toString()
+    
+                        tokenlist[refreshToken] = {
+                            refreshToken,
+                            token,
+                            encToken
+                        }
+    
+                        res.status(200).json({
+                            message: "Session Extended",
+                            token: token,
+                            refreshToken: refreshToken,
+                            encToken: encToken
+                        })
                     }
-
-                    res.status(200).json({
-                        message: "Session Extended",
-                        token: token,
-                        refreshToken: refreshToken
-                    })
+                    catch (error) {
+                        console.log(error)
+                    }
                 }
-                catch (error) {
-                    console.log(error)
-                }
+            }
+            else {
+                res.status(401).json({
+                    message: "Session Expired"
+                })
             }
         }
         else {
@@ -254,3 +295,11 @@ export const signOut = async (req, res) => {
     }
 
 }
+
+function clearTokenList() {
+    tokenlist = {}
+    console.log("token list cleared", tokenlist)
+}
+
+setInterval(clearTokenList, 86400000)
+//86400000
