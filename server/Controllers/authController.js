@@ -93,6 +93,8 @@ export const addData = async (req, res) => {
 // User SignIn Functions
 export const signInRequest = async (req, res) => {
     try {
+        const IP = req.headers['x-forwarded-for']
+        console.log(req.headers['x-forwarded-for'], "IP")
         const email = req.body.email
         const chkUser = await getUser(email)
         if (chkUser[0] === email) {
@@ -131,9 +133,8 @@ export const signInRequest = async (req, res) => {
 export const signIn = async (req, res) => {
     try {
         const user = req.body
-        const IP = req.socket.remoteAddress
-        console.log(req.socket.remoteAddress, "IP")
-        console.log(req.headers['x-forwarded-for'], "IP2")
+        const IP = req.headers['x-forwarded-for']
+        console.log(req.headers['x-forwarded-for'], "IP")
         const userResult = await getUser(user.hashEmail)
         if (userResult[0] !== user.hashEmail) {
             res.status(404).json({
@@ -147,12 +148,13 @@ export const signIn = async (req, res) => {
                 const encPrivate = await getPrivateKey(user.hashEmail)
                 const encMasterKey = await getMasterEncKey(user.hashEmail)
                 const publicKey = await getPublicKey(user.hashEmail)
-                const token = jwt.sign({ email: user.hashEmail }, process.env.JWT_SECRET, { expiresIn: '1h' })
-                const refreshToken = jwt.sign({ email: user.hashEmail }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
+                const token = jwt.sign({ email: user.hashEmail, ip: IP }, process.env.JWT_SECRET, { expiresIn: '1h' })
+                const refreshToken = jwt.sign({ email: user.hashEmail, ip: IP }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
 
                 tokenlist[refreshToken] = {
                     refreshToken,
-                    token
+                    token,
+                    IP
                 }
                 console.log(tokenlist, "New Signin")
                 console.log(userResult)
