@@ -12,6 +12,19 @@ export const assignVaultParser = (vaults) => {
     return vaultArr
 }
 
+export const vaultDataParser = (vault) => {
+    let vaultObj = {}
+    vaultObj['vaultIndex'] = parseInt(vault[0]._hex)
+    vaultObj['vaultName'] = vault[1]
+    vaultObj['description'] = vault[2]
+    vaultObj['ownerEmail'] = vault[3]
+    vaultObj['vaultUsers'] = vaultUserParser(vault[7])
+    vaultObj['vaultLogins'] = vaultLoginParser(vault[8])
+    vaultObj['numUsers'] = vaultObj['vaultUsers'].length
+    vaultObj['numLogins'] = vaultObj['vaultLogins'].length
+    return vaultObj
+}
+
 export const vaultLoginParser = (logins) => {
     let loginArr = []
     for (let i = 0; i < logins.length; i++) {
@@ -28,3 +41,18 @@ export const vaultLoginParser = (logins) => {
     }
     return loginArr
 }
+
+export const vaultUserParser = (users) => {
+    let userArr = []
+    for (let i = 0; i < users.length; i++) {
+        let userObj = {}
+        userObj['isOwner'] = users[i][0]
+        userObj['userIndex'] = parseInt(users[i][1]._hex)
+        userObj['userEmail'] = users[i][2]
+        if(users[i][0] !== '') {
+            userArr.push(userObj)
+        }
+    }
+    return userArr
+}
+

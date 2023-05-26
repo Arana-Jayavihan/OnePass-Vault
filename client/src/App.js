@@ -22,6 +22,7 @@ import Billing from "scenes/billing/Billing";
 import Profile from "scenes/profile/Profile";
 import { switchMode } from "actions/generalActions";
 import UnlockedVault from "scenes/unlockedVault/UnlockedVault";
+import { lockUserVault } from "actions/vaultActions";
 
 function App() {
 	const dispatch = useDispatch()
@@ -45,6 +46,10 @@ function App() {
 
 	const refreshToken = useCallback(() => {
 		dispatch(tokenRefresh())
+	}, [dispatch])
+
+	const lockVault = useCallback(() => {
+		dispatch(lockUserVault())
 	}, [dispatch])
 
 	const authenticating = useSelector(state => state.auth.authenticating)
@@ -117,7 +122,7 @@ function App() {
 					</Route>
 				</Routes>
 			</ThemeProvider>
-			<AuthVerify logOut={logOut} refreshToken={refreshToken} />
+			<AuthVerify logOut={logOut} refreshToken={refreshToken} lockVault={lockVault}/>
 		</div>
 
 	);

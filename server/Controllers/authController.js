@@ -131,6 +131,9 @@ export const signInRequest = async (req, res) => {
 export const signIn = async (req, res) => {
     try {
         const user = req.body
+        const IP = req.socket.remoteAddress
+        console.log(req.socket.remoteAddress, "IP")
+        console.log(req.headers['x-forwarded-for'], "IP2")
         const userResult = await getUser(user.hashEmail)
         if (userResult[0] !== user.hashEmail) {
             res.status(404).json({

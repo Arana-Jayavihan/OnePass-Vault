@@ -145,8 +145,7 @@ export const unlockUserVault = (form) => {
                                 dispatch({
                                     type: vaultConsts.UNLOCK_VAULT_SUCCESS,
                                     payload: {
-                                        vaultKey,
-                                        vaultUnlockToken
+                                        vaultKey
                                     }
                                 })
                                 const result = {
@@ -207,6 +206,57 @@ export const unlockUserVault = (form) => {
     }
 }
 
+export const getVaultData = (form, vaultKey) => {
+    try {
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.GET_VAULT_DATA_REQUEST
+            })
+            const res = await axiosInstance.post("/vault/get-vault-data", form)
+            if (res.status === 200) {
+                toast.success("Vault Data Fetched", { id: 'vds' })
+                const vaultData = res.data.payload
+                vaultData["vaultLogins"] = await decryptVaultLogins(vaultData.vaultLogins, vaultKey)
+                dispatch({
+                    type: vaultConsts.GET_VAULT_DATA_SUCCESS,
+                    payload: vaultData
+                })
+            }
+            else if (res.response) {
+                toast.error(res.response.data.message, { id: 'gvf' })
+                dispatch({
+                    type: vaultConsts.GET_VAULT_DATA_FAILED
+                })
+            }
+
+        }
+    } catch (error) {
+        console.log(error)
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.GET_VAULT_DATA_FAILED
+            })
+        }
+    }
+}
+
+export const lockUserVault = () => {
+    try {
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.LOCK_VAULT_SUCCESS
+            })
+        }
+    } catch (error) {
+        console.log(error)
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.LOCK_VAULT_FAILED
+            })
+        }
+    }
+}
+
 export const decryptVaultLogins = async (logins, vaultKey) => {
     try {
         let loginArr = []
@@ -221,8 +271,11 @@ export const decryptVaultLogins = async (logins, vaultKey) => {
         return loginArr
     } catch (error) {
         console.log(error)
+        return []
     }
 }
+
+
 
 const testEncrypt = async (vaultKey) => {
     const loginName = "Instagram"

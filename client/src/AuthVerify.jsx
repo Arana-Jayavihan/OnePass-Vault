@@ -32,6 +32,7 @@ const AuthVerify = (props) => {
                     props.refreshToken();
                 }
             }
+            props.lockVault();
         }
         catch (err) {
             console.log(err)
