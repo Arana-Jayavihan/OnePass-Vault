@@ -1,7 +1,8 @@
 import shortID from "shortid"
 import jwt from 'jsonwebtoken'
-import { assignVaultParser, vaultLoginParser } from "../Parsers/parsers.js"
+import { assignVaultParser, vaultDataParser, vaultLoginParser } from "../Parsers/parsers.js"
 import { createVault, getAssignVaults, getUserVaultEncKey, getVaultHash, getAllVaultLogins } from "./contractController.js"
+import { getVault } from "./contractController.js"
 
 export const addVault = async (req, res) => {
     try {
@@ -89,11 +90,10 @@ export const getEncVaultKey = async (req, res) => {
         const vaultIndex = req.body.vaultIndex
         const email = req.body.email
         const vaultUnlockToken = req.body.vaultUnlockToken
-
+        const user = req.user
+        console.log(user)
         const decoded = jwt.verify(vaultUnlockToken, process.env.JWT_SECRET)
-        console.log(decoded)
-        console.log(vaultUnlockTokens[decoded.id])
-        if (vaultUnlockTokens[decoded.id].email === email && vaultUnlockTokens[decoded.id].vaultIndex === vaultIndex) {
+        if (vaultUnlockTokens[decoded.id].email === email && vaultUnlockTokens[decoded.id].vaultIndex === vaultIndex && vaultUnlockTokens[decoded.id].email === user.email) {
             const result = await getUserVaultEncKey(vaultIndex, email)
             if (result && result !== "") {
                 res.status(200).json({
@@ -139,6 +139,41 @@ export const getVaultLogins = async (req, res) => {
                 message: "Something Went Wrong!"
             })
         }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: "Something Went Wrong!",
+            error: error
+        })
+    }
+}
+
+export const getVaultData = async (req, res) => {
+    try {
+        const token = req.body.token
+        const email = req.body.email
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        if (vaultUnlockTokens[decoded.id].email === email){
+            const result = await getVault(vaultUnlockTokens[decoded.id].vaultIndex)
+            if (result) {
+                const vaultData = vaultDataParser(result)
+                res.status(200).json({
+                    message: "Vault Data Fetched",
+                    payload: vaultData
+                })
+            }
+            else if (result === false) {
+                res.status(500).json({
+                    message: "Something Went Wrong!"
+                })
+            }
+        }
+        else {
+            res.status(400).json({
+                message: "Invalid Token"
+            })
+        }
+
     } catch (error) {
         console.log(error)
         res.status(500).json({
