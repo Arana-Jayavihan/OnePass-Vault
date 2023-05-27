@@ -19,31 +19,22 @@ import { getVaultData, lockUserVault } from 'actions/vaultActions';
 import { addUserLogin } from 'actions/loginActions';
 
 const UnlockedVault = () => {
-    
-
     const theme = useTheme()
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const email = useSelector(state => state.auth.user.email)
     const loading = useSelector(state => state.vault.loading)
-    const adding = useSelector(state => state.login.adding)
-    const deleting = useSelector(state => state.login.deleting)
-    const updating = useSelector(state => state.login.updating)
+    const adding = useSelector(state => state.vault.adding)
+    const deleting = useSelector(state => state.vault.deleting)
+    const updating = useSelector(state => state.vault.updating)
     const vaultUnlockKey = useSelector(state => state.vault.vaultKey)
-    const logins = useSelector(state => state.login.logins)
     const vault = useSelector(state => state.vault.vault)
     const unlockToken = useParams()
 
-    const [loginsList, setLoginsList] = useState([]);
+    const [loginList, setLoginList] = useState([]);
     useEffect(() => {
-        if (logins?.length === 0) {
-            setLoginsList(vault?.vaultLogins)
-        }
-        else {
-            setLoginsList(logins)
-        }
-    }, [logins])
-
+        setLoginList(vault?.vaultLogins)
+    }, [vault])
 
     useEffect(() => {
         if (loading === true) {
@@ -97,7 +88,7 @@ const UnlockedVault = () => {
         }
         dispatch(getVaultData(form, vaultUnlockKey)).then((result) => {
             if (result === false) {
-                setLoginsList([])
+                dispatch(lockUserVault())
                 navigate('/vaults')
             }
         })
@@ -254,7 +245,7 @@ const UnlockedVault = () => {
                 </thead>
                 <tbody>
                     {
-                        loginsList?.map((login, index) => {
+                        loginList?.map((login, index) => {
                             return (
                                 <tr key={index}>
                                     <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
@@ -354,7 +345,7 @@ const UnlockedVault = () => {
                                             whileHover={{ scale: [1, 1.1] }}
                                             onClick={() => setShowAddLogin(true)}
                                         >
-                                            Add Credential
+                                            Add Credentials
                                         </motion.button>
                                     </div>
                                 </Col>
@@ -370,7 +361,7 @@ const UnlockedVault = () => {
                                                     Logins
                                                 </Typography>
                                                 <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                                    {loginsList?.length}
+                                                    {vault?.vaultLogins?.length}
                                                 </Typography>
                                             </div>
                                             <div style={{ backgroundColor: theme.palette.background.default, padding: '2rem 2.5rem', borderRadius: '15px' }}>
@@ -450,7 +441,7 @@ const UnlockedVault = () => {
 
                                     <Col md={12} style={{ overflowX: 'scroll' }}>
                                         {
-                                            vault?.numLogins > 0 ?
+                                            loginList?.length > 0 ?
                                                 <motion.div
                                                     whileInView={{ opacity: [0, 1] }}
                                                     transition={{ duration: .75, ease: 'easeInOut' }}
@@ -459,9 +450,12 @@ const UnlockedVault = () => {
                                                     {renderLoginTable()}
                                                 </motion.div>
                                                 :
-                                                <div style={{ height: '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: theme.palette.secondary[400] }} >
+                                                <div style={{ height: '50vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #6d4aff, #cc00ee)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
                                                         No Credentials
+                                                    </Typography>
+                                                    <Typography variant='h5' sx={{ textAlign: 'center', paddingTop: '.5rem', paddingLeft: '.5rem' }}>
+                                                        Add some credentials to your vault.
                                                     </Typography>
                                                 </div>
                                         }

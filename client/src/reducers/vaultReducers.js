@@ -5,10 +5,11 @@ const initState = {
     updating: false,
     deleteing: false,
     loading: false,
+    adding: false,
     unlocking: false,
     vaultKey: undefined,
     vaults: [],
-    vault: undefined
+    vault: {}
 }
 
 export default (state = initState, action) => {
@@ -102,6 +103,28 @@ export default (state = initState, action) => {
                 ...state,
                 vaultKey: undefined,
                 vault: {}
+            }
+            break
+        case vaultConsts.ADD_NEW_VAULT_LOGIN_REQUEST:
+            state = {
+                ...state,
+                adding: true
+            }
+            break
+        case vaultConsts.ADD_NEW_VAULT_LOGIN_SUCCESS:
+            state = {
+                ...state,
+                adding: false,
+                vault: {
+                    ...state.vault,
+                    vaultLogins: action.payload
+                }
+            }
+            break
+        case vaultConsts.ADD_NEW_VAULT_LOGIN_FAILED:
+            state = {
+                ...state,
+                adding: false
             }
             break
     }

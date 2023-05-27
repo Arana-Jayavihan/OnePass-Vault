@@ -69,6 +69,7 @@ axiosInstance.interceptors.response.use((res) => {
         })
         sessionStorage.clear()
         store.dispatch({ type: authConsts.LOGOUT_SUCCESS })
+        window.location.href = '/'
     }
     if (status === 429){
         toast.error("Too many requests, Try again later...", {id: 'ratelim'})
@@ -77,7 +78,7 @@ axiosInstance.interceptors.response.use((res) => {
         toast.error("Request timed out, Try again later...", {id: 'timeout'})
     }
 
-    if (status === 401 && error.response.data.message === "Potential Malicious Atempt"){
+    if ((status === 401 && error.response.data.message === "Potential Malicious Atempt") || (status === 400 && (error.response.data.message === "Invalid Session" || error.response.data.message === "Invalid Token"))) {
         toast.error(`${error.response.data.message}`, {
             id: 'sessiontout'
         })
@@ -92,6 +93,7 @@ axiosInstance.interceptors.response.use((res) => {
         })
         sessionStorage.clear()
         store.dispatch({ type: authConsts.LOGOUT_SUCCESS })
+        window.location.href = '/'
     }
     return error
 })

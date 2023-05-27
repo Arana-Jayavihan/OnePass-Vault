@@ -98,40 +98,43 @@ const Vaults = () => {
     // Vault Grid
     const renderVaultGrid = () => {
         return (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 350px))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
                 {
                     vaultArr && vaultArr.length > 0 ?
                         vaultArr.map((vault, index) => (
                             vault.vaultName !== '' ?
-                            <div key={index}>
-                                <Vault key={index} >
-                                    <div style={{ display: 'flex', flexDirection: 'column', margin: '1rem', alignSelf: 'center' }} >
-                                        <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'left', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                            {vault.vaultName}
-                                        </Typography>
-                                        <p className="subtitle">
-                                            {vault.desctiption}
-                                        </p>
-                                    </div>
-                                    <div className='padlockOverlay'>
-                                    <motion.button
-                                        className='form-control' style={{ alignSelf: 'center', padding: '.5rem 2rem', width: 'fit-content', height: 'fit-content', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff', opacity: '1' }}
-                                        whileHover={{ scale: [1, 1.1] }}
-                                        onClick={() => renderShowUnlockModal(vault)}
-                                    >
-                                        Unlock
-                                    </motion.button>
-                                    </div>
-                                    
-                                </Vault>
+                                <div key={index}>
+                                    <Vault key={index} >
+                                        <div style={{ display: 'flex', flexDirection: 'column', margin: '1rem', alignSelf: 'center' }} >
+                                            <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'left', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
+                                                {vault.vaultName}
+                                            </Typography>
+                                            <p className="subtitle">
+                                                {vault.desctiption}
+                                            </p>
+                                        </div>
+                                        <div className='padlockOverlay'>
+                                            <motion.button
+                                                className='form-control' style={{ alignSelf: 'center', padding: '.5rem 2rem', width: 'fit-content', height: 'fit-content', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff', opacity: '1' }}
+                                                whileHover={{ scale: [1, 1.1] }}
+                                                onClick={() => renderShowUnlockModal(vault)}
+                                            >
+                                                Unlock
+                                            </motion.button>
+                                        </div>
 
-                            </div>
-                            :
-                            null
+                                    </Vault>
+
+                                </div>
+                                :
+                                null
                         )) :
-                        <div style={{ height: '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: theme.palette.secondary[400] }} >
+                        <div style={{ height: '50vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #6d4aff, #cc00ee)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
                                 No Vaults
+                            </Typography>
+                            <Typography variant='h5' sx={{ textAlign: 'center', paddingTop: '.5rem', paddingLeft: '.5rem' }}>
+                                You have no vaults assigned to you, Try adding one.
                             </Typography>
                         </div>
                 }
@@ -196,7 +199,7 @@ const Vaults = () => {
                             />
                         </Typography>
                     </Col>
-                    <Col md={12} style={{display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
+                    <Col md={12} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
                                 label="Password"
@@ -204,7 +207,7 @@ const Vaults = () => {
                                 type={passType}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
-                            
+
                         </Typography>
                         <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
                             {
@@ -233,15 +236,15 @@ const Vaults = () => {
         setSelectedVault(vault)
     }
     const showPasswords = () => {
-            if (passType === 'password') {
-                setPassType('text')
-                setShowPassword(true)
-            }
-            else {
-                setPassType('password')
-                setShowPassword(false)
-            }
+        if (passType === 'password') {
+            setPassType('text')
+            setShowPassword(true)
         }
+        else {
+            setPassType('password')
+            setShowPassword(false)
+        }
+    }
 
     const closeUnlockModal = () => {
         setShowUnlockModal(false)
@@ -257,16 +260,15 @@ const Vaults = () => {
             email: email
         }
         dispatch(unlockUserVault(form))
-        .then((result) => {
-            if (result.status === true) {
-                setShowUnlockModal(false)
-                setPassword(undefined)
-                setPassType("password")
-                setShowPassword(false)
-                console.log(result.vaultUnlockToken)
-                navigate(`/unlock-vault/${result.vaultUnlockToken}`)
-            }
-        })
+            .then((result) => {
+                if (result.status === true) {
+                    setShowUnlockModal(false)
+                    setPassword(undefined)
+                    setPassType("password")
+                    setShowPassword(false)
+                    navigate(`/unlock-vault/${result.vaultUnlockToken}`)
+                }
+            })
     }
     const renderUnlockVault = () => {
         return (
@@ -283,9 +285,9 @@ const Vaults = () => {
                         onClick: unlockVault
                     }
                 ]}
-                >
+            >
                 <Row>
-                    <Col md={12} style={{display: 'flex', justifyContent: 'space-between', alignItems: "center"}}>
+                    <Col md={12} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
                                 label="Password"
@@ -293,7 +295,7 @@ const Vaults = () => {
                                 type={passType}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
-                            
+
                         </Typography>
                         <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
                             {
@@ -316,7 +318,7 @@ const Vaults = () => {
             whileInView={{ opacity: [0, 1] }}
             transition={{ duration: .75, ease: 'easeInOut' }}
             initial={{ opacity: 0 }}
-            style={{marginTop: '5rem', marginBottom: '2rem', paddingBottom: '2rem'}}
+            style={{ marginTop: '5rem', marginBottom: '2rem', paddingBottom: '2rem' }}
         >
             <Container>
                 <Row>
