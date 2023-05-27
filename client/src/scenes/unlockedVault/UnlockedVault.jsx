@@ -243,7 +243,7 @@ const UnlockedVault = () => {
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody style={{height: "60vh", overflowY: 'scroll'}}>
                     {
                         loginList?.map((login, index) => {
                             return (

@@ -98,7 +98,7 @@ const Vaults = () => {
     // Vault Grid
     const renderVaultGrid = () => {
         return (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 350px))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 400px))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
                 {
                     vaultArr && vaultArr.length > 0 ?
                         vaultArr.map((vault, index) => (
