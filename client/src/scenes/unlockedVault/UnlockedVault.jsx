@@ -243,7 +243,7 @@ const UnlockedVault = () => {
                         </th>
                     </tr>
                 </thead>
-                <tbody style={{height: "60vh", overflowY: 'scroll'}}>
+                <tbody>
                     {
                         loginList?.map((login, index) => {
                             return (
@@ -356,7 +356,7 @@ const UnlockedVault = () => {
                                 >
                                     <div style={{ backgroundColor: theme.palette.primary[100], borderRadius: '15px', padding: '1rem', height: 'auto' }}>
                                         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }} >
-                                            <div style={{ backgroundColor: theme.palette.background.default, padding: '2rem 2.5rem', borderRadius: '15px' }}>
+                                            <div style={{ backgroundColor: theme.palette.background.default, padding: '10% 12%', borderRadius: '15px' }}>
                                                 <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
                                                     Logins
                                                 </Typography>
@@ -364,7 +364,7 @@ const UnlockedVault = () => {
                                                     {vault?.vaultLogins?.length}
                                                 </Typography>
                                             </div>
-                                            <div style={{ backgroundColor: theme.palette.background.default, padding: '2rem 2.5rem', borderRadius: '15px' }}>
+                                            <div style={{ backgroundColor: theme.palette.background.default, padding: '10% 12%', borderRadius: '15px' }}>
                                                 <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
                                                     Users
                                                 </Typography>
@@ -420,7 +420,7 @@ const UnlockedVault = () => {
 
                                 </Col>
                                 <Col md={9}
-                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: "60vh", overflowY: 'scroll' }}
+                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem' }}
                                 >
                                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem, 1rem' }}>
 
@@ -439,7 +439,7 @@ const UnlockedVault = () => {
                                         </FlexBetween>
                                     </div>
 
-                                    <Col md={12} style={{ overflowX: 'scroll' }}>
+                                    <Col md={12} style={{ overflowX: 'scroll',height: "55vh", overflowY: 'scroll' }}>
                                         {
                                             loginList?.length > 0 ?
                                                 <motion.div
