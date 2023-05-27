@@ -32,7 +32,7 @@ const SignIn = () => {
         else {
             const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
             const form = {
-                'email': hashEmail
+                'email': email
             }
             dispatch(signInReq(form)).then(result => {
                 if (result) {
@@ -51,7 +51,7 @@ const SignIn = () => {
             if (passwordHash === hashPass) {
                 const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
                 const form = {
-                    'hashEmail': hashEmail,
+                    'hashEmail': email,
                     'hashPass': passwordHash,
                 }
                 dispatch(login(form, password)).then(result => {

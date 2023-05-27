@@ -264,7 +264,7 @@ const Vaults = () => {
                 setPassType("password")
                 setShowPassword(false)
                 console.log(result.vaultUnlockToken)
-                navigate(`/vault/${result.vaultUnlockToken}`)
+                navigate(`/unlock-vault/${result.vaultUnlockToken}`)
             }
         })
     }

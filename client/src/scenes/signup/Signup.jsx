@@ -85,7 +85,7 @@ const Signup = () => {
                 const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
 
                 const form = {
-                    'email': hashEmail,
+                    'email': email,
                     'encPrivateKey': encPrivate,
                     'encPublicKey': pubExpB64,
                     'masterEncKey': encryptedMasterEncKey
@@ -113,7 +113,7 @@ const Signup = () => {
             const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
 
             const form = {
-                'email': hashEmail,
+                'email': email,
                 'firstName': encFirstName,
                 'lastName': encLastName,
                 'contact': encContact,
@@ -122,7 +122,7 @@ const Signup = () => {
             dispatch(addData(form)).then(result => {
                 if (result) {
                     const form = {
-                        'hashEmail': hashEmail,
+                        'hashEmail': email,
                         'hashPass': hashPassword
                     }
                     dispatch(login(form, password))

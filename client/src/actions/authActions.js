@@ -4,6 +4,7 @@ import { authConsts } from "./constants"
 import Cookies from 'universal-cookie'
 import { decryptAES, decryptRSA, importRSAPrivKey } from "encrypt"
 import CryptoJS from "crypto-js"
+import { Navigate } from "react-router-dom"
 
 const cookies = new Cookies()
 
@@ -178,6 +179,7 @@ export const isLoggedIn = () => {
 
 export const signout = () => {
     return async (dispatch) => {
+        
         dispatch({ type: authConsts.LOGOUT_REQUEST })
         let refreshToken = cookies.get('refreshToken')
         let token = cookies.get('token')
@@ -202,6 +204,7 @@ export const signout = () => {
             dispatch(
                 { type: authConsts.LOGOUT_SUCCESS }
             )
+            window.location.href = '/'
         }
         else {
             dispatch(

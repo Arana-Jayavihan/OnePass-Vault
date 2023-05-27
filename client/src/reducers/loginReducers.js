@@ -91,6 +91,12 @@ export default (state = initState, action) => {
                 updating: false
             }
             break
+        case loginConsts.REMOVE_LOGINS:
+            state = {
+                ...state,
+                logins: []
+            }
+            break
     }
     return state
 }

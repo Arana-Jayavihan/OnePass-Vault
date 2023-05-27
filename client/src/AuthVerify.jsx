@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { useLocation } from "react-router-dom";
 import Cookies from 'universal-cookie';
 
@@ -32,7 +33,12 @@ const AuthVerify = (props) => {
                     props.refreshToken();
                 }
             }
-            props.lockVault();
+            // if(	(location.pathname.includes("/unlock-vault")) === true ){
+            //     toast.error("You must unlock your vault to access this page", { id: 'auth-verify' });
+            //     console.log(location)
+            //     // props.lockVault();
+            // }
+            
         }
         catch (err) {
             console.log(err)

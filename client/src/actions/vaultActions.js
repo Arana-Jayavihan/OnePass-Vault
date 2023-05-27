@@ -1,5 +1,5 @@
 import axiosInstance from "helpers/axios"
-import { vaultConsts } from "./constants"
+import { loginConsts, vaultConsts } from "./constants"
 import { toast } from "react-hot-toast"
 import shortid from "shortid"
 import { decryptAES, decryptRSA, encryptAES, generateMasterEncryptionKey, importRSAPrivKey } from "encrypt"
@@ -144,13 +144,13 @@ export const unlockUserVault = (form) => {
                             const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", getVaultKeyForm)
                             if (vaultKeyRes.status === 200) {
                                 const encVaultKey = vaultKeyRes.data.payload
+                                console.log(encVaultKey)
                                 const vaultKey = (await decryptAES(encVaultKey, masterEncKey)).toString(CryptoJS.enc.Utf8)
                                 toast.success("Vault Unlocked", { id: 'vus' })
+                                console.log(vaultKey)
                                 dispatch({
                                     type: vaultConsts.UNLOCK_VAULT_SUCCESS,
-                                    payload: {
-                                        vaultKey
-                                    }
+                                    payload: vaultKey
                                 })
                                 cookies.set("encVaultUnlockToken", encVaultUnlockToken, {
                                     path: "/",
@@ -230,9 +230,11 @@ export const getVaultData = (form, vaultKey) => {
                 })
                 toast.success("Vault Data Fetched", { id: 'vds' })
                 const vaultData = res.data.payload
+                console.log(vaultKey)
                 const decLogins = await decryptVaultLogins(vaultData.vaultLogins, vaultKey)
                 if (decLogins !== false) {
                     vaultData["vaultLogins"] = decLogins
+                    
                     dispatch({
                         type: vaultConsts.GET_VAULT_DATA_SUCCESS,
                         payload: vaultData
@@ -282,6 +284,9 @@ export const lockUserVault = () => {
         return async dispatch => {
             dispatch({
                 type: vaultConsts.LOCK_VAULT_SUCCESS
+            })
+            dispatch({
+                type: loginConsts.REMOVE_LOGINS
             })
         }
     } catch (error) {

@@ -15,6 +15,7 @@ import methodOverride from 'method-override'
 import authRoutes from "./Routes/authRoutes.js"
 import vaultRoutes from "./Routes/vaultRoutes.js"
 import keyRoutes from "./Routes/keyRoutes.js"
+import loginRoutes from "./Routes/loginRoutes.js"
 
 const filePath = fileURLToPath(import.meta.url);
 const dirName = path.dirname(filePath);
@@ -144,6 +145,7 @@ app.use((req, res, next) => {
 app.use("/api", authRoutes)
 app.use("/api", vaultRoutes)
 app.use("/api", keyRoutes)
+app.use("/api", loginRoutes)
 
 // DEFAULT ROUTE
 app.get('/', (req, res) => {

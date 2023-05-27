@@ -3,7 +3,7 @@ export const assignVaultParser = (vaults) => {
     for (let i = 0; i < vaults.length; i++) {
         let vaultObj = {}
         vaultObj['vaultIndex'] = parseInt(vaults[i][0]._hex)
-        vaultObj['vaultName'] = vaults[i][1]
+        vaultObj['vaultName'] = vaults[i][1].split('_')[0]
         vaultObj['desctiption'] = vaults[i][2]
         if(vaults[i][1] !== '' && vaults[i][2] !== '') {
             vaultArr.push(vaultObj)
@@ -15,7 +15,7 @@ export const assignVaultParser = (vaults) => {
 export const vaultDataParser = (vault) => {
     let vaultObj = {}
     vaultObj['vaultIndex'] = parseInt(vault[0]._hex)
-    vaultObj['vaultName'] = vault[1]
+    vaultObj['vaultName'] = vault[1].split('_')[0]
     vaultObj['description'] = vault[2]
     vaultObj['ownerEmail'] = vault[3]
     vaultObj['vaultUsers'] = vaultUserParser(vault[7])

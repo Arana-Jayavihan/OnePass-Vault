@@ -30,7 +30,7 @@ function App() {
 	const verifying = useSelector(state => state.auth.verifying)
 	const mode = useSelector(state => state.general.mode)
 	const authenticated = useSelector(state => state.auth.authenticated);
-	const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);
+	const theme = useMemo(() => createTheme(themeSettings(mode)), [mode])
 
 	useEffect(() => {
 		const mode1 = localStorage.getItem('mode')
@@ -113,12 +113,12 @@ function App() {
 
 					<Route element={authenticated ? <Layout /> : <SignIn />}>
 						{/* <Route path="/dashboard" element={<Test />} /> */}
-						<Route path="/dashboard1" element={<Dashboard />} />
+						<Route path="/dashboard" element={<Dashboard />} />
 						<Route path="/transactions" element={<Transactions />} />
 						<Route path="/vaults" element={<Vaults />} />
 						<Route path="/billing" element={<Billing />} />
 						<Route path="/profile" element={<Profile />} />
-						<Route path="/vault/:id" element={<UnlockedVault />} />
+						<Route path="/unlock-vault/:id" element={<UnlockedVault />} />
 					</Route>
 				</Routes>
 			</ThemeProvider>

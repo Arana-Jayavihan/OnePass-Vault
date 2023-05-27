@@ -247,7 +247,7 @@ contract OnePass {
 
         AssignedVault storage asVault = assignedVaults[vaultKeyHash];
         asVault.vaultName = name;
-        asVault.vaultIndex = tempUser.numVaults;
+        asVault.vaultIndex = vaultCount;
         asVault.note = note;
 
         tempUser.assignedVaults.push(asVault);
@@ -329,11 +329,12 @@ contract OnePass {
         User storage tempUser = users[addUserEmail];
 
         AssignedVault storage tempVault = assignedVaults[encVaultKey];
-        tempVault.vaultIndex = tempUser.numVaults;
+        tempVault.vaultIndex = vaultIndex;
         tempVault.vaultName = vaults[vaultIndex].name;
         tempVault.note = vaults[vaultIndex].note;
 
         tempUser.assignedVaults.push(tempVault);
+        tempUser.numVaults++;
         
         VaultUser storage user = vaultUsers[addUserEmail];
         user.email = addUserEmail;

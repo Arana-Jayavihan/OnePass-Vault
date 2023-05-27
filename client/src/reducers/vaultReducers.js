@@ -2,7 +2,7 @@ import { vaultConsts } from "actions/constants"
 
 const initState = {
     creating: false,
-    updatung: false,
+    updating: false,
     deleteing: false,
     loading: false,
     unlocking: false,
@@ -61,7 +61,7 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 unlocking: false,
-                vaultKey: action.payload.vaultKey
+                vaultKey: action.payload
             }
             break
         case vaultConsts.UNLOCK_VAULT_FAILED:
@@ -80,8 +80,7 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 loading: false,
-                vault: action.payload,
-                vaultKey: undefined,
+                vault: action.payload
             }
             break
         case vaultConsts.GET_VAULT_DATA_FAILED:
@@ -95,14 +94,14 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 vaultKey: undefined,
-                vault: undefined
+                vault: {}
             }
             break
         case vaultConsts.LOCK_VAULT_FAILED:
             state = {
                 ...state,
                 vaultKey: undefined,
-                vault: undefined
+                vault: {}
             }
             break
     }

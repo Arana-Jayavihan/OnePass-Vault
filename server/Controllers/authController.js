@@ -30,9 +30,6 @@ export const userKeyGeneration = async (req, res) => {
                     error: result
                 })
             }
-            // res.status(201).json({
-            //     message: 'User Key Generation Success'
-            // })
         }
         else {
             res.status(401).json({

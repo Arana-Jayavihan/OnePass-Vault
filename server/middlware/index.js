@@ -11,12 +11,12 @@ export const requireSignin = (req, res, next) => {
             if (decToken === token) {
                 const user = jwt.verify(token, process.env.JWT_SECRET)
                 req.user = user
-                // if(req.user.ip !== req.headers['x-forwarded-for'])
-                // {
-                //     return res.status(400).json({
-                //         message: "Invalid Session"
-                //     })
-                // }
+                if(req.user.ip !== req.headers['x-forwarded-for'])
+                {
+                    return res.status(400).json({
+                        message: "Invalid Session"
+                    })
+                }
             }
             else {
                 return res.status(401).json({

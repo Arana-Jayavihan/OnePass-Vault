@@ -15,17 +15,35 @@ import { Col, Container, Row, Table } from 'react-bootstrap'
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getVaultData } from 'actions/vaultActions';
+import { getVaultData, lockUserVault } from 'actions/vaultActions';
+import { addUserLogin } from 'actions/loginActions';
 
 const UnlockedVault = () => {
+    
+
     const theme = useTheme()
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const email = useSelector(state => state.auth.user.email)
     const loading = useSelector(state => state.vault.loading)
+    const adding = useSelector(state => state.login.adding)
+    const deleting = useSelector(state => state.login.deleting)
+    const updating = useSelector(state => state.login.updating)
     const vaultUnlockKey = useSelector(state => state.vault.vaultKey)
+    const logins = useSelector(state => state.login.logins)
     const vault = useSelector(state => state.vault.vault)
     const unlockToken = useParams()
+
+    const [loginsList, setLoginsList] = useState([]);
+    useEffect(() => {
+        if (logins?.length === 0) {
+            setLoginsList(vault?.vaultLogins)
+        }
+        else {
+            setLoginsList(logins)
+        }
+    }, [logins])
+
 
     useEffect(() => {
         if (loading === true) {
@@ -38,18 +56,164 @@ const UnlockedVault = () => {
         }
 
     }, [loading]);
-    let users = ['aranajayavihan@gmail.com', "fernandojanith266@gmail.com", "afanaj@mitesp.com"]
+    useEffect(() => {
+        if (adding === true) {
+            toast.loading('Adding...', {
+                id: 'Adding'
+            })
+        }
+        else if (adding === false) {
+            toast.dismiss('Adding')
+        }
+
+    }, [adding]);
+    useEffect(() => {
+        if (deleting === true) {
+            toast.loading('Removing...', {
+                id: 'Removing'
+            })
+        }
+        else if (deleting === false) {
+            toast.dismiss('Removing')
+        }
+
+    }, [deleting]);
+    useEffect(() => {
+        if (updating === true) {
+            toast.loading('Updating...', {
+                id: 'Updating'
+            })
+        }
+        else if (updating === false) {
+            toast.dismiss('Updating')
+        }
+
+    }, [updating]);
+
     useEffect(() => {
         const form = {
             email: email,
             token: unlockToken.id
         }
         dispatch(getVaultData(form, vaultUnlockKey)).then((result) => {
-            // if (result === false){
-            //     navigate('/vaults')
-            // }
+            if (result === false) {
+                setLoginsList([])
+                navigate('/vaults')
+            }
         })
     }, [])
+
+    // Add new login
+    const [showAddLogin, setShowAddLogin] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [loginName, setLoginName] = useState(undefined);
+    const [loginUrl, setLoginUrl] = useState(undefined);
+    const [loginUsername, setLoginUsername] = useState(undefined);
+    const [loginPassword, setLoginPassword] = useState(undefined);
+    const vaultKey = useSelector(state => state.vault.vaultKey)
+
+    const [passType, setPassType] = useState('password')
+
+    const showPasswords = () => {
+        if (showPassword === false) {
+            setPassType('text')
+            setShowPassword(true)
+        }
+        else {
+            setPassType('password')
+            setShowPassword(false)
+        }
+    }
+
+    const closeAddLogin = () => {
+        setShowAddLogin(false)
+        setLoginName(undefined)
+        setLoginUrl(undefined)
+        setLoginUsername(undefined)
+        setLoginPassword(undefined)
+    }
+
+    const addLogin = () => {
+        const form = {
+            vaultIndex: vault?.vaultIndex,
+            email: email,
+            loginName: loginName,
+            loginUrl: loginUrl,
+            loginUsername: loginUsername,
+            loginPassword: loginPassword,
+            vaultKey: vaultKey
+        }
+
+        dispatch(addUserLogin(form)).then((result) => {
+            console.log(result)
+        })
+        closeAddLogin()
+    }
+
+    const renderAddLoginModal = () => {
+        return (
+            <NewModel
+                show={showAddLogin}
+                close={closeAddLogin}
+                handleClose={addLogin}
+                ModalTitle="Enter Credential Details"
+                size='md'>
+                <Row>
+                    <Col md={6}>
+                        <Typography sx={{ color: theme.palette.primary[500] }} >
+                            <Input
+                                label="Name"
+                                value={loginName}
+                                placeholder={'Instagram'}
+                                onChange={(e) => setLoginName(e.target.value)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={6}>
+                        <Typography sx={{ color: theme.palette.primary[500] }} >
+                            <Input
+                                label="URL"
+                                value={loginUrl}
+                                placeholder={'www.instagram.com'}
+                                onChange={(e) => setLoginUrl(e.target.value)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={6}>
+                        <Typography sx={{ color: theme.palette.primary[500] }} >
+                            <Input
+                                label="Username"
+                                value={loginUsername}
+                                placeholder={'_.john_doe._'}
+                                onChange={(e) => setLoginUsername(e.target.value)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={6} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                        <Typography sx={{ color: theme.palette.primary[500] }} >
+                            <Input
+                                label="Password"
+                                value={loginPassword}
+                                type={passType}
+                                onChange={(e) => setLoginPassword(e.target.value)}
+                            />
+
+                        </Typography>
+                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
+                            {
+                                showPassword ?
+                                    <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                                    :
+                                    <AiFillEyeInvisible style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                            }
+                        </IconButton>
+                    </Col>
+                </Row>
+
+            </NewModel>
+        )
+    }
+
 
     const renderLoginTable = () => {
         return (
@@ -90,7 +254,7 @@ const UnlockedVault = () => {
                 </thead>
                 <tbody>
                     {
-                        vault?.vaultLogins?.map((login, index) => {
+                        loginsList?.map((login, index) => {
                             return (
                                 <tr key={index}>
                                     <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
@@ -188,25 +352,25 @@ const UnlockedVault = () => {
                                         <motion.button
                                             className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
                                             whileHover={{ scale: [1, 1.1] }}
-
+                                            onClick={() => setShowAddLogin(true)}
                                         >
-                                            Add Login
+                                            Add Credential
                                         </motion.button>
                                     </div>
                                 </Col>
                             </Row>
                             <Row>
                                 <Col md={3}
-                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: "auto", overflowY: 'scroll' }}
+                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: "60vh", overflowY: 'scroll' }}
                                 >
-                                    <div style={{ backgroundColor: "#343434", borderRadius: '15px', padding: '1rem' }}>
+                                    <div style={{ backgroundColor: theme.palette.primary[100], borderRadius: '15px', padding: '1rem', height: 'auto' }}>
                                         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }} >
                                             <div style={{ backgroundColor: theme.palette.background.default, padding: '2rem 2.5rem', borderRadius: '15px' }}>
                                                 <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
                                                     Logins
                                                 </Typography>
                                                 <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                                    {vault?.numLogins}
+                                                    {loginsList?.length}
                                                 </Typography>
                                             </div>
                                             <div style={{ backgroundColor: theme.palette.background.default, padding: '2rem 2.5rem', borderRadius: '15px' }}>
@@ -214,38 +378,61 @@ const UnlockedVault = () => {
                                                     Users
                                                 </Typography>
                                                 <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                                    {vault?.numUsers}
+                                                    {vault?.vaultUsers?.length}
                                                 </Typography>
                                             </div>
                                         </div>
                                         <div style={{ marginTop: '2rem' }}>
-                                            <Typography variant='h6' sx={{ textAlign: 'left', margin: 0, marginBottom: '.5rem', padding: 0, }}>
-                                                Owner : aranajayavihan@gmail.com
+                                            <Typography variant='h6' sx={{ textAlign: 'left', margin: 0, marginBottom: '.5rem', padding: 0, color: theme.palette.primary[900] }}>
+                                                Owner : {vault?.ownerEmail}
                                             </Typography>
-                                            <Typography variant='h6' sx={{ textAlign: 'left', margin: 0, marginBottom: '.5rem', padding: 0, }}>
-                                                {`Users : \n\n`}
+                                            <Typography variant='h6' sx={{ textAlign: 'left', margin: 0, marginBottom: '.5rem', padding: 0, color: theme.palette.primary[900] }}>
+                                                {`Assigned Users : \n\n`}
                                                 {
-                                                    users.map((user, index) => {
-                                                        return (
-                                                            <Typography key={index} variant='h6' sx={{ textAlign: 'left', margin: 0, padding: 0, paddingLeft: '1rem' }}>
-                                                                {user}
-                                                            </Typography>
-                                                        )
+                                                    vault?.vaultUsers?.map((user, index) => {
+                                                        if (user?.userEmail !== vault?.ownerEmail) {
+                                                            return (
+                                                                <Typography key={index} variant='h6' sx={{ textAlign: 'left', margin: 0, padding: 0, paddingLeft: '1rem', color: theme.palette.primary[900] }}>
+                                                                    {user?.userEmail}
+                                                                </Typography>
+                                                            )
+                                                        }
+                                                        if (vault?.vaultUsers?.length === 1) {
+                                                            return (
+                                                                <Typography key={index} variant='h6' sx={{ textAlign: 'left', margin: 0, padding: 0, paddingLeft: '1rem', color: theme.palette.primary[900] }}>
+                                                                    No users assigned
+                                                                </Typography>
+                                                            )
+                                                        }
                                                     })
                                                 }
                                             </Typography>
                                         </div>
+                                        <div style={{ display: "flex" }}>
+                                            <Typography sx={{ color: theme.palette.primary[500] }} >
+                                                <Input
+                                                    label="Assign a user"
+                                                    value={undefined}
+                                                    placeholder={'Enter email'}
+
+                                                />
+                                            </Typography>
+                                            <motion.button
+                                                className='form-control' style={{ width: 'auto', height: 'fit-content', margin: '1.9rem 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                                whileHover={{ scale: [1, 1.1] }}
+
+                                            >
+                                                Add
+                                            </motion.button>
+                                        </div>
                                     </div>
 
                                 </Col>
-                                <Col md={9}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem' }}>
-                                        <div style={{ display: 'flex', height: '2rem', alignItems: 'center' }}>
-                                            <IconButton  >
-                                                <MdRefresh />
-                                            </IconButton>
-                                            <Typography style={{ cursor: 'pointer' }} >Refresh</Typography>
-                                        </div>
+                                <Col md={9}
+                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: "60vh", overflowY: 'scroll' }}
+                                >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem, 1rem' }}>
+
                                         <FlexBetween
                                             backgroundColor={theme.palette.background.alt}
                                             borderRadius="9px"
@@ -284,7 +471,9 @@ const UnlockedVault = () => {
                             </Row>
                         </Container>
                     </motion.div>
+
             }
+            {renderAddLoginModal()}
         </Container>
 
     )
