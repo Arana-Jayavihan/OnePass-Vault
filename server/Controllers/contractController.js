@@ -148,6 +148,7 @@ export const removeUser = async (email) => {
 export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyHash) => {
     try {
         const result = await contract.call("createVault", [email, vaultName, note, encVaultKey, vaultKeyHash])
+        addTransactionHash(email, result.receipt.transactionHash)
         return result
     } catch (error) {
         console.log(error)
@@ -158,6 +159,7 @@ export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyH
 export const updateVault = async (vaultIndex, ownerEmail, vaultName, note) => {
     try {
         const result = await contract.call("updateVault", [vaultIndex, ownerEmail, vaultName, note])
+        addTransactionHash(ownerEmail, result.receipt.transactionHash)
         return result
     } catch (error) {
         console.log(error)
@@ -168,6 +170,7 @@ export const updateVault = async (vaultIndex, ownerEmail, vaultName, note) => {
 export const addVaultUser = async (vaultIndex, ownerEmail, addUserEmail, encVaultKey) => {
     try {
         const result = await contract.call("addVaultUser", [vaultIndex, ownerEmail, addUserEmail, encVaultKey])
+        addTransactionHash(addUserEmail, result.receipt.transactionHash)
         return result
     } catch (error) {
         console.log(error)
@@ -178,6 +181,7 @@ export const addVaultUser = async (vaultIndex, ownerEmail, addUserEmail, encVaul
 export const removeVaultUser = async (email, vaultIndex, userIndex) => {
     try {
         const result = await contract.call("removeVaultUser", [email, vaultIndex, userIndex])
+        addTransactionHash(email, result.receipt.transactionHash)
         return result
     } catch (error) {
         console.log(error)
@@ -188,6 +192,7 @@ export const removeVaultUser = async (email, vaultIndex, userIndex) => {
 export const removeVault = async (ownerEmail, vaultIndex) => {
     try {
         const result = await contract.call("removeVault", [ownerEmail, vaultIndex])
+        addTransactionHash(ownerEmail, result.receipt.transactionHash)
         return result
     } catch (error) {
         console.log(error)
@@ -239,6 +244,7 @@ export const getUserVaultEncKey = async (vaultIndex, email) => {
 export const addVaultLogin = async (email, loginName, url, userName, password, vaultIndex) => {
     try {
         const result = await contract.call("addVaultLogin", [email, loginName, url, userName, password, vaultIndex])
+        addTransactionHash(email, result.receipt.transactionHash)
         return result
     } catch (error) {
         console.log(error)
@@ -249,6 +255,7 @@ export const addVaultLogin = async (email, loginName, url, userName, password, v
 export const updateVaultLogin = async (loginIndex, vaultIndex, ownerEmail, loginName, url, userName, password) => {
     try {
         const result = await contract.call("updateVaultLogin", [loginIndex, vaultIndex, ownerEmail, loginName, url, userName, password])
+        addTransactionHash(ownerEmail, result.receipt.transactionHash)
         return result
     } catch (error) {
         console.log(error)
@@ -259,6 +266,7 @@ export const updateVaultLogin = async (loginIndex, vaultIndex, ownerEmail, login
 export const removeVaultLogin = async (ownerEmail, vaultIndex, loginIndex) => {
     try {
         const result = await contract.call("removeVaultLogin", [ownerEmail, vaultIndex, loginIndex])
+        addTransactionHash(ownerEmail, result.receipt.transactionHash)
         return result
     } catch (error) {
         console.log(error)
