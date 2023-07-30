@@ -11,7 +11,7 @@ export const getMasterEncryptionKey = async (req, res) => {
         }
         else if(result === false) {
             res.status(500).json({
-                message: "Something Went Wrong!"
+                message: "No User Found!"
             })
         }
     } catch (error) {
@@ -25,6 +25,7 @@ export const getMasterEncryptionKey = async (req, res) => {
 
 export const getPubKey = async (req, res) => {
     try {
+        console.log(req.body, 'key')
         const email = req.body.email
         const result = await getPublicKey(email)
         if(result) {
@@ -35,7 +36,7 @@ export const getPubKey = async (req, res) => {
         }
         else if(result === false) {
             res.status(500).json({
-                message: "Something Went Wrong!"
+                message: "No User Found!"
             })
         }
     } catch (error) {
@@ -59,7 +60,7 @@ export const getPrivKey = async (req, res) => {
         }
         else if(result === false) {
             res.status(500).json({
-                message: "Something Went Wrong!"
+                message: "No User Found!"
             })
         }
     } catch (error) {
@@ -83,7 +84,7 @@ export const getUserHashPassword = async (req, res) => {
         }
         else if(result === false) {
             res.status(500).json({
-                message: "Something Went Wrong!"
+                message: "No User Found!"
             })
         }
     } catch (error) {

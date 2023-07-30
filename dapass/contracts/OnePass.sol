@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 contract OnePass {
     address private owner;
     string private contractHash;
+    bool private isInitiated;
     uint256 private vaultCount = 0;
     uint256 private loginCount = 0;
 
@@ -67,7 +68,9 @@ contract OnePass {
 
     //Constructor
     function InitiateContract(string memory contHash) public {
+        require(isInitiated == false, "Contract is Initiated");
         owner = msg.sender;
+        isInitiated == true;
         contractHash = contHash;
     }
 

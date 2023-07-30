@@ -20,9 +20,9 @@ import Transactions from "scenes/transactions/Transactions";
 import Vaults from "scenes/vaults/Vaults";
 import Billing from "scenes/billing/Billing";
 import Profile from "scenes/profile/Profile";
-import { switchMode } from "actions/generalActions";
 import UnlockedVault from "scenes/unlockedVault/UnlockedVault";
 import { lockUserVault } from "actions/vaultActions";
+import VaultInvite from "scenes/vaultInvite/vaultInvite";
 
 function App() {
 	const dispatch = useDispatch()
@@ -33,8 +33,6 @@ function App() {
 	const theme = useMemo(() => createTheme(themeSettings(mode)), [mode])
 
 	useEffect(() => {
-		const mode1 = localStorage.getItem('mode')
-		dispatch(switchMode(mode1))
 		if (!authenticated) {
 			dispatch(isLoggedIn());
 		}
@@ -107,7 +105,7 @@ function App() {
 				<Routes>
 					<Route path="/" element={<SignIn />} />
 					<Route path="/signup" element={<Signup />} />
-
+					
 					{/* <Route path="/test" element={<Test />} /> */}
 					{/* <Route path="pw-reset/:token" element={<PassReset />} /> */}
 
@@ -119,6 +117,7 @@ function App() {
 						<Route path="/billing" element={<Billing />} />
 						<Route path="/profile" element={<Profile />} />
 						<Route path="/unlock-vault/:id" element={<UnlockedVault />} />
+						<Route path="/vault-invite/:token" element={<VaultInvite />} />
 					</Route>
 				</Routes>
 			</ThemeProvider>

@@ -2,7 +2,7 @@ import axiosInstance from "helpers/axios"
 import { loginConsts, vaultConsts } from "./constants"
 import { toast } from "react-hot-toast"
 import shortid from "shortid"
-import { decryptAES, decryptRSA, encryptAES, generateMasterEncryptionKey, importRSAPrivKey } from "encrypt"
+import { decryptAES, decryptRSA, encryptAES, encryptRSA, generateMasterEncryptionKey, importRSAPrivKey, importRSAPubKey } from "encrypt"
 import CryptoJS from "crypto-js"
 import Cookies from 'universal-cookie'
 const cookies = new Cookies()
@@ -146,7 +146,7 @@ export const unlockUserVault = (form) => {
                                 const encVaultKey = vaultKeyRes.data.payload
                                 const vaultKey = (await decryptAES(encVaultKey, masterEncKey)).toString(CryptoJS.enc.Utf8)
                                 toast.success("Vault Unlocked", { id: 'vus' })
-                                
+
                                 dispatch({
                                     type: vaultConsts.UNLOCK_VAULT_SUCCESS,
                                     payload: vaultKey
@@ -232,7 +232,7 @@ export const getVaultData = (form, vaultKey) => {
                 const decLogins = await decryptVaultLogins(vaultData.vaultLogins, vaultKey)
                 if (decLogins !== false) {
                     vaultData["vaultLogins"] = decLogins
-                    
+
                     dispatch({
                         type: vaultConsts.GET_VAULT_DATA_SUCCESS,
                         payload: vaultData
@@ -274,6 +274,187 @@ export const getVaultData = (form, vaultKey) => {
                 type: vaultConsts.GET_VAULT_DATA_FAILED
             })
             return false
+        }
+    }
+}
+
+export const addVaultUser = (form) => {
+    try {
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.ADD_VAULT_USER_REQUEST_REQUEST
+            })
+            const form1 = {
+                email: form.addUserEmail,
+            }
+            const addUserPubKeyRes = await axiosInstance.post("/keys/get-pub-key", form1)
+            if (addUserPubKeyRes.status !== 200) {
+                toast.error(addUserPubKeyRes.response.data.message, { id: 'vaf' })
+                dispatch({
+                    type: vaultConsts.ADD_VAULT_USER_REQUEST_FAILED
+                })
+            }
+            const publicKey = await importRSAPubKey(addUserPubKeyRes.data.payload)
+            const encVaultKey = await encryptRSA(form.vaultKey, publicKey)
+            const vaultUnlockForm = {
+                vaultIndex: form.vaultIndex,
+                email: form.email,
+                addUserEmail: form.addUserEmail,
+                encVaultKey: encVaultKey
+            }
+            const res = await axiosInstance.post("/vault/add-vault-user-request", vaultUnlockForm)
+            if (res.status === 200) {
+                toast.success(res.data.message, { id: 'vas' })
+                dispatch({
+                    type: vaultConsts.ADD_VAULT_USER_REQUEST_SUCCESS
+                })
+            }
+            else if (res.response) {
+                toast.error(res.response.data.message, { id: 'vaf' })
+                dispatch({
+                    type: vaultConsts.ADD_VAULT_USER_REQUEST_FAILED
+                })
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.ADD_VAULT_USER_REQUEST_FAILED
+            })
+        }
+    }
+
+}
+
+export const getVaultInvitationData = (form) => {
+    try {
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.GET_VAULT_INVITE_DATA_REQUEST
+            })
+            const res = await axiosInstance.post("/vault/get-vault-invite-data", form)
+            if (res.status === 200) {
+                toast.success("Vault Invitation Data Fetched", { id: 'vids' })
+                dispatch({
+                    type: vaultConsts.GET_VAULT_INVITE_DATA_SUCCESS,
+                    payload: res.data.payload
+                })
+            }
+            else if (res.response) {
+                toast.error(res.response.data.message, { id: 'vidf' })
+                dispatch({
+                    type: vaultConsts.GET_VAULT_INVITE_DATA_FAILED
+                })
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.GET_VAULT_INVITE_DATA_FAILED
+            })
+        }
+    }
+}
+
+export const acceptVaultInvitation = (form) => {
+    try {
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.VAULT_INVITE_ACCEPT_REQUEST
+            })
+            const getKeysForm = {
+                email: form.email
+            }
+            const hashRes = await axiosInstance.post("/keys/get-user-hash-pass", getKeysForm)
+            if (hashRes.status === 200) {
+                const userHashPass = hashRes.data.payload
+                if (CryptoJS.SHA512(form.pass).toString(CryptoJS.enc.Base64) === userHashPass) {
+                    const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
+                    if (masterKeyRes.status === 200) {
+                        const encMasterKey = masterKeyRes.data.payload
+                        const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
+                        if (privKeyRes.status === 200) {
+                            const encPrivKey = privKeyRes.data.payload
+                            try {
+                                const encodedPrivateKey = (await decryptAES(encPrivKey, form.pass)).toString(CryptoJS.enc.Utf8)
+                                const privateKey = await importRSAPrivKey(encodedPrivateKey)
+                                try {
+                                    const vaultKey = await decryptRSA(form.encVaultKey, privateKey)
+                                    const masterEncKey = await decryptRSA(encMasterKey, privateKey)
+                                    const encVaultKey = await encryptAES(vaultKey, masterEncKey)
+                                    const addVaultUserForm = {
+                                        vaultIndex: form.vaultIndex,
+                                        email: form.email,
+                                        encVaultKey: encVaultKey,
+                                        token: form.token
+                                    }
+                                    const res = await axiosInstance.post("/vault/accept-vault-invite", addVaultUserForm)
+                                    if (res.status === 201) {
+                                        toast.success(res.data.message, { id: 'vas' })
+                                        dispatch({
+                                            type: vaultConsts.VAULT_INVITE_ACCEPT_SUCCESS
+                                        })
+                                        return true
+                                    }
+                                    else if (res.response) {
+                                        toast.error(res.response.data.message, { id: 'vaf' })
+                                        dispatch({
+                                            type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+                                        })
+                                    }
+                                } catch (error) {
+                                    toast.error('Incorrect Private Key', { id: 'vuf' })
+                                    dispatch({
+                                        type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+                                    })
+                                }
+                            } catch (error) {
+                                toast.error("Incorrect Password", { id: 'icp' })
+                                dispatch({
+                                    type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+                                })
+                                return false
+                            }
+                        }
+                        else if (privKeyRes.response) {
+                            toast.error(privKeyRes.response.data.message, { id: 'vuf' })
+                            dispatch({
+                                type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+                            })
+                            return false
+                        }
+                    }
+                    else if (masterKeyRes.response) {
+                        toast.error(masterKeyRes.response.data.message, { id: 'vuf' })
+                        dispatch({
+                            type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+                        })
+                        return false
+                    }
+                }
+                else {
+                    toast.error("Incorrect Password", { id: 'icp' })
+                    dispatch({
+                        type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+                    })
+                    return false
+                }
+            }
+            else if (hashRes.response) {
+                toast.error(hashRes.response.data.message, { id: 'vuf' })
+                dispatch({
+                    type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+                })
+                return false
+            }
+        }
+    } catch (error) {
+        return async dispatch => {
+            dispatch({
+                type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+            })
         }
     }
 }

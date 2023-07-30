@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useId } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion'
 import { useTheme, IconButton, InputBase, Typography } from '@mui/material'
@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast'
 import FlexBetween from 'components/FlexBetween'
 import { Search } from '@mui/icons-material';
 import { ThreeDots } from 'react-loader-spinner'
-import { MdDelete, MdRemoveRedEye, MdEdit, MdRefresh } from 'react-icons/md'
+import { MdDelete, MdRemoveRedEye, MdEdit, MdRefresh, MdFileCopy } from 'react-icons/md'
 import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
 import { NewModel } from 'components/Modal'
 import { Input } from 'components/input/input'
@@ -15,7 +15,7 @@ import { Col, Container, Row, Table } from 'react-bootstrap'
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getVaultData, lockUserVault } from 'actions/vaultActions';
+import { addVaultUser, getVaultData, lockUserVault } from 'actions/vaultActions';
 import { addUserLogin } from 'actions/loginActions';
 
 const UnlockedVault = () => {
@@ -101,6 +101,7 @@ const UnlockedVault = () => {
     const [loginUrl, setLoginUrl] = useState(undefined);
     const [loginUsername, setLoginUsername] = useState(undefined);
     const [loginPassword, setLoginPassword] = useState(undefined);
+    const [addUserEmail, setAddUserEmail] = useState(undefined);
     const vaultKey = useSelector(state => state.vault.vaultKey)
 
     const [passType, setPassType] = useState('password')
@@ -205,6 +206,21 @@ const UnlockedVault = () => {
         )
     }
 
+    // Add Vault User 
+    
+    const addUser = () => {
+        console.log(addUserEmail)
+
+        let form = {
+            'email': email,
+            'addUserEmail': addUserEmail,
+            'vaultIndex': vault.vaultIndex,
+            'vaultKey': vaultUnlockKey
+        }
+        dispatch(addVaultUser(form))
+        form = {}
+
+    }
 
     const renderLoginTable = () => {
         return (
@@ -259,25 +275,55 @@ const UnlockedVault = () => {
                                         </Typography>
                                     </td>
                                     <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                        <Typography sx={{ color: theme.palette.primary[200] }}>
+                                        <Typography
+                                            sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}
+                                            onClick={() => window.open(`https://${login.loginUrl}`, '_blank')}
+                                        >
                                             {login.loginUrl}
                                         </Typography>
                                     </td>
                                     <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                        <Typography sx={{ color: theme.palette.primary[200] }}>
+                                        <Typography sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}>
                                             {login.loginUsername}
+                                            <span><IconButton onClick={() => {
+                                                navigator.clipboard.writeText(login.loginUsername)
+                                                toast.success('Copied to Clipboard')
+                                            }}>
+                                                <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
+                                            </IconButton>
+                                            </span>
                                         </Typography>
                                     </td>
                                     <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                        <Typography sx={{ color: theme.palette.primary[200] }}>
-                                            {login.loginPassword}
+                                        <Typography
+                                            sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}>
+                                            <input type='password' id={login.loginUsername} value={login.loginPassword} cursor='pointer' disabled />
+                                            <span><IconButton onClick={() => {
+                                                navigator.clipboard.writeText(login.loginPassword)
+                                                toast.success('Copied to Clipboard')
+                                            }}>
+                                                <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
+                                            </IconButton>
+                                            </span>
                                         </Typography>
                                     </td>
                                     <td>
                                         {
                                             <div style={{ display: 'flex' }}>
                                                 <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
-                                                    <IconButton  >
+                                                    <IconButton
+                                                        onClick={() => {
+                                                            let type = document.getElementById(login.loginUsername).getAttribute('type')
+                                                            let setType = undefined
+                                                            if (type === 'password') {
+                                                                setType = 'text'
+                                                            }
+                                                            else if (type === 'text') {
+                                                                setType = 'password'
+                                                            }
+                                                            document.getElementById(login.loginUsername).setAttribute('type', setType)
+                                                        }}
+                                                    >
                                                         <MdRemoveRedEye style={{ color: theme.palette.secondary[300] }} />
                                                     </IconButton>
                                                 </Typography>
@@ -403,15 +449,18 @@ const UnlockedVault = () => {
                                             <Typography sx={{ color: theme.palette.primary[500] }} >
                                                 <Input
                                                     label="Assign a user"
-                                                    value={undefined}
+                                                    value={addUserEmail}
                                                     placeholder={'Enter email'}
-
+                                                    onChange={(e) => {
+                                                        setAddUserEmail(e.target.value)
+                                                        }
+                                                    }
                                                 />
                                             </Typography>
                                             <motion.button
                                                 className='form-control' style={{ width: 'auto', height: 'fit-content', margin: '1.9rem 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
                                                 whileHover={{ scale: [1, 1.1] }}
-
+                                                onClick={() => addUser()}
                                             >
                                                 Add
                                             </motion.button>
@@ -439,7 +488,7 @@ const UnlockedVault = () => {
                                         </FlexBetween>
                                     </div>
 
-                                    <Col md={12} style={{ overflowX: 'scroll',height: "55vh", overflowY: 'scroll' }}>
+                                    <Col md={12} style={{ overflowX: 'scroll', height: "55vh", overflowY: 'scroll' }}>
                                         {
                                             loginList?.length > 0 ?
                                                 <motion.div

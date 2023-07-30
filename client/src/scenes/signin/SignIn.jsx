@@ -30,7 +30,6 @@ const SignIn = () => {
             toast.error("Please provide an Email...")
         }
         else {
-            const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
             const form = {
                 'email': email
             }
@@ -49,7 +48,6 @@ const SignIn = () => {
         else {
             const passwordHash = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
             if (passwordHash === hashPass) {
-                const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
                 const form = {
                     'hashEmail': email,
                     'hashPass': passwordHash,

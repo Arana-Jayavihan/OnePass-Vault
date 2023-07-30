@@ -3,7 +3,7 @@ import { addUserData, addUserKeys, getMasterEncKey, getPrivateKey, getPublicKey,
 import CryptoJS from 'crypto-js'
 import sh from 'shortid'
 
-let tokenlist = {}
+export let tokenlist = {}
 
 // User SignUp Functions
 export const userKeyGeneration = async (req, res) => {
@@ -14,7 +14,7 @@ export const userKeyGeneration = async (req, res) => {
         console.log(chkUser)
         if (chkUser[0] !== user.email) {
             const result = await addUserKeys(user)
-            if (result.receipt.confirmations != 0) {
+            if (result.receipt.confirmations !== 0) {
                 res.status(201).json({
                     message: 'User Key Generation Success'
                 })
@@ -52,7 +52,7 @@ export const addData = async (req, res) => {
         const chkUser = await getUser(user.email)
         if (chkUser[0] === user.email) {
             const result = await addUserData(user)
-            if (result.receipt.confirmations != 0) {
+            if (result.receipt.confirmations !== 0) {
                 res.status(201).json({
                     message: "User Data Added"
                 })
@@ -226,8 +226,8 @@ export const tokenRefresh = async (req, res) => {
                 if (token === tokenlist[refreshToken].token) {
                     try {
                         delete tokenlist[refreshToken]
-                        token = jwt.sign({ email: email }, process.env.JWT_SECRET, { expiresIn: '1h' })
-                        refreshToken = jwt.sign({ email: email }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
+                        token = jwt.sign({ email: email,ip: ip }, process.env.JWT_SECRET, { expiresIn: '1h' })
+                        refreshToken = jwt.sign({ email: email, ip: ip }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
                         const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
                             iv: CryptoJS.SHA256(sh.generate()).toString(),
                             mode: CryptoJS.mode.CBC,
@@ -237,7 +237,7 @@ export const tokenRefresh = async (req, res) => {
                         tokenlist[refreshToken] = {
                             refreshToken,
                             token,
-                            encToken
+                            ip
                         }
     
                         res.status(200).json({
@@ -250,6 +250,11 @@ export const tokenRefresh = async (req, res) => {
                     catch (error) {
                         console.log(error)
                     }
+                }
+                else{
+                    res.status(401).json({
+                        message: "Invalid Token"
+                    })
                 }
             }
             else {

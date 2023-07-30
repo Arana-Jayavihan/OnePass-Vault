@@ -1,8 +1,9 @@
 import { toast } from "react-hot-toast"
 import { generalConstatnts } from "../actions/constants"
 
+const mode = localStorage.getItem('mode')
 const initState = {
-    mode: 'dark',
+    mode: mode,
     loading: false
 }
 export default (state = initState, action) => {

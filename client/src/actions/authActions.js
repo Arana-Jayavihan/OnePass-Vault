@@ -219,10 +219,12 @@ export const tokenRefresh = () => {
     const user = JSON.parse(sessionStorage.getItem('user'))
     let refreshToken = cookies.get('refreshToken')
     let token = cookies.get('token')
+    let encToken = cookies.get('encToken')
     const form = {
         'refreshToken': refreshToken,
         'token': token,
-        'email': user.email
+        'email': user.email,
+        'encToken': encToken
     }
 
     return async () => {

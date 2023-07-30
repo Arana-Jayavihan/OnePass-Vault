@@ -82,8 +82,6 @@ const Signup = () => {
                 const encryptedMasterEncKey = await encryptRSA(masterEncryptionKey, keyPair.publicKey)
                 setMasterEncKey(masterEncryptionKey)
 
-                const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
-
                 const form = {
                     'email': email,
                     'encPrivateKey': encPrivate,
@@ -109,7 +107,6 @@ const Signup = () => {
             const encFirstName = await encryptAES(firstName, masterEncKey)
             const encLastName = await encryptAES(lastName, masterEncKey)
             const encContact = await encryptAES(contact, masterEncKey)
-            const hashEmail = CryptoJS.SHA256(email).toString(CryptoJS.enc.Base64)
             const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
 
             const form = {

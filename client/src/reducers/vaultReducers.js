@@ -4,12 +4,14 @@ const initState = {
     creating: false,
     updating: false,
     deleteing: false,
+    accepting: false,
     loading: false,
     adding: false,
     unlocking: false,
     vaultKey: undefined,
     vaults: [],
-    vault: {}
+    vault: {},
+    invite: {}
 }
 
 export default (state = initState, action) => {
@@ -125,6 +127,62 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 adding: false
+            }
+            break
+        case vaultConsts.ADD_VAULT_USER_REQUEST_REQUEST:
+            state = {
+                ...state,
+                adding: true
+            }
+            break
+        case vaultConsts.ADD_VAULT_USER_REQUEST_SUCCESS:
+            state = {
+                ...state,
+                adding: false,
+            }
+            break
+        case vaultConsts.ADD_VAULT_USER_REQUEST_FAILED:
+            state = {
+                ...state,
+                adding: false
+            }
+            break
+        case vaultConsts.GET_VAULT_INVITE_DATA_REQUEST:
+            state = {
+                ...state,
+                loading: true
+            }
+            break
+        case vaultConsts.GET_VAULT_INVITE_DATA_SUCCESS:
+            state = {
+                ...state,
+                loading: false,
+                invite: action.payload
+            }
+            break
+        case vaultConsts.GET_VAULT_INVITE_DATA_FAILED:
+            state = {
+                ...state,
+                loading: false,
+                invite: {}
+            }
+            break
+        case vaultConsts.VAULT_INVITE_ACCEPT_REQUEST:
+            state = {
+                ...state,
+                accepting: true
+            }
+            break
+        case vaultConsts.VAULT_INVITE_ACCEPT_SUCCESS:
+            state = {
+                ...state,
+                accepting: false
+            }
+            break
+        case vaultConsts.VAULT_INVITE_ACCEPT_FAILED:
+            state = {
+                ...state,
+                accepting: false
             }
             break
     }
