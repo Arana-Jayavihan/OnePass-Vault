@@ -279,7 +279,7 @@ export const addVaultUserRequest = async (req, res) => {
             const mailData = {
                 to: body.addUserEmail,
                 subject: "New Vault Invitation",
-                html: vaultInvite(URL1, body.email),
+                html: vaultInvite(URL, body.email),
                 attachments: [],
                 body: ``
             }
