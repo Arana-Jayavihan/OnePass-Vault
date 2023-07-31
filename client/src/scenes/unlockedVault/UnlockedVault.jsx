@@ -79,7 +79,6 @@ const UnlockedVault = () => {
             }
 
         }
-        console.log(loginList)
     }, [page, vaultLogins]);
 
     useEffect(() => {

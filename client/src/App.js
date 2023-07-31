@@ -1,8 +1,8 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { useSelector } from "react-redux";
-import { themeSettings, themeSettings1 } from "theme";
-import { Route, Routes } from "react-router-dom";
+import { themeSettings } from "theme";
+import { Route, Routes, useLocation } from "react-router-dom";
 import Dashboard from "scenes/dashboard";
 import Layout from "scenes/layout";
 import SignIn from "scenes/signin/SignIn";
@@ -11,7 +11,6 @@ import { isLoggedIn, tokenRefresh } from "actions/authActions";
 import React, { useEffect, useMemo, useCallback, useState } from "react";
 import { useDispatch } from "react-redux";
 import './App.css'
-import AuthVerify from "AuthVerify";
 import { signout } from "actions/authActions";
 import PassReset from "scenes/pwReset/PassReset";
 import Signup from "scenes/signup/Signup";
@@ -37,10 +36,6 @@ function App() {
 		}
 	}, []);
 
-	const logOut = useCallback(() => {
-		dispatch(signout());
-	}, [dispatch]);
-
 	const refreshToken = useCallback(() => {
 		dispatch(tokenRefresh())
 	}, [dispatch])
@@ -48,6 +43,13 @@ function App() {
 	const lockVault = useCallback(() => {
 		dispatch(lockUserVault())
 	}, [dispatch])
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			refreshToken()
+		}, 1800000);
+		return () => clearInterval(interval);
+	}, []);
 
 	const authenticating = useSelector(state => state.auth.authenticating)
 
@@ -104,7 +106,7 @@ function App() {
 				<Routes>
 					<Route path="/" element={<SignIn />} />
 					<Route path="/signup" element={<Signup />} />
-					
+
 					{/* <Route path="/test" element={<Test />} /> */}
 					{/* <Route path="pw-reset/:token" element={<PassReset />} /> */}
 
@@ -120,7 +122,7 @@ function App() {
 					</Route>
 				</Routes>
 			</ThemeProvider>
-			<AuthVerify logOut={logOut} refreshToken={refreshToken} lockVault={lockVault}/>
+			{/* <AuthVerify logOut={logOut} refreshToken={refreshToken} lockVault={lockVault} /> */}
 		</div>
 
 	);

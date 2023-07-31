@@ -162,7 +162,6 @@ export const signout = () => {
             dispatch(
                 { type: authConsts.LOGOUT_SUCCESS }
             )
-            window.location.href = '/'
         }
         else {
             dispatch(
@@ -176,12 +175,14 @@ export const signout = () => {
 export const tokenRefresh = () => {
     return async () => {
         const user = JSON.parse(sessionStorage.getItem('user'))
-        const form = {
-            'email': user.email
-        }
-        const res = await axiosInstance.post('/auth/token', form)
-        if (res.status === 200) {
-            toast.success("Session Extended!", { id: 'token' })
+        if (user){
+            const form = {
+                'email': user.email
+            }
+            const res = await axiosInstance.post('/auth/token', form)
+            if (res.status === 200) {
+                toast.success("Session Extended!", { id: 'token' })
+            }
         }
     }
 }
