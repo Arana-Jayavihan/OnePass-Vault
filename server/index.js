@@ -10,6 +10,7 @@ import { rateLimit } from "express-rate-limit"
 import { middleware } from "sanitize"
 import vd from 'validator'
 import methodOverride from 'method-override'
+import cookieParser from 'cookie-parser'
 
 //Routes
 import authRoutes from "./Routes/authRoutes.js"
@@ -25,11 +26,12 @@ const app = express()
 
 // CORS
 const corsOptions = {
-    origin: ["https://onepass-vault-v3.netlify.app"]
-    // origin: ["https://onepass-vault-v3.netlify.app", "https://localhost:3000"]
-    // credentials: true,
+    // origin: ["https://onepass-vault-v3.netlify.app"]
+    origin: ["https://onepass-vault-v3.netlify.app", "https://localhost:3000"],
+    credentials: true,
 }
 app.use(cors(corsOptions))
+app.use(cookieParser())
 
 // EXPRESS
 app.use(bodyParser.json())
@@ -40,7 +42,7 @@ app.use(express.static(path.join(dirName, "Public")));
 
 // HELMET
 app.use(helmet())
-app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }))
+//app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }))
 app.use(helmet.hsts({ maxAge: 320000000, includeSubDomains: true, preload: true }))
 app.use(helmet.contentSecurityPolicy({
     browserSniff: false,
@@ -87,7 +89,6 @@ app.use((req, res, next) => {
     // APPEND
     res.append('Access-Control-Allow-Methods', 'GET,POST');
     res.append('Access-Control-Allow-Headers', 'Content-Type');
-    res.append('Access-Control-Allow-Credentials', 'true');
     res.append('Permissions-Policy', 'geolocation=(self, microphone=()')
     res.append('Server', 'CLASSIFIED')
     next();

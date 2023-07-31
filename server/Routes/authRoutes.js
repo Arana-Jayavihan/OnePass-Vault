@@ -1,9 +1,10 @@
 import express from 'express'
 import { addData, signIn, signInRequest, signOut, tokenRefresh, userKeyGeneration } from '../Controllers/authController.js'
-import { requireSignin } from '../middlware/index.js'
+import { isLoggedIn } from '../middlware/index.js'
 
 const router = express.Router()
 
+router.post("/auth/isloggedin", isLoggedIn)
 router.post("/auth/genKeys", userKeyGeneration)
 router.post("/auth/add-user-data", addData)
 router.post("/auth/signin-request", signInRequest)

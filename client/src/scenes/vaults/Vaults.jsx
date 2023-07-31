@@ -95,40 +95,75 @@ const Vaults = () => {
         dispatch(getUserAssignedVaults(form))
     }, []);
 
+    useEffect(() => {
+        setVaultList(vaultArr)
+    }, [vaultArr])
+
+    // Search
+    const [searchText, setSearchText] = useState('');
+    const [vaultList, setVaultList] = useState([]);
+
+    useEffect(() => {
+        if (searchText !== '') {
+            const resultsArray = vaultArr.filter(vault =>
+                vault.vaultName.toLowerCase().includes(searchText) ||
+                vault.desctiption.toLowerCase().includes(searchText)
+            )
+            setVaultList(resultsArray.slice(0, 9))
+        }
+        if (searchText === '' && searchText.length === 0) {
+            setVaultList(vaultArr)
+        }
+    }, [searchText])
+
     // Vault Grid
     const renderVaultGrid = () => {
         return (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 400px))', alignItems: 'center', justifyContent: 'center', gridGap: '2rem', paddingTop: '1rem' }}>
+            <>
                 {
-                    vaultArr && vaultArr.length > 0 ?
-                        vaultArr.map((vault, index) => (
-                            vault.vaultName !== '' ?
-                                <div key={index}>
-                                    <Vault key={index} >
-                                        <div style={{ display: 'flex', flexDirection: 'column', margin: '1rem', alignSelf: 'center' }} >
-                                            <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'left', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                                {vault.vaultName}
-                                            </Typography>
-                                            <p className="subtitle">
-                                                {vault.desctiption}
-                                            </p>
-                                        </div>
-                                        <div className='padlockOverlay'>
-                                            <motion.button
-                                                className='form-control' style={{ alignSelf: 'center', padding: '.5rem 2rem', width: 'fit-content', height: 'fit-content', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff', opacity: '1' }}
-                                                whileHover={{ scale: [1, 1.1] }}
-                                                onClick={() => renderShowUnlockModal(vault)}
-                                            >
-                                                Unlock
-                                            </motion.button>
-                                        </div>
+                    vaultList && vaultList.length > 0 ?
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 400px))', gridGap: '2rem', paddingTop: '1rem' }}>
+                            {
+                                vaultList.map((vault, index) => (
+                                    vault.vaultName !== '' ?
+                                        <div key={index}>
+                                            <Vault key={index} >
+                                                <div style={{ display: 'flex', flexDirection: 'column', margin: '1rem', alignSelf: 'center' }} >
+                                                    <Typography variant="h2" fontWeight="bold" sx={{ textAlign: 'left', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
+                                                        {vault.vaultName}
+                                                    </Typography>
+                                                    <p className="subtitle">
+                                                        {vault.desctiption}
+                                                    </p>
+                                                </div>
+                                                <div className='padlockOverlay'>
+                                                    <motion.button
+                                                        className='form-control' style={{ alignSelf: 'center', padding: '.5rem 2rem', width: 'fit-content', height: 'fit-content', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff', opacity: '1' }}
+                                                        whileHover={{ scale: [1, 1.1] }}
+                                                        onClick={() => renderShowUnlockModal(vault)}
+                                                    >
+                                                        Unlock
+                                                    </motion.button>
+                                                </div>
 
-                                    </Vault>
+                                            </Vault>
 
-                                </div>
-                                :
-                                null
-                        )) :
+                                        </div>
+                                        :
+                                        null
+                                ))
+                            }
+                        </div> :
+                        searchText.length > 0 ?
+                        <div style={{ height: '50vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #6d4aff, #cc00ee)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
+                                No Vaults
+                            </Typography>
+                            <Typography variant='h5' sx={{ textAlign: 'center', paddingTop: '.5rem', paddingLeft: '.5rem' }}>
+                                No vaults match your search.
+                            </Typography>
+                        </div>
+                        :
                         <div style={{ height: '50vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                             <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #6d4aff, #cc00ee)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
                                 No Vaults
@@ -138,7 +173,8 @@ const Vaults = () => {
                             </Typography>
                         </div>
                 }
-            </div>
+            </>
+
         )
     }
 
@@ -266,7 +302,7 @@ const Vaults = () => {
                     setPassword(undefined)
                     setPassType("password")
                     setShowPassword(false)
-                    navigate(`/unlock-vault/${result.vaultUnlockToken}`)
+                    navigate(`/unlock-vault/${result.tokenHash}`)
                 }
             })
     }
@@ -351,6 +387,8 @@ const Vaults = () => {
                             >
                                 <InputBase
                                     placeholder='Search...'
+                                    value={searchText}
+                                    onChange={(e) => { setSearchText((e.target.value).toLowerCase()) }}
                                 />
                                 <IconButton>
                                     <Search />

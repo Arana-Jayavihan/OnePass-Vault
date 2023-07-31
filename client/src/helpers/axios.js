@@ -1,14 +1,11 @@
 import axios from "axios";
-import { authConsts } from '../actions/constants'
 import { api } from "../urlConfigs";
 import store from "store";
 import { toast } from "react-hot-toast";
-import Cookies from "universal-cookie";
-
-const cookies = new Cookies()
+import { signout } from "actions/authActions";
 
 const axiosInstance = axios.create({
-    // withCredentials: true,
+    withCredentials: true,
     baseURL: api,
     headers: {
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
@@ -17,94 +14,52 @@ const axiosInstance = axios.create({
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '0',
         'X-Content-Type-Options': 'nosniff',
-        'Content-Security-Policy': "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'",
+        //'Content-Security-Policy': "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'",
         'Referrer-Policy': 'no-referrer',
         'Feature-Policy': "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'",
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
         'Access-Control-Allow-Methods': 'GET,POST',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Credentials': 'true',
         'Permissions-Policy': 'geolocation=(self, microphone=()',
         'Server': 'CLASSIFIED'
     }
 })
 
-axiosInstance.interceptors.request.use((req) => {
-    const token = cookies.get('token')
-    if (token) {
-        req.headers.Authorization = `${token}`
-    }
-    const encToken = cookies.get('encToken')
-    if (encToken) {
-        req.data["encToken"] = encToken
-    }
-    const encVaultUnlockToken = cookies.get('encVaultUnlockToken')
-    if (encVaultUnlockToken) {
-        req.data["encVaultUnlockToken"] = encVaultUnlockToken
-    }
-    return req
-})
-
 axiosInstance.interceptors.response.use((res) => {
-    if(res){
+    if (res) {
         console.log(res)
     }
     return res
 }, (error) => {
-    try{
+    try {
         toast.dismiss('loading')
         toast.dismiss('Deleting')
         toast.dismiss('Updating')
         toast.dismiss('sending')
+        toast.dismiss('Unlocking')
+        toast.dismiss('Creating')
+        toast.dismiss('Removing')
+        toast.dismiss('Loading')
+        toast.dismiss('Adding')
+        toast.dismiss('generating')
     }
-    catch (err){
+    catch (err) {
         console.log(error)
     }
-    
+
     console.log(error.response)
     const { status } = error.response
-    if (status === 401 && error.response.data.message === "Session Expired") {
-        toast.error(`${error.response.data.message}`, {
-            id: 'sessiontout'
-        })
-        cookies.remove('token', {
-            path: '/'
-        })
-        cookies.remove('refreshToken', {
-            path: '/'
-        })
-        cookies.remove('encToken', {
-            path: '/'
-        })
-        sessionStorage.clear()
-        store.dispatch({ type: authConsts.LOGOUT_SUCCESS })
-        window.location.href = '/'
+
+    if (status === 429) {
+        toast.error("Too many requests, Try again later...", { id: 'ratelim' })
     }
-    if (status === 429){
-        toast.error("Too many requests, Try again later...", {id: 'ratelim'})
-    }
-    if (status === 408){
-        toast.error("Request timed out, Try again later...", {id: 'timeout'})
+    else if (status === 408) {
+        toast.error("Request timed out, Try again later...", { id: 'timeout' })
     }
 
-    if ((status === 401 && error.response.data.message === "Potential Malicious Atempt") || (status === 400 && (error.response.data.message === "Invalid Session" || error.response.data.message === "Invalid Token"))) {
-        toast.error(`${error.response.data.message}`, {
-            id: 'sessiontout'
-        })
-        cookies.remove('token', {
-            path: '/'
-        })
-        cookies.remove('refreshToken', {
-            path: '/'
-        })
-        cookies.remove('encToken', {
-            path: '/'
-        })
-        sessionStorage.clear()
-        store.dispatch({ type: authConsts.LOGOUT_SUCCESS })
-        window.location.href = '/'
+    else if ((status === 401 && error.response.data.message === "Session Expired" || status === 401 && error.response.data.message === "Potential Malicious Atempt") || (status === 400 && (error.response.data.message === "Invalid Session" || error.response.data.message === "Invalid Token" || error.response.data.message === "Not Logged In"))) {
+        store.dispatch(signout())
     }
     return error
 })

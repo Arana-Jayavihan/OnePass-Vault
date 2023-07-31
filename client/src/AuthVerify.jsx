@@ -38,7 +38,7 @@ const AuthVerify = (props) => {
             //     console.log(location)
             //     // props.lockVault();
             // }
-            
+                       
         }
         catch (err) {
             console.log(err)

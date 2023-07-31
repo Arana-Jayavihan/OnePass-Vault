@@ -137,10 +137,7 @@ export const unlockUserVault = (form) => {
                         }
                         const vaultUnlockRes = await axiosInstance.post("/vault/get-vault-unlock-token", getVaultKeyForm)
                         if (vaultUnlockRes.status === 200) {
-                            const vaultUnlockToken = vaultUnlockRes.data.payload.vaultUnlockToken
-                            const encVaultUnlockToken = vaultUnlockRes.data.payload.encVaultUnlockToken
-                            getVaultKeyForm["vaultUnlockToken"] = vaultUnlockToken
-                            getVaultKeyForm["encVaultUnlockToken"] = encVaultUnlockToken
+                            const tokenHash = vaultUnlockRes.data.payload
                             const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", getVaultKeyForm)
                             if (vaultKeyRes.status === 200) {
                                 const encVaultKey = vaultKeyRes.data.payload
@@ -151,15 +148,8 @@ export const unlockUserVault = (form) => {
                                     type: vaultConsts.UNLOCK_VAULT_SUCCESS,
                                     payload: vaultKey
                                 })
-                                cookies.set("encVaultUnlockToken", encVaultUnlockToken, {
-                                    path: "/",
-                                    maxAge: '600000',
-                                    sameSite: "lax",
-                                    secure: true,
-                                    httpOnly: false
-                                })
                                 const result = {
-                                    vaultUnlockToken,
+                                    tokenHash,
                                     status: true
                                 }
                                 return result

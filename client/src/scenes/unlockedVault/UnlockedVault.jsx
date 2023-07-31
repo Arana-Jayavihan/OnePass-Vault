@@ -14,7 +14,7 @@ import { Input } from 'components/input/input'
 import { Col, Container, Row, Table } from 'react-bootstrap'
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { addVaultUser, getVaultData, lockUserVault } from 'actions/vaultActions';
 import { addUserLogin } from 'actions/loginActions';
 
@@ -29,12 +29,67 @@ const UnlockedVault = () => {
     const updating = useSelector(state => state.vault.updating)
     const vaultUnlockKey = useSelector(state => state.vault.vaultKey)
     const vault = useSelector(state => state.vault.vault)
-    const unlockToken = useParams()
-
+    const vaultLogins = useSelector(state => state.vault.vault.vaultLogins)
     const [loginList, setLoginList] = useState([]);
+    const [searchList, setSearchList] = useState([]);
+    const [renderList, setRenderList] = useState([]);
+
+    // Search
+    const [tableRows, setTableRows] = useState(8);
+    const [searchText, setSearchText] = useState('');
     useEffect(() => {
-        setLoginList(vault?.vaultLogins)
-    }, [vault])
+        if (searchText !== '') {
+            const resultsArray = vaultLogins?.filter(login =>
+                login.loginName.toLowerCase().includes(searchText) ||
+                login.loginUrl.toLowerCase().includes(searchText) ||
+                login.loginUsername.toLowerCase().includes(searchText)
+            )
+            setSearchList(resultsArray.slice(0, tableRows))
+        }
+        if (searchText === '' && searchText.length === 0) {
+            setSearchList([])
+        }
+    }, [searchText])
+
+    // Pagination
+    const [page, setPage] = useState(1);
+    const handleChange = (e, v) => {
+        setPage(v)
+    }
+    useEffect(() => {
+        if (page === 1 && page > 0) {
+            if (vaultLogins?.length <= tableRows) {
+                const loginArr = vaultLogins?.slice(0, vaultLogins?.length)
+                setLoginList(loginArr)
+            }
+            else {
+                const loginArr = vaultLogins?.slice(0, tableRows)
+                setLoginList(loginArr)
+            }
+
+        }
+        else {
+            if ((page - 1) * tableRows + tableRows > vaultLogins?.length) {
+                const loginArr = vaultLogins?.slice((page - 1) * tableRows, vaultLogins?.length)
+                setLoginList(loginArr)
+            }
+            else {
+                const loginArr = vaultLogins?.slice((page - 1) * tableRows, (page - 1) * tableRows + tableRows)
+                setLoginList(loginArr)
+            }
+
+        }
+        console.log(loginList)
+    }, [page, vaultLogins]);
+
+    useEffect(() => {
+        if (searchList.length > 0) {
+            setRenderList(searchList)
+        }
+        else {
+            setRenderList(loginList)
+        }
+    }, [searchList, loginList]);
 
     useEffect(() => {
         if (loading === true) {
@@ -83,8 +138,7 @@ const UnlockedVault = () => {
 
     useEffect(() => {
         const form = {
-            email: email,
-            token: unlockToken.id
+            email: email
         }
         dispatch(getVaultData(form, vaultUnlockKey)).then((result) => {
             if (result === false) {
@@ -207,7 +261,7 @@ const UnlockedVault = () => {
     }
 
     // Add Vault User 
-    
+
     const addUser = () => {
         console.log(addUserEmail)
 
@@ -224,130 +278,146 @@ const UnlockedVault = () => {
 
     const renderLoginTable = () => {
         return (
-            <Table striped style={{ fontSize: 14, alignItems: '' }} responsive>
-                <thead>
-                    <tr>
-                        <th style={{ verticalAlign: 'baseline' }}>
-                            <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
-                                #
-                            </Typography>
-                        </th>
-                        <th style={{ verticalAlign: 'baseline' }}>
-                            <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
-                                Name
-                            </Typography>
-                        </th>
-                        <th style={{ verticalAlign: 'baseline' }}>
-                            <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
-                                Website
-                            </Typography>
-                        </th>
-                        <th style={{ verticalAlign: 'baseline' }}>
-                            <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
-                                User Name
-                            </Typography>
-                        </th>
-                        <th style={{ verticalAlign: 'baseline' }}>
-                            <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
-                                Password
-                            </Typography>
-                        </th>
-                        <th style={{ verticalAlign: 'baseline' }}>
-                            <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
-                                Actions
-                            </Typography>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {
-                        loginList?.map((login, index) => {
-                            return (
-                                <tr key={index}>
-                                    <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                        <Typography sx={{ color: theme.palette.primary[200] }}>
-                                            {index + 1}
-                                        </Typography>
-                                    </td>
-                                    <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                        <Typography sx={{ color: theme.palette.primary[200] }}>
-                                            {login.loginName}
-                                        </Typography>
-                                    </td>
-                                    <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                        <Typography
-                                            sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}
-                                            onClick={() => window.open(`https://${login.loginUrl}`, '_blank')}
-                                        >
-                                            {login.loginUrl}
-                                        </Typography>
-                                    </td>
-                                    <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                        <Typography sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}>
-                                            {login.loginUsername}
-                                            <span><IconButton onClick={() => {
-                                                navigator.clipboard.writeText(login.loginUsername)
-                                                toast.success('Copied to Clipboard')
-                                            }}>
-                                                <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
-                                            </IconButton>
-                                            </span>
-                                        </Typography>
-                                    </td>
-                                    <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                        <Typography
-                                            sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}>
-                                            <input type='password' id={login.loginUsername} value={login.loginPassword} cursor='pointer' disabled />
-                                            <span><IconButton onClick={() => {
-                                                navigator.clipboard.writeText(login.loginPassword)
-                                                toast.success('Copied to Clipboard')
-                                            }}>
-                                                <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
-                                            </IconButton>
-                                            </span>
-                                        </Typography>
-                                    </td>
-                                    <td>
-                                        {
-                                            <div style={{ display: 'flex' }}>
-                                                <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
-                                                    <IconButton
-                                                        onClick={() => {
-                                                            let type = document.getElementById(login.loginUsername).getAttribute('type')
-                                                            let setType = undefined
-                                                            if (type === 'password') {
-                                                                setType = 'text'
-                                                            }
-                                                            else if (type === 'text') {
-                                                                setType = 'password'
-                                                            }
-                                                            document.getElementById(login.loginUsername).setAttribute('type', setType)
-                                                        }}
-                                                    >
-                                                        <MdRemoveRedEye style={{ color: theme.palette.secondary[300] }} />
-                                                    </IconButton>
-                                                </Typography>
-                                                <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
-                                                    <IconButton  >
-                                                        <MdEdit style={{ color: theme.palette.secondary[300] }} />
-                                                    </IconButton>
-                                                </Typography>
-                                                <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
-                                                    <IconButton  >
-                                                        <MdDelete style={{ color: theme.palette.secondary[300] }} />
-                                                    </IconButton>
-                                                </Typography>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
+                <Table striped style={{ fontSize: 14, alignItems: '', height: '100%' }} responsive>
+                    <thead>
+                        <tr>
+                            <th style={{ verticalAlign: 'baseline' }}>
+                                <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
+                                    #
+                                </Typography>
+                            </th>
+                            <th style={{ verticalAlign: 'baseline' }}>
+                                <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
+                                    Name
+                                </Typography>
+                            </th>
+                            <th style={{ verticalAlign: 'baseline' }}>
+                                <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
+                                    Website
+                                </Typography>
+                            </th>
+                            <th style={{ verticalAlign: 'baseline' }}>
+                                <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
+                                    User Name
+                                </Typography>
+                            </th>
+                            <th style={{ verticalAlign: 'baseline' }}>
+                                <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
+                                    Password
+                                </Typography>
+                            </th>
+                            <th style={{ verticalAlign: 'baseline' }}>
+                                <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
+                                    Actions
+                                </Typography>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            renderList?.map((login, index) => {
+                                return (
+                                    <tr key={index}>
+                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                            <Typography sx={{ color: theme.palette.primary[200] }}>
+                                                {index + 1}
+                                            </Typography>
+                                        </td>
+                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                            <Typography sx={{ color: theme.palette.primary[200] }}>
+                                                {login.loginName}
+                                            </Typography>
+                                        </td>
+                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                            <Typography
+                                                sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}
+                                                onClick={() => window.open(`https://${login.loginUrl}`, '_blank')}
+                                            >
+                                                {login.loginUrl}
+                                            </Typography>
+                                        </td>
+                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                            <Typography sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}>
+                                                {login.loginUsername}
+                                                <span><IconButton onClick={() => {
+                                                    navigator.clipboard.writeText(login.loginUsername)
+                                                    toast.success('Copied to Clipboard')
+                                                }}>
+                                                    <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
+                                                </IconButton>
+                                                </span>
+                                            </Typography>
+                                        </td>
+                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                            <Typography
+                                                sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}>
+                                                <input type='password' id={login.loginUsername} value={login.loginPassword} cursor='pointer' disabled />
+                                                <span><IconButton onClick={() => {
+                                                    navigator.clipboard.writeText(login.loginPassword)
+                                                    toast.success('Copied to Clipboard')
+                                                }}>
+                                                    <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
+                                                </IconButton>
+                                                </span>
+                                            </Typography>
+                                        </td>
+                                        <td>
+                                            {
+                                                <div style={{ display: 'flex' }}>
+                                                    <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
+                                                        <IconButton
+                                                            onClick={() => {
+                                                                let type = document.getElementById(login.loginUsername).getAttribute('type')
+                                                                let setType = undefined
+                                                                if (type === 'password') {
+                                                                    setType = 'text'
+                                                                }
+                                                                else if (type === 'text') {
+                                                                    setType = 'password'
+                                                                }
+                                                                document.getElementById(login.loginUsername).setAttribute('type', setType)
+                                                            }}
+                                                        >
+                                                            <MdRemoveRedEye style={{ color: theme.palette.secondary[300] }} />
+                                                        </IconButton>
+                                                    </Typography>
+                                                    <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
+                                                        <IconButton  >
+                                                            <MdEdit style={{ color: theme.palette.secondary[300] }} />
+                                                        </IconButton>
+                                                    </Typography>
+                                                    <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
+                                                        <IconButton  >
+                                                            <MdDelete style={{ color: theme.palette.secondary[300] }} />
+                                                        </IconButton>
+                                                    </Typography>
 
-                                            </div>
-                                        }
-                                    </td>
-                                </tr>
-                            )
-                        })
-                    }
-                </tbody>
-            </Table>
+                                                </div>
+                                            }
+                                        </td>
+                                    </tr>
+                                )
+                            })
+                        }
+                    </tbody>
+                </Table>
+                {
+                    searchList.length > 0 ?
+                        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', paddingBottom: '1rem' }} >
+                            <Stack spacing={2} >
+                                <Pagination count={Math.ceil(searchList?.length / tableRows)} color="secondary" page={page} onChange={handleChange} />
+                            </Stack>
+                        </div>
+                        :
+                        <div style={{ width: '100%', display: 'flex', justifyContent: 'center', paddingBottom: '1rem' }} >
+                            <Stack spacing={2} >
+                                <Pagination count={Math.ceil(vaultLogins?.length / tableRows)} color="secondary" page={page} onChange={handleChange} />
+                            </Stack>
+                        </div>
+                }
 
+            </div>
         )
     }
     return (
@@ -398,62 +468,64 @@ const UnlockedVault = () => {
                             </Row>
                             <Row>
                                 <Col md={3}
-                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: "60vh", overflowY: 'scroll' }}
+                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: "75vh", overflowY: 'scroll' }}
                                 >
-                                    <div style={{ backgroundColor: theme.palette.primary[100], borderRadius: '15px', padding: '1rem', height: 'auto' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }} >
-                                            <div style={{ backgroundColor: theme.palette.background.default, padding: '10% 12%', borderRadius: '15px' }}>
-                                                <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
-                                                    Logins
+                                    <div style={{ backgroundColor: theme.palette.primary[100], borderRadius: '15px', padding: '1rem', height: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                        <div>
+                                            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }} >
+                                                <div style={{ backgroundColor: theme.palette.background.default, padding: '10% 12%', borderRadius: '15px' }}>
+                                                    <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
+                                                        Logins
+                                                    </Typography>
+                                                    <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
+                                                        {vault?.vaultLogins?.length}
+                                                    </Typography>
+                                                </div>
+                                                <div style={{ backgroundColor: theme.palette.background.default, padding: '10% 12%', borderRadius: '15px' }}>
+                                                    <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
+                                                        Users
+                                                    </Typography>
+                                                    <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
+                                                        {vault?.vaultUsers?.length}
+                                                    </Typography>
+                                                </div>
+                                            </div>
+                                            <div style={{ marginTop: '2rem' }}>
+                                                <Typography variant='h6' sx={{ textAlign: 'left', margin: 0, marginBottom: '.5rem', padding: 0, color: theme.palette.primary[900] }}>
+                                                    Owner : {vault?.ownerEmail}
                                                 </Typography>
-                                                <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                                    {vault?.vaultLogins?.length}
+                                                <Typography variant='h6' sx={{ textAlign: 'left', margin: 0, marginBottom: '.5rem', padding: 0, color: theme.palette.primary[900] }}>
+                                                    {`Assigned Users : \n\n`}
+                                                    {
+                                                        vault?.vaultUsers?.map((user, index) => {
+                                                            if (user?.userEmail !== vault?.ownerEmail) {
+                                                                return (
+                                                                    <Typography key={index} variant='h6' sx={{ textAlign: 'left', margin: 0, padding: 0, paddingLeft: '1rem', color: theme.palette.primary[900] }}>
+                                                                        {user?.userEmail}
+                                                                    </Typography>
+                                                                )
+                                                            }
+                                                            if (vault?.vaultUsers?.length === 1) {
+                                                                return (
+                                                                    <Typography key={index} variant='h6' sx={{ textAlign: 'left', margin: 0, padding: 0, paddingLeft: '1rem', color: theme.palette.primary[900] }}>
+                                                                        No users assigned
+                                                                    </Typography>
+                                                                )
+                                                            }
+                                                        })
+                                                    }
                                                 </Typography>
                                             </div>
-                                            <div style={{ backgroundColor: theme.palette.background.default, padding: '10% 12%', borderRadius: '15px' }}>
-                                                <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
-                                                    Users
-                                                </Typography>
-                                                <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                                    {vault?.vaultUsers?.length}
-                                                </Typography>
-                                            </div>
-                                        </div>
-                                        <div style={{ marginTop: '2rem' }}>
-                                            <Typography variant='h6' sx={{ textAlign: 'left', margin: 0, marginBottom: '.5rem', padding: 0, color: theme.palette.primary[900] }}>
-                                                Owner : {vault?.ownerEmail}
-                                            </Typography>
-                                            <Typography variant='h6' sx={{ textAlign: 'left', margin: 0, marginBottom: '.5rem', padding: 0, color: theme.palette.primary[900] }}>
-                                                {`Assigned Users : \n\n`}
-                                                {
-                                                    vault?.vaultUsers?.map((user, index) => {
-                                                        if (user?.userEmail !== vault?.ownerEmail) {
-                                                            return (
-                                                                <Typography key={index} variant='h6' sx={{ textAlign: 'left', margin: 0, padding: 0, paddingLeft: '1rem', color: theme.palette.primary[900] }}>
-                                                                    {user?.userEmail}
-                                                                </Typography>
-                                                            )
-                                                        }
-                                                        if (vault?.vaultUsers?.length === 1) {
-                                                            return (
-                                                                <Typography key={index} variant='h6' sx={{ textAlign: 'left', margin: 0, padding: 0, paddingLeft: '1rem', color: theme.palette.primary[900] }}>
-                                                                    No users assigned
-                                                                </Typography>
-                                                            )
-                                                        }
-                                                    })
-                                                }
-                                            </Typography>
                                         </div>
                                         <div style={{ display: "flex" }}>
-                                            <Typography sx={{ color: theme.palette.primary[500] }} >
+                                            <Typography sx={{ fontWeight: 'bold', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
                                                 <Input
                                                     label="Assign a user"
                                                     value={addUserEmail}
                                                     placeholder={'Enter email'}
                                                     onChange={(e) => {
                                                         setAddUserEmail(e.target.value)
-                                                        }
+                                                    }
                                                     }
                                                 />
                                             </Typography>
@@ -481,6 +553,8 @@ const UnlockedVault = () => {
                                         >
                                             <InputBase
                                                 placeholder='Search...'
+                                                value={searchText}
+                                                onChange={(e) => { setSearchText((e.target.value).toLowerCase()) }}
                                             />
                                             <IconButton>
                                                 <Search />
@@ -488,7 +562,7 @@ const UnlockedVault = () => {
                                         </FlexBetween>
                                     </div>
 
-                                    <Col md={12} style={{ overflowX: 'scroll', height: "55vh", overflowY: 'scroll' }}>
+                                    <Col md={12} style={{ overflowX: 'scroll', height: "65vh", overflowY: 'scroll' }}>
                                         {
                                             loginList?.length > 0 ?
                                                 <motion.div

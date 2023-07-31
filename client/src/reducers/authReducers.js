@@ -69,8 +69,8 @@ export default (state = initState, action) => {
 
         case authConsts.LOGOUT_FAILED:
             state = {
-                ...state,
-                loading: false
+                ...initState,
+                loading: false,
             }
             break
         case authConsts.KEY_GEN_REQUEST:

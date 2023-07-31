@@ -4,19 +4,16 @@ import { authConsts } from "./constants"
 import Cookies from 'universal-cookie'
 import { decryptAES, decryptRSA, importRSAPrivKey } from "encrypt"
 import CryptoJS from "crypto-js"
-import { Navigate } from "react-router-dom"
-
-const cookies = new Cookies()
 
 export const genKeys = (form) => {
     return async dispatch => {
         dispatch({
             type: authConsts.KEY_GEN_REQUEST
         })
-        
+
         const res = await axiosInstance.post("/auth/genkeys", form)
 
-        if(res.status === 201) {
+        if (res.status === 201) {
             toast.success("Key Generation Success")
             dispatch({
                 type: authConsts.KEY_GEN_SUCCESS
@@ -39,7 +36,7 @@ export const addData = (form) => {
             type: authConsts.USER_DATA_ADD_REQUEST
         })
         const res = await axiosInstance.post("/auth/add-user-data", form)
-        if(res.status === 201) {
+        if (res.status === 201) {
             toast.success("Registered")
             dispatch({
                 type: authConsts.USER_DATA_ADD_SUCCESS
@@ -63,7 +60,7 @@ export const signInReq = (form) => {
         })
         const res = await axiosInstance.post("/auth/signin-request", form)
 
-        if(res.status === 200){
+        if (res.status === 200) {
             toast.success("User verification success")
             dispatch({
                 type: authConsts.USER_LOGIN_REQUEST_SUCCESS,
@@ -83,14 +80,11 @@ export const signInReq = (form) => {
 
 export const login = (form, password) => {
     return async (dispatch) => {
-        
+
         dispatch({ type: authConsts.LOGIN_REQUEST })
         const res = await axiosInstance.post('/auth/signin', form)
         if (res.status === 200) {
             const user = res.data.user
-            const token = res.data.token
-            const refreshToken = res.data.refreshToken
-            const encToken = res.data.encToken
 
             const decPrivate = (await decryptAES(user.privateKey, password)).toString(CryptoJS.enc.Utf8)
             const importedPrivKey = await importRSAPrivKey(decPrivate)
@@ -102,47 +96,24 @@ export const login = (form, password) => {
 
             const decUser = {
                 'firstName': firstName,
-                'lastName':lastName,
-                'email':user.email,
+                'lastName': lastName,
+                'email': user.email,
                 'contact': contact,
                 'pubKey': user.publicKey
             }
-    
+
             toast.success(`Login Success, Welcome ${decUser.firstName}`, {
                 id: 'login'
-            })
-            cookies.set("token", token, {
-                path: '/',
-                maxAge: '3600000',
-                sameSite: "lax",
-                secure: true,
-                httpOnly: false
-            })
-            cookies.set("refreshToken", refreshToken, {
-                path: '/',
-                maxAge: '86400000',
-                sameSite: "lax",
-                secure: true,
-                httpOnly: false
-            })
-
-            cookies.set("encToken", encToken, {
-                path: '/',
-                maxAge: '3600000',
-                sameSite: "lax",
-                secure: true,
-                httpOnly: false
             })
 
             sessionStorage.setItem('user', JSON.stringify(decUser))
             dispatch({
                 type: authConsts.LOGIN_SUCCESS,
                 payload: {
-                    'user': decUser,
-                    token
+                    'user': decUser
                 }
             })
-        } 
+        }
         else if (res.response) {
             toast.error(res.response.data.message)
             dispatch({
@@ -155,52 +126,39 @@ export const login = (form, password) => {
 
 export const isLoggedIn = () => {
     return async (dispatch) => {
-        const token = cookies.get('token')
-        if (token) {
-            const user = JSON.parse(sessionStorage.getItem('user'))
-            if (user) {
+        const user = JSON.parse(sessionStorage.getItem('user'))
+        if (user) {
+            const res = await axiosInstance.post('/auth/isloggedin', { 'email': user.email })
+            if (res.status === 200) {
                 dispatch({
                     type: authConsts.LOGIN_SUCCESS,
                     payload: {
-                        token,
                         'user': user
                     }
                 })
             }
-
-        } else {
-            dispatch({
-                type: authConsts.LOGIN_FALIURE,
-                payload: { error: 'Failed to login' }
-            })
+            else if (res.response) {
+                toast.error(res.response.data.message)
+                dispatch({
+                    type: authConsts.LOGIN_FALIURE
+                })
+            }
+        }
+        else {
+            signout()
         }
     }
 }
 
 export const signout = () => {
     return async (dispatch) => {
-        
+
         dispatch({ type: authConsts.LOGOUT_REQUEST })
-        let refreshToken = cookies.get('refreshToken')
-        let token = cookies.get('token')
-        const form = {
-            'refreshToken': refreshToken,
-            'token': token
-        }
-        const res = await axiosInstance.post(`/auth/signout`, form)
+        const res = await axiosInstance.post(`/auth/signout`)
 
         if (res.status === 200) {
             toast.success("Logged Out Successfully!", { id: 'lOut' })
             sessionStorage.clear()
-            cookies.remove('token', {
-                path: '/'
-            })
-            cookies.remove('refreshToken', {
-                path: '/'
-            })
-            cookies.remove('encToken', {
-                path: '/'
-            })
             dispatch(
                 { type: authConsts.LOGOUT_SUCCESS }
             )
@@ -216,45 +174,14 @@ export const signout = () => {
 }
 
 export const tokenRefresh = () => {
-    const user = JSON.parse(sessionStorage.getItem('user'))
-    let refreshToken = cookies.get('refreshToken')
-    let token = cookies.get('token')
-    let encToken = cookies.get('encToken')
-    const form = {
-        'refreshToken': refreshToken,
-        'token': token,
-        'email': user.email,
-        'encToken': encToken
-    }
-
     return async () => {
+        const user = JSON.parse(sessionStorage.getItem('user'))
+        const form = {
+            'email': user.email
+        }
         const res = await axiosInstance.post('/auth/token', form)
-        if(res.status === 200){
-            token = res.data.token
-        refreshToken = res.data.refreshToken
-        const encToken = res.data.encToken
-        cookies.set("token", token, {
-            path: '/',
-            maxAge: '3600000',
-            sameSite: "lax",
-            secure: true,
-            httpOnly: false
-        })
-        cookies.set("refreshToken", refreshToken, {
-            path: '/',
-            maxAge: '86400000',
-            sameSite: "lax",
-            secure: true,
-            httpOnly: false
-        })
-        cookies.set("encToken", encToken, {
-            path: '/',
-            maxAge: '3600000',
-            sameSite: "lax",
-            secure: true,
-            httpOnly: false
-        })
-        toast.success("Session Extended!", { id: 'token' })
+        if (res.status === 200) {
+            toast.success("Session Extended!", { id: 'token' })
         }
     }
 }

@@ -153,33 +153,33 @@ export const signIn = async (req, res) => {
                     padding: CryptoJS.pad.Pkcs7
                 }).toString()
                 tokenlist[refreshToken] = {
-                    refreshToken,
-                    token,
-                    IP
+                    'refreshToken': refreshToken,
+                    'token': token,
+                    'ip': IP
                 }
                 console.log(tokenlist, "New Signin")
                 console.log(userResult)
-                // res.cookie('token', token, {
-                //     path: '/',
-                //     maxAge: 3600000,
-                //     sameSite: "lax",
-                //     secure: false,
-                //     httpOnly: true
-                // })
-                // res.cookie('refreshToken', refreshToken, {
-                //     path: '/',
-                //     maxAge: 86400000,
-                //     sameSite: "lax",
-                //     secure: false,
-                //     httpOnly: true
-                // })
-                // res.cookie('encToken', encToken, {
-                //     path: '/',
-                //     maxAge: 3600000,
-                //     sameSite: "lax",
-                //     secure: false,
-                //     httpOnly: true
-                // })
+                res.cookie('token', token, {
+                    path: '/',
+                    maxAge: 3600000,
+                    sameSite: "none",
+                    secure: true,
+                    httpOnly: true
+                })
+                res.cookie('refreshToken', refreshToken, {
+                    path: '/',
+                    maxAge: 86400000,
+                    sameSite: "none",
+                    secure: true,
+                    httpOnly: true
+                })
+                res.cookie('encToken', encToken, {
+                    path: '/',
+                    maxAge: 3600000,
+                    sameSite: "none",
+                    secure: true,
+                    httpOnly: true
+                })
                 res.status(200).json({
                     message: "Authentication successful",
                     user: {
@@ -190,10 +190,7 @@ export const signIn = async (req, res) => {
                         masterKey: encMasterKey,
                         privateKey: encPrivate,
                         publicKey: publicKey
-                    },
-                    token: token,
-                    refreshToken: refreshToken,
-                    encToken: encToken
+                    }
                 })
                 console.log(user)
             }
@@ -215,14 +212,12 @@ export const signIn = async (req, res) => {
 
 export const tokenRefresh = async (req, res) => {
     try {
-        let refreshToken = req.body.refreshToken
-        let token = req.body.token
+        let refreshToken = req.cookies.refreshToken
+        let token = req.cookies.token
         let email = req.body.email
         let ip = req.headers['x-forwarded-for']
-        console.log(req.body)
-        console.log(tokenlist, "TokenRefresh")
         if (Object.keys(tokenlist).length > 0 && tokenlist.constructor === Object) {
-            if(tokenlist[refreshToken].IP === ip) {
+            if(tokenlist[refreshToken].ip === ip) {
                 if (token === tokenlist[refreshToken].token) {
                     try {
                         delete tokenlist[refreshToken]
@@ -233,18 +228,36 @@ export const tokenRefresh = async (req, res) => {
                             mode: CryptoJS.mode.CBC,
                             padding: CryptoJS.pad.Pkcs7
                         }).toString()
+                        res.cookie('token', token, {
+                            path: '/',
+                            maxAge: 3600000,
+                            sameSite: "none",
+                            secure: true,
+                            httpOnly: true
+                        })
+                        res.cookie('refreshToken', refreshToken, {
+                            path: '/',
+                            maxAge: 86400000,
+                            sameSite: "none",
+                            secure: true,
+                            httpOnly: true
+                        })
+                        res.cookie('encToken', encToken, {
+                            path: '/',
+                            maxAge: 3600000,
+                            sameSite: "none",
+                            secure: true,
+                            httpOnly: true
+                        })
     
                         tokenlist[refreshToken] = {
-                            refreshToken,
-                            token,
-                            ip
+                            'refreshToken': refreshToken,
+                            'token': token,
+                            'ip': ip
                         }
-    
+                        console.log(tokenlist, "New TokenRefresh")
                         res.status(200).json({
-                            message: "Session Extended",
-                            token: token,
-                            refreshToken: refreshToken,
-                            encToken: encToken
+                            message: "Session Extended"
                         })
                     }
                     catch (error) {
@@ -280,10 +293,14 @@ export const tokenRefresh = async (req, res) => {
 
 export const signOut = async (req, res) => {
     try {
-        console.log(tokenlist)
-        const refreshToken = req.body.refreshToken
+        const refreshToken = req.cookies.refreshToken
         delete tokenlist[refreshToken]
         console.log(tokenlist, "SignOut")
+        res.clearCookie('token', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
         res.status(200).json({
             message: "Signout successfully :)"
         })

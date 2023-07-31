@@ -83,15 +83,20 @@ export const vaultUnlockRequest = async (req, res) => {
             mode: CryptoJS.mode.CBC,
             padding: CryptoJS.pad.Pkcs7
         }).toString()
-
+        const tokenHash = CryptoJS.SHA256(encVaultUnlockToken).toString()
+        token['vaultUnlockToken'] = vaultUnlockToken
         vaultUnlockTokens[id] = token
         console.log(vaultUnlockTokens, "new vault unlock request")
+        res.cookie('encVaultUnlockToken', encVaultUnlockToken, {
+            path: `/`,
+            maxAge: 300000,
+            sameSite: "none",
+            secure: true,
+            httpOnly: true
+        })
         res.status(200).json({
             message: "Vault Unlock Token Generated",
-            payload: {
-                vaultUnlockToken,
-                encVaultUnlockToken
-            }
+            payload: tokenHash
         })
     } catch (error) {
         console.log(error)
@@ -106,32 +111,129 @@ export const getEncVaultKey = async (req, res) => {
     try {
         const vaultIndex = req.body.vaultIndex
         const email = req.body.email
-        const vaultUnlockToken = req.body.vaultUnlockToken
-        const encVaultUnlockToken = req.body.encVaultUnlockToken
-        const decVaultUnlockToken = CryptoJS.AES.decrypt(encVaultUnlockToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
-
-        const user = req.user
-        const ip = req.headers['x-forwarded-for']
-        const decoded = jwt.verify(vaultUnlockToken, process.env.JWT_SECRET)
-        if (ip === vaultUnlockTokens[decoded.id].ip) {
-            if (decVaultUnlockToken === vaultUnlockToken) {
-                if (vaultUnlockTokens[decoded.id].email === email && vaultUnlockTokens[decoded.id].vaultIndex === vaultIndex && vaultUnlockTokens[decoded.id].email === user.email) {
-                    const result = await getUserVaultEncKey(vaultIndex, email)
-                    if (result && result !== "") {
-                        res.status(200).json({
-                            message: "Vault Encrypted Key Fetched",
-                            payload: result
-                        })
+        const encVaultUnlockToken = req.cookies.encVaultUnlockToken
+        if (encVaultUnlockToken === undefined) {
+            res.status(400).json({
+                message: "Invalid Token"
+            })
+        }
+        else {
+            const decVaultUnlockToken = CryptoJS.AES.decrypt(encVaultUnlockToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+            const user = req.user
+            const ip = req.headers['x-forwarded-for']
+            const decoded = jwt.verify(decVaultUnlockToken, process.env.JWT_SECRET)
+            const vaultUnlockToken = vaultUnlockTokens[decoded.id].vaultUnlockToken
+            if (ip === vaultUnlockTokens[decoded.id].ip) {
+                if (decVaultUnlockToken === vaultUnlockToken) {
+                    if (vaultUnlockTokens[decoded.id].email === email && vaultUnlockTokens[decoded.id].vaultIndex === vaultIndex && vaultUnlockTokens[decoded.id].email === user.email) {
+                        const result = await getUserVaultEncKey(vaultIndex, email)
+                        if (result && result !== "") {
+                            res.status(200).json({
+                                message: "Vault Encrypted Key Fetched",
+                                payload: result
+                            })
+                        }
+                        else if (result === false || result === "") {
+                            res.status(500).json({
+                                message: "Something Went Wrong!"
+                            })
+                        }
                     }
-                    else if (result === false || result === "") {
-                        res.status(500).json({
-                            message: "Something Went Wrong!"
+                    else {
+                        res.status(400).json({
+                            message: "Invalid Token"
                         })
+                        try {
+                            delete vaultUnlockTokens[decoded.id]
+                        } catch (error) {
+                            console.log(error)
+                        }
                     }
                 }
                 else {
                     res.status(400).json({
                         message: "Invalid Token"
+                    })
+                    try {
+                        delete vaultUnlockTokens[decoded.id]
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            }
+            else {
+                res.status(400).json({
+                    message: "Invalid Session"
+                })
+                try {
+                    delete vaultUnlockTokens[decoded.id]
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: "Something Went Wrong!",
+            error: error
+        })
+    }
+}
+
+export const getVaultData = async (req, res) => {
+    try {
+        const email = req.body.email
+        const encVaultUnlockToken = req.cookies.encVaultUnlockToken
+        if (encVaultUnlockToken === undefined) {
+            res.status(400).json({
+                message: "Invalid Token"
+            })
+        }
+        else {
+            const decVaultUnlockToken = CryptoJS.AES.decrypt(encVaultUnlockToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+            const decoded = jwt.verify(decVaultUnlockToken, process.env.JWT_SECRET)
+            const vaultUnlockToken = vaultUnlockTokens[decoded.id].vaultUnlockToken
+            if (decVaultUnlockToken === vaultUnlockToken) {
+                const user = req.user
+                const ip = req.headers['x-forwarded-for']
+                const decoded = jwt.verify(vaultUnlockToken, process.env.JWT_SECRET)
+                if (ip === vaultUnlockTokens[decoded.id].ip) {
+                    if (vaultUnlockTokens[decoded.id].email === email && vaultUnlockTokens[decoded.id].email === user.email) {
+                        const result = await getVault(vaultUnlockTokens[decoded.id].vaultIndex)
+                        if (result) {
+                            const vaultData = vaultDataParser(result)
+                            try {
+                                delete vaultUnlockTokens[decoded.id]
+                            } catch (error) {
+                                console.log(error)
+                            }
+                            res.status(200).json({
+                                message: "Vault Data Fetched",
+                                payload: vaultData
+                            })
+                        }
+                        else if (result === false) {
+                            res.status(500).json({
+                                message: "Something Went Wrong!"
+                            })
+                        }
+                    }
+                    else {
+                        res.status(400).json({
+                            message: "Invalid Token"
+                        })
+                        try {
+                            delete vaultUnlockTokens[decoded.id]
+                        } catch (error) {
+                            console.log(error)
+                        }
+
+                    }
+                }
+                else {
+                    res.status(400).json({
+                        message: "Invalid Session"
                     })
                     try {
                         delete vaultUnlockTokens[decoded.id]
@@ -149,92 +251,8 @@ export const getEncVaultKey = async (req, res) => {
                 } catch (error) {
                     console.log(error)
                 }
-            }
-        }
-        else {
-            res.status(400).json({
-                message: "Invalid Session"
-            })
-            try {
-                delete vaultUnlockTokens[decoded.id]
-            } catch (error) {
-                console.log(error)
-            }
-        }
 
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({
-            message: "Something Went Wrong!",
-            error: error
-        })
-    }
-}
-
-export const getVaultData = async (req, res) => {
-    try {
-        const token = req.body.token
-        const email = req.body.email
-        const encVaultUnlockToken = req.body.encVaultUnlockToken
-        const decVaultUnlockToken = CryptoJS.AES.decrypt(encVaultUnlockToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
-        if (decVaultUnlockToken === token) {
-            const user = req.user
-            const ip = req.headers['x-forwarded-for']
-            const decoded = jwt.verify(token, process.env.JWT_SECRET)
-            if (ip === vaultUnlockTokens[decoded.id].ip) {
-                if (vaultUnlockTokens[decoded.id].email === email && vaultUnlockTokens[decoded.id].email === user.email) {
-                    const result = await getVault(vaultUnlockTokens[decoded.id].vaultIndex)
-                    if (result) {
-                        const vaultData = vaultDataParser(result)
-                        try {
-                            delete vaultUnlockTokens[decoded.id]
-                        } catch (error) {
-                            console.log(error)
-                        }
-                        res.status(200).json({
-                            message: "Vault Data Fetched",
-                            payload: vaultData
-                        })
-                    }
-                    else if (result === false) {
-                        res.status(500).json({
-                            message: "Something Went Wrong!"
-                        })
-                    }
-                }
-                else {
-                    res.status(400).json({
-                        message: "Invalid Token"
-                    })
-                    try {
-                        delete vaultUnlockTokens[decoded.id]
-                    } catch (error) {
-                        console.log(error)
-                    }
-
-                }
             }
-            else {
-                res.status(400).json({
-                    message: "Invalid Session"
-                })
-                try {
-                    delete vaultUnlockTokens[decoded.id]
-                } catch (error) {
-                    console.log(error)
-                }
-            }
-        }
-        else {
-            res.status(400).json({
-                message: "Invalid Token"
-            })
-            try {
-                delete vaultUnlockTokens[decoded.id]
-            } catch (error) {
-                console.log(error)
-            }
-
         }
 
     } catch (error) {
@@ -249,50 +267,60 @@ export const getVaultData = async (req, res) => {
 export const addVaultUserRequest = async (req, res) => {
     try {
         const body = req.body
-        let token = {
-            email: body.email,
-            vaultIndex: body.vaultIndex,
-            id: shortID.generate(),
-            addUserEmail: body.addUserEmail,
-            encVaultKey: body.encVaultKey,
-        }
-        const user = await getUser(body.addUserEmail)
-        const assignedVaults = assignVaultParser(user[4])
-        const vault = assignedVaults.find(vault => vault.vaultIndex === body.vaultIndex)
-        if (vault) {
+        const vaultData = await getVault(body.vaultIndex)
+        const parsedVaultData = vaultDataParser(vaultData)
+        if (parsedVaultData && parsedVaultData.ownerEmail !== body.email) {
             res.status(400).json({
-                message: "User Already Assigned To Vault"
+                message: "You Are Not The Owner Of This Vault"
             })
         }
-        else if (vault === undefined) {
-            const addVaultUserToken = jwt.sign({ vaultIndex: body.vaultIndex, email: body.email, id: token.id, addUserEmail: body.addUserEmail }, process.env.JWT_SECRET, { expiresIn: '6h' })
-            const encToken = CryptoJS.AES.encrypt(addVaultUserToken, process.env.AES_SECRET, {
-                iv: CryptoJS.SHA256(sh.generate()).toString(),
-                mode: CryptoJS.mode.CBC,
-                padding: CryptoJS.pad.Pkcs7
-            }).toString()
-            const b64EncToken = Buffer.from(encToken).toString('base64')
-            const URL = `https://onepass-vault-v3.netlify.app/vault-invite/${b64EncToken}`
-            const URL1 = `https://localhost:3000/vault-invite/${b64EncToken}`
-            addVaultUserTokens[token.id] = token
-            console.log(addVaultUserTokens, "new vault user add request")
-            const mailData = {
-                to: body.addUserEmail,
-                subject: "New Vault Invitation",
-                html: vaultInvite(URL, body.email),
-                attachments: [],
-                body: ``
+        else {
+            let token = {
+                email: body.email,
+                vaultIndex: body.vaultIndex,
+                id: shortID.generate(),
+                addUserEmail: body.addUserEmail,
+                encVaultKey: body.encVaultKey,
             }
-            const result = sendMails(mailData)
-            if (result) {
-                res.status(200).json({
-                    message: "Vault Invitation Sent"
+            const user = await getUser(body.addUserEmail)
+            const assignedVaults = assignVaultParser(user[4])
+            const vault = assignedVaults.find(vault => vault.vaultIndex === body.vaultIndex)
+            if (vault) {
+                res.status(400).json({
+                    message: "User Already Assigned To Vault"
                 })
             }
-            else {
-                res.status(500).json({
-                    message: "Something Went Wrong!"
-                })
+            
+            else if (vault === undefined) {
+                const addVaultUserToken = jwt.sign({ vaultIndex: body.vaultIndex, email: body.email, id: token.id, addUserEmail: body.addUserEmail }, process.env.JWT_SECRET, { expiresIn: '6h' })
+                const encToken = CryptoJS.AES.encrypt(addVaultUserToken, process.env.AES_SECRET, {
+                    iv: CryptoJS.SHA256(sh.generate()).toString(),
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                }).toString()
+                const b64EncToken = Buffer.from(encToken).toString('base64')
+                const URL = `https://onepass-vault-v3.netlify.app/vault-invite/${b64EncToken}`
+                const URL1 = `https://localhost:3000/vault-invite/${b64EncToken}`
+                addVaultUserTokens[token.id] = token
+                console.log(addVaultUserTokens, "new vault user add request")
+                const mailData = {
+                    to: body.addUserEmail,
+                    subject: "New Vault Invitation",
+                    html: vaultInvite(URL, body.email),
+                    attachments: [],
+                    body: ``
+                }
+                const result = sendMails(mailData)
+                if (result) {
+                    res.status(200).json({
+                        message: "Vault Invitation Sent"
+                    })
+                }
+                else {
+                    res.status(500).json({
+                        message: "Something Went Wrong!"
+                    })
+                }
             }
         }
     } catch (error) {
@@ -325,6 +353,13 @@ export const getInviteData = async (req, res) => {
                     addUserEmail: addVaultUserTokens[decoded.id].addUserEmail
                 }
                 console.log(payload)
+                res.cookie('addVaultUserToken', token, {
+                    path: '/',
+                    maxAge: 300000,
+                    sameSite: "none",
+                    secure: true,
+                    httpOnly: true
+                })
                 res.status(200).json({
                     message: "Vault Invite Data Fetched",
                     payload: payload
@@ -353,7 +388,7 @@ export const getInviteData = async (req, res) => {
 export const acceptVaultInvite = async (req, res) => {
     try {
         const body = req.body
-        const token = req.body.token
+        const token = req.cookies.addVaultUserToken
         const fromB64 = Buffer.from(token, 'base64').toString('ascii')
         const decToken = CryptoJS.AES.decrypt(fromB64, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
         const decoded = jwt.verify(decToken, process.env.JWT_SECRET)
@@ -366,9 +401,9 @@ export const acceptVaultInvite = async (req, res) => {
                     res.status(201).json({
                         message: "Vault Invitation Accepted"
                     })
-                    
+
                 }
-                else if (result === false){
+                else if (result === false) {
                     res.status(500).json({
                         message: "Something Went Wrong!"
                     })

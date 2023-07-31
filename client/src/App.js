@@ -1,7 +1,7 @@
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { useSelector } from "react-redux";
-import { themeSettings } from "theme";
+import { themeSettings, themeSettings1 } from "theme";
 import { Route, Routes } from "react-router-dom";
 import Dashboard from "scenes/dashboard";
 import Layout from "scenes/layout";
@@ -31,7 +31,6 @@ function App() {
 	const mode = useSelector(state => state.general.mode)
 	const authenticated = useSelector(state => state.auth.authenticated);
 	const theme = useMemo(() => createTheme(themeSettings(mode)), [mode])
-
 	useEffect(() => {
 		if (!authenticated) {
 			dispatch(isLoggedIn());

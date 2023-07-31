@@ -1,7 +1,11 @@
 import { toast } from "react-hot-toast"
 import { generalConstatnts } from "../actions/constants"
 
-const mode = localStorage.getItem('mode')
+let mode = localStorage.getItem('mode')
+if (mode === null || mode === undefined) {
+    mode = 'light'
+    localStorage.setItem('mode', 'light')
+}
 const initState = {
     mode: mode,
     loading: false
