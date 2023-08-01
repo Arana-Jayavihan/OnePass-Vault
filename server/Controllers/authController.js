@@ -108,6 +108,10 @@ export const signInRequest = async (req, res) => {
         if (chkUser[0] === email) {
             const hashPass = await getUserHashPass(email)
             if (hashPass) {
+                res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
+                res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
+                res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
+                res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                 res.status(200).json({
                     message: "User Hash Fetch Success",
                     payload: hashPass
