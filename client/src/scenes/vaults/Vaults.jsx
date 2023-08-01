@@ -326,6 +326,7 @@ const Vaults = () => {
                     <Col md={12} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
+                                autoFocus
                                 label="Password"
                                 value={password}
                                 type={passType}

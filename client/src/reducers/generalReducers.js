@@ -1,5 +1,5 @@
 import { toast } from "react-hot-toast"
-import { generalConstatnts } from "../actions/constants"
+import { generalConstatnts, authConsts } from "../actions/constants"
 
 let mode = localStorage.getItem('mode')
 if (mode === null || mode === undefined) {
@@ -56,6 +56,11 @@ export default (state = initState, action) => {
                 loading: false
             }
             localStorage.setItem('mode', 'light')
+            break
+        case authConsts.LOGOUT_SUCCESS:
+            state = {
+                ...initState
+            }
             break
     }
 

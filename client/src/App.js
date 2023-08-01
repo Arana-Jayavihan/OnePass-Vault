@@ -29,6 +29,7 @@ function App() {
 	const verifying = useSelector(state => state.auth.verifying)
 	const mode = useSelector(state => state.general.mode)
 	const authenticated = useSelector(state => state.auth.authenticated);
+	const vaultKey = useSelector(state => state.vault.vaultKey)
 	const theme = useMemo(() => createTheme(themeSettings(mode)), [mode])
 	useEffect(() => {
 		if (!authenticated) {
@@ -41,15 +42,24 @@ function App() {
 	}, [dispatch])
 
 	const lockVault = useCallback(() => {
-		dispatch(lockUserVault())
+		if (vaultKey !== undefined) {
+			dispatch(lockUserVault())
+		}
 	}, [dispatch])
 
 	useEffect(() => {
-		const interval = setInterval(() => {
+		const interval1 = setInterval(() => {
 			refreshToken()
 		}, 1800000);
-		return () => clearInterval(interval);
+		return () => clearInterval(interval1);
 	}, []);
+
+	// useEffect(() => {
+	// 	const interval2 = setInterval(() => {
+	// 		lockVault()
+	// 	}, 300000);
+	// 	return () => clearInterval(interval2);
+	// }, [])
 
 	const authenticating = useSelector(state => state.auth.authenticating)
 
@@ -122,7 +132,6 @@ function App() {
 					</Route>
 				</Routes>
 			</ThemeProvider>
-			{/* <AuthVerify logOut={logOut} refreshToken={refreshToken} lockVault={lockVault} /> */}
 		</div>
 
 	);

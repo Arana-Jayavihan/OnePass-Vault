@@ -9,6 +9,7 @@ import { Search } from '@mui/icons-material';
 import { ThreeDots } from 'react-loader-spinner'
 import { MdDelete, MdRemoveRedEye, MdEdit, MdRefresh, MdFileCopy } from 'react-icons/md'
 import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
+import { RiSendPlaneFill } from 'react-icons/ri'
 import { NewModel } from 'components/Modal'
 import { Input } from 'components/input/input'
 import { Col, Container, Row, Table } from 'react-bootstrap'
@@ -35,7 +36,7 @@ const UnlockedVault = () => {
     const [renderList, setRenderList] = useState([]);
 
     // Search
-    const [tableRows, setTableRows] = useState(8);
+    const [tableRows, setTableRows] = useState(5);
     const [searchText, setSearchText] = useState('');
     useEffect(() => {
         if (searchText !== '') {
@@ -337,7 +338,7 @@ const UnlockedVault = () => {
                                             </Typography>
                                         </td>
                                         <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                            <Typography sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}>
+                                            <Typography sx={{ color: theme.palette.primary[200], cursor: 'pointer', width: 'max-content' }}>
                                                 {login.loginUsername}
                                                 <span><IconButton onClick={() => {
                                                     navigator.clipboard.writeText(login.loginUsername)
@@ -350,7 +351,7 @@ const UnlockedVault = () => {
                                         </td>
                                         <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
                                             <Typography
-                                                sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}>
+                                                sx={{ color: theme.palette.primary[200], cursor: 'pointer', width: 'max-content' }}>
                                                 <input type='password' id={login.loginUsername} value={login.loginPassword} cursor='pointer' disabled />
                                                 <span><IconButton onClick={() => {
                                                     navigator.clipboard.writeText(login.loginPassword)
@@ -383,7 +384,7 @@ const UnlockedVault = () => {
                                                     </Typography>
                                                     <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
                                                         <IconButton  >
-                                                            <MdEdit style={{ color: theme.palette.secondary[300] }} />
+                                                            <RiSendPlaneFill style={{ color: theme.palette.secondary[300] }} />
                                                         </IconButton>
                                                     </Typography>
                                                     <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>

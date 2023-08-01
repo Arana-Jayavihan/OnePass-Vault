@@ -8,6 +8,7 @@
     "@mui/icons-material": "^5.11.0",
     "@mui/material": "^5.14.2",
     "@mui/x-data-grid": "^5.17.20",
+    "@reduxjs/toolkit": "^1.9.5",
     "axios": "^1.2.6",
     "crypto-js": "^4.1.1",
     "dompurify": "^3.0.3",

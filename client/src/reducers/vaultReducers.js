@@ -1,4 +1,4 @@
-import { vaultConsts } from "actions/constants"
+import { authConsts, vaultConsts } from "actions/constants"
 
 const initState = {
     creating: false,
@@ -183,6 +183,11 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 accepting: false
+            }
+            break
+        case authConsts.LOGOUT_SUCCESS:
+            state = {
+                ...initState
             }
             break
     }

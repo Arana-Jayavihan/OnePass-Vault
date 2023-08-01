@@ -11,6 +11,7 @@ export const Input = (props) => {
     <Form.Group className="mb-3" >
         {props.label && <Form.Label>{props.label}</Form.Label>}
         <Form.Control 
+            autoFocus={props.autoFocus ? props.autoFocus : null}
             onKeyDown={props.onKeyDown ? props.onKeyDown : null}
             type={props.type} 
             placeholder={props.placeholder} 

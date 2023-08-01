@@ -26,6 +26,7 @@ contract OnePass {
         uint256 vaultIndex;
         string vaultName;
         string note;
+        bool isOwner;
     }
 
     struct VaultUser {
@@ -167,9 +168,11 @@ contract OnePass {
     }
 
     function getPrivateKey(
-        string memory email
+        string memory email,
+        string memory hashPass
     ) public view returns (string memory encPrivateKey) {
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         return users[email].encPrivateKey;
     }
 
@@ -181,9 +184,11 @@ contract OnePass {
     }
 
     function getMasterEncKey(
-        string memory email
+        string memory email,
+        string memory hashPass
     ) public view returns (string memory masterEncKey) {
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         return users[email].masterEncKey;
     }
 
@@ -209,8 +214,12 @@ contract OnePass {
         );
     }
 
-    function removeUser(string memory email) public returns (bool success) {
+    function removeUser(
+        string memory email,
+        string memory hashPass
+    ) public returns (bool success) {
         requireOwner();
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         delete users[email];
         return true;
     }
@@ -227,10 +236,12 @@ contract OnePass {
         string memory name,
         string memory note,
         string memory encVaultKey,
-        string memory vaultKeyHash
+        string memory vaultKeyHash,
+        string memory hashPass
     ) public returns (bool sucess) {
         requireOwner();
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         User storage tempUser = users[email];
         Vault storage tempVault = vaults[vaultCount];
 
@@ -252,6 +263,7 @@ contract OnePass {
         asVault.vaultName = name;
         asVault.vaultIndex = vaultCount;
         asVault.note = note;
+        asVault.isOwner = true;
 
         tempUser.assignedVaults.push(asVault);
         tempUser.numVaults++;
@@ -269,18 +281,16 @@ contract OnePass {
         return vaults[index];
     }
 
-    function getVaultKeyHash(uint256 vaultIndex) public view returns(string memory vaultKeyHash){
-        return vaults[vaultIndex].vaultKeyHash;
-    }
-
     function getAssignVaults(string memory email) public view returns(AssignedVault[] memory){
         return users[email].assignedVaults;
     }
 
     function getUserEncVaultKey(
-        string memory email, 
+        string memory email,
+        string memory hashPass, 
         uint256 vaultIndex
         ) public view returns(string memory encVaultKey){
+            require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
             for(uint256 i; i < vaults[vaultIndex].numUsers; i++){
                 if(compareStrings(vaults[vaultIndex].vaultUsers[i].email, email) == true){
                     return vaults[vaultIndex].vaultUsers[i].encVaultPass;
@@ -309,11 +319,13 @@ contract OnePass {
     function updateVault(
         uint256 vaultIndex,
         string memory userEmail,
+        string memory hashPass,
         string memory name,
         string memory note
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
+        require(compareStrings(users[userEmail].hashPassPhrase, hashPass) == true, "Invalid Password");
         requireObjOwner(userEmail, vaults[vaultIndex].owner);
         vaults[vaultIndex].name = name;
         vaults[vaultIndex].note = note;
@@ -324,10 +336,13 @@ contract OnePass {
         uint256 vaultIndex,
         string memory userEmail,
         string memory addUserEmail,
-        string memory encVaultKey
+        string memory encVaultKey,
+        string memory hashPass
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[addUserEmail].email, "") == false, "User Not Found");
+        require(compareStrings(users[userEmail].hashPassPhrase, hashPass) == true, "Invalid Password");
+        require(findVaultUser(addUserEmail, vaultIndex) == false, "User Already Assigned");
         requireObjOwner(userEmail, vaults[vaultIndex].owner);
         User storage tempUser = users[addUserEmail];
 
@@ -335,6 +350,7 @@ contract OnePass {
         tempVault.vaultIndex = vaultIndex;
         tempVault.vaultName = vaults[vaultIndex].name;
         tempVault.note = vaults[vaultIndex].note;
+        tempVault.isOwner = false;
 
         tempUser.assignedVaults.push(tempVault);
         tempUser.numVaults++;
@@ -354,12 +370,14 @@ contract OnePass {
 
     function removeVaultUser(
         string memory email,
+        string memory hashPass,
         uint256 vaultIndex,
         uint256 userIndex
     ) public returns (bool success) {
         requireOwner();
         requireObjOwner(email, vaults[vaultIndex].owner);
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
 
         Vault storage tempVault = vaults[vaultIndex];
         User storage tempUser = users[email];
@@ -385,10 +403,12 @@ contract OnePass {
 
     function removeVault(
         string memory userEmail,
+        string memory hashPass,
         uint256 vaultIndex
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
+        require(compareStrings(users[userEmail].hashPassPhrase, hashPass) == true, "Invalid Password");
         requireObjOwner(userEmail, vaults[vaultIndex].owner);
         Vault storage tempVault = vaults[vaultIndex];
         for(uint256 i = 0; i < tempVault.numUsers; i++){
@@ -416,10 +436,12 @@ contract OnePass {
         string memory website,
         string memory userName,
         string memory password,
+        string memory hashPass,
         uint256 vaultIndex
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         require(findVaultUser(email, vaultIndex) == true, "User not authorized");
         Login storage login = vaultLogins[loginCount];
 
@@ -447,6 +469,7 @@ contract OnePass {
         uint256 loginIndex,
         uint256 vaultIndex,
         string memory email,
+        string memory hashPass,
         string memory name,
         string memory website,
         string memory userName,
@@ -454,6 +477,7 @@ contract OnePass {
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         requireObjOwner(email, vaults[vaultIndex].logins[loginIndex].owner);
 
         vaults[vaultIndex].logins[loginIndex].name = name;
@@ -465,11 +489,13 @@ contract OnePass {
 
     function removeVaultLogin(
         string memory email,
+        string memory hashPass,
         uint256 vaultIndex,
         uint256 loginIndex
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[email].email, "") == false, "User Not Found");
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         requireObjOwner(email, vaults[vaultIndex].logins[loginIndex].owner);
         delete vaults[vaultIndex].logins[loginIndex];
         return true;

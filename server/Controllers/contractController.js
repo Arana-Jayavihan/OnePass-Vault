@@ -1,55 +1,79 @@
 import { Sepolia } from "@thirdweb-dev/chains";
 import { ThirdwebSDK } from "@thirdweb-dev/sdk/evm";
 import dotenv from 'dotenv'
-
 dotenv.config()
+
 let sdk = undefined
 let contract = undefined
 try {
     sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-    contract = await sdk.getContract("0xc5E051b2bEB84F6b3103eA4b6e9c32E63F29796f");
+    //contract = await sdk.getContract("0xc5E051b2bEB84F6b3103eA4b6e9c32E63F29796f");
+    contract = await sdk.getContract("0x422e6700498843d43f81155c3542CF9975Ec51B5");
 } catch (error) {
     console.log(error)
 }
 
-export const InitiateContract = async (req, res) => {
+// export const InitiateContract = async (req, res) => {
 
-    const result = await contract.call("InitiateContract", [process.env.AES_SECRET])
+//     const result = await contract.call("InitiateContract", [process.env.AES_SECRET])
 
-    console.log(result)
-    if (result.receipt.confirmations != 0) {
-        res.status(201).json({
-            message: 'Contract Initiated'
-        })
-    }
-    else {
-        res.status(500).json({
-            message: 'Contract Initialization Failed',
-            error: result
-        })
-    }
-}
+//     console.log(result)
+//     if (result.receipt.confirmations != 0) {
+//         res.status(201).json({
+//             message: 'Contract Initiated'
+//         })
+//     }
+//     else {
+//         res.status(500).json({
+//             message: 'Contract Initialization Failed',
+//             error: result
+//         })
+//     }
+// }
 
 // User Functions
 export const addUserKeys = async (user) => {
     try {
         const result = await contract.call("addUserKeys", [user.email, user.encPrivateKey, user.encPublicKey, user.masterEncKey])
-        addTransactionHash(user.email, result.receipt.transactionHash)
-        return result
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(user.email, result.receipt.transactionHash)
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
 export const addUserData = async (user) => {
     try {
         const result = await contract.call("addUserData", [user.email, user.firstName, user.lastName, user.contact, user.passwordHash])
-        addTransactionHash(user.email, result.receipt.transactionHash)
-        return result
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(user.email, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
@@ -59,7 +83,12 @@ export const getUser = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
@@ -69,7 +98,12 @@ export const getAssignVaults = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
@@ -79,17 +113,27 @@ export const getUserHashPass = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const getPrivateKey = async (email) => {
+export const getPrivateKey = async (email, hashPass) => {
     try {
-        const result = await contract.call("getPrivateKey", [email])
+        const result = await contract.call("getPrivateKey", [email, hashPass])
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
@@ -99,27 +143,47 @@ export const getPublicKey = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const getMasterEncKey = async (email) => {
+export const getMasterEncKey = async (email, hashPass) => {
     try {
-        const result = await contract.call("getMasterEncKey", [email])
+        const result = await contract.call("getMasterEncKey", [email, hashPass])
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
 export const addTransactionHash = async (email, txnHash) => {
     try {
         const result = await contract.call("addTxnHash", [email, txnHash])
-        console.log('Transaction added to user', result)
+        if (result.receipt.confirmations != 0) {
+            console.log('Transaction added to user', result)
+        }
+        else {
+            console.log('Transaction not added to user', result)
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
@@ -129,74 +193,157 @@ export const getUserTransactionHash = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const removeUser = async (email) => {
+export const removeUser = async (email, hashPass) => {
     try {
-        const result = await contract.call("removeUser", [email])
-        addTransactionHash(user.email, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("removeUser", [email, hashPass])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(email, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
 // Vault Functions
-export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyHash) => {
+export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyHash, hashPass) => {
     try {
-        const result = await contract.call("createVault", [email, vaultName, note, encVaultKey, vaultKeyHash])
-        addTransactionHash(email, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("createVault", [email, vaultName, note, encVaultKey, vaultKeyHash, hashPass])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(email, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const updateVault = async (vaultIndex, ownerEmail, vaultName, note) => {
+export const updateVault = async (vaultIndex, ownerEmail, hashPass, vaultName, note) => {
     try {
-        const result = await contract.call("updateVault", [vaultIndex, ownerEmail, vaultName, note])
-        addTransactionHash(ownerEmail, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("updateVault", [vaultIndex, ownerEmail, hashPass, vaultName, note])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(ownerEmail, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const addVaultUser = async (vaultIndex, ownerEmail, addUserEmail, encVaultKey) => {
+export const addVaultUser = async (vaultIndex, ownerEmail, addUserEmail, encVaultKey, hashPass) => {
     try {
-        const result = await contract.call("addVaultUser", [vaultIndex, ownerEmail, addUserEmail, encVaultKey])
-        addTransactionHash(addUserEmail, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("addVaultUser", [vaultIndex, ownerEmail, addUserEmail, encVaultKey, hashPass])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(ownerEmail, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const removeVaultUser = async (email, vaultIndex, userIndex) => {
+export const removeVaultUser = async (email, hashPass, vaultIndex, userIndex) => {
     try {
-        const result = await contract.call("removeVaultUser", [email, vaultIndex, userIndex])
-        addTransactionHash(email, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("removeVaultUser", [email, hashPass, vaultIndex, userIndex])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(email, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const removeVault = async (ownerEmail, vaultIndex) => {
+export const removeVault = async (ownerEmail, hashPass, vaultIndex) => {
     try {
-        const result = await contract.call("removeVault", [ownerEmail, vaultIndex])
-        addTransactionHash(ownerEmail, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("removeVault", [ownerEmail, hashPass, vaultIndex])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(ownerEmail, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
@@ -206,7 +353,12 @@ export const getUserVaults = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
@@ -216,61 +368,100 @@ export const getVault = async (vaultIndex) => {
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const getVaultHash = async (vaultIndex) => {
+export const getUserVaultEncKey = async (email, hashPass, vaultIndex) => {
     try {
-        const result = await contract.call("getVaultKeyHash", [vaultIndex])
+        const result = await contract.call("getUserEncVaultKey", [email, hashPass, vaultIndex])
         return result
     } catch (error) {
         console.log(error)
-        return false
-    }
-}
-
-export const getUserVaultEncKey = async (vaultIndex, email) => {
-    try {
-        const result = await contract.call("getUserEncVaultKey", [email, vaultIndex])
-        return result
-    } catch (error) {
-        console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
 // Login Functions
-export const addVaultLogin = async (email, loginName, url, userName, password, vaultIndex) => {
+export const addVaultLogin = async (email, loginName, url, userName, password, hashPass, vaultIndex) => {
     try {
-        const result = await contract.call("addVaultLogin", [email, loginName, url, userName, password, vaultIndex])
-        addTransactionHash(email, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("addVaultLogin", [email, loginName, url, userName, password, hashPass, vaultIndex])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(email, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const updateVaultLogin = async (loginIndex, vaultIndex, ownerEmail, loginName, url, userName, password) => {
+export const updateVaultLogin = async (loginIndex, vaultIndex, ownerEmail, hashPass, loginName, url, userName, password) => {
     try {
-        const result = await contract.call("updateVaultLogin", [loginIndex, vaultIndex, ownerEmail, loginName, url, userName, password])
-        addTransactionHash(ownerEmail, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("updateVaultLogin", [loginIndex, vaultIndex, ownerEmail, hashPass, loginName, url, userName, password])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(ownerEmail, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
-export const removeVaultLogin = async (ownerEmail, vaultIndex, loginIndex) => {
+export const removeVaultLogin = async (ownerEmail, hashPass, vaultIndex, loginIndex) => {
     try {
-        const result = await contract.call("removeVaultLogin", [ownerEmail, vaultIndex, loginIndex])
-        addTransactionHash(ownerEmail, result.receipt.transactionHash)
-        return result
+        const result = await contract.call("removeVaultLogin", [ownerEmail, hashPass, vaultIndex, loginIndex])
+        if (result.receipt.confirmations != 0) {
+            addTransactionHash(ownerEmail, result.receipt.transactionHash)
+            return result
+        }
+        else if (!result.receipt){
+            return result
+        }
+        else {
+            return false
+        }
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
 
@@ -280,6 +471,11 @@ export const getAllVaultLogins = async (vaultIndex) => {
         return result
     } catch (error) {
         console.log(error)
-        return false
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
     }
 }
