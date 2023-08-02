@@ -14,6 +14,7 @@ const axiosInstance = axios.create({
         'X-Frame-Options': 'DENY',
         'X-XSS-Protection': '0',
         'X-Content-Type-Options': 'nosniff',
+        'Content-Type': 'application/json; charset=utf-8',
         //'Content-Security-Policy': "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'",
         'Referrer-Policy': 'no-referrer',
         'Feature-Policy': "geolocation 'none'; midi 'none'; sync-xhr 'none'; microphone 'none'; camera 'none'; magnetometer 'none'; gyroscope 'none'; speaker 'none'; fullscreen 'self'; payment 'none'",
@@ -58,7 +59,16 @@ axiosInstance.interceptors.response.use((res) => {
         toast.error("Request timed out, Try again later...", { id: 'timeout' })
     }
 
-    else if ((status === 401 && error.response.data.message === "Session Expired" || status === 401 && error.response.data.message === "Potential Malicious Atempt") || (status === 400 && (error.response.data.message === "Invalid Session" || error.response.data.message === "Invalid Token" || error.response.data.message === "Not Logged In"))) {
+    else if (
+        (status === 401 &&
+            (error.response.data.message === "Session Expired" ||
+                error.response.data.message === "Unauthorized" ||
+                error.response.data.message === "Potential Malicious Atempt")) ||
+        (status === 400 &&
+            (error.response.data.message === "Invalid Session" ||
+                error.response.data.message === "Invalid Token" ||
+                error.response.data.message === "Not Logged In")
+        )) {
         store.dispatch(signout())
     }
     return error

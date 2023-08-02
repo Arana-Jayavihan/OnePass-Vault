@@ -70,7 +70,7 @@ export const addData = async (req, res) => {
             }
             else if (result === "You are not the owner of the object") {
                 res.status(401).json({
-                    message: 'Unauthorized...'
+                    message: 'Unauthorized'
                 })
             }
             else if (result === false) {
@@ -188,7 +188,7 @@ export const signIn = async (req, res) => {
                     console.log(userResult)
                     res.cookie('refreshToken', refreshToken, {
                         path: '/',
-                        maxAge: 86400000,
+                        maxAge: 7200000,
                         sameSite: "none",
                         secure: true,
                         httpOnly: true
@@ -262,7 +262,7 @@ export const tokenRefresh = async (req, res) => {
                             }).toString()
                             res.cookie('refreshToken', refreshToken, {
                                 path: '/',
-                                maxAge: 86400000,
+                                maxAge: 7200000,
                                 sameSite: "none",
                                 secure: true,
                                 httpOnly: true
@@ -351,5 +351,5 @@ function clearTokenList() {
     console.log("token list cleared", tokenlist)
 }
 
-setInterval(clearTokenList, 86400000)
+setInterval(clearTokenList, 7200000)
 //86400000
