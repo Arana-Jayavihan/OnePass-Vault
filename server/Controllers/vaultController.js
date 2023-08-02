@@ -259,7 +259,7 @@ export const getVaultData = async (req, res) => {
                 const decVaultUnlockToken = CryptoJS.AES.decrypt(encVaultUnlockToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
                 const decoded = jwt.verify(decVaultUnlockToken, process.env.JWT_SECRET)
                 const vaultUnlockToken = vaultUnlockTokens[decoded.id].vaultUnlockToken
-                if (decVaultUnlockToken === vaultUnlockToken) {
+                if (vaultUnlockToken && decVaultUnlockToken === vaultUnlockToken) {
                     const user = req.user
                     const ip = req.headers['x-forwarded-for']
                     const decoded = jwt.verify(vaultUnlockToken, process.env.JWT_SECRET)
