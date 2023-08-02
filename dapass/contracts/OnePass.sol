@@ -5,8 +5,8 @@ contract OnePass {
     address private owner;
     string private contractHash;
     bool private isInitiated;
-    uint256 private vaultCount = 0;
-    uint256 private loginCount = 0;
+    uint64 private vaultCount = 0;
+    uint64 private loginCount = 0;
 
     struct User {
         string fName;
@@ -18,12 +18,12 @@ contract OnePass {
         string publicKey;
         string masterEncKey;
         string[] transactionHashes;
-        uint256 numVaults;
+        uint16 numVaults;
         AssignedVault[] assignedVaults;
     }
 
     struct AssignedVault {
-        uint256 vaultIndex;
+        uint64 vaultIndex;
         string vaultName;
         string note;
         bool isOwner;
@@ -31,38 +31,47 @@ contract OnePass {
 
     struct VaultUser {
         bool isOwner;
-        uint256 index;
+        uint64 index;
         string email;
         string encVaultPass;
     }
 
     struct Vault {
-        uint256 index;
+        uint64 index;
         string name;
         string note;
         string owner;
-        uint256 numLogins;
-        uint256 numUsers;
+        uint64 numLogins;
+        uint64 numUsers;
         string vaultKeyHash;
         VaultUser[] vaultUsers;
         Login[] logins;
+        CustomFields[] vaultCustomFields;
     }
 
     struct Login {
-        uint256 index;
+        uint64 index;
         string owner;
         string name;
         string website;
         string userName;
         string password;
+        CustomFields[] loginCustomFields;
+    }
+
+    struct CustomFields {
+        string id;
+        string name;
+        string value;
     }
 
     struct TxnHash {
         string tHash;
     }
 
-    mapping(uint256 => Vault) private vaults;
-    mapping(uint256 => Login) private vaultLogins;
+    mapping(uint64 => Vault) private vaults;
+    mapping(uint64 => Login) private vaultLogins;
+    mapping(string => CustomFields) private customFields;
     mapping (string => AssignedVault) private assignedVaults;
     mapping(string => User) private users;
     mapping(string => VaultUser) private vaultUsers;
@@ -94,9 +103,9 @@ contract OnePass {
     // Find Vault User
     function findVaultUser(
         string memory email,
-        uint256 vaultIndex
+        uint64 vaultIndex
     ) private view returns (bool success){
-        for(uint256 i = 0; i < vaults[vaultIndex].numUsers; i++ ){
+        for(uint64 i = 0; i < vaults[vaultIndex].numUsers; i++ ){
             if(compareStrings(email, vaults[vaultIndex].vaultUsers[i].email) == true){
                 return true;
             }
@@ -237,13 +246,24 @@ contract OnePass {
         string memory note,
         string memory encVaultKey,
         string memory vaultKeyHash,
-        string memory hashPass
+        string memory hashPass,
+        CustomFields[] memory tempCustomFields,
+        uint8 size
     ) public returns (bool sucess) {
         requireOwner();
         require(compareStrings(users[email].email, "") == false, "User Not Found");
         require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         User storage tempUser = users[email];
         Vault storage tempVault = vaults[vaultCount];
+
+        for(uint8 i = 0; i < size; i++){
+            CustomFields storage tempCustomField = customFields[vaultKeyHash];
+            tempCustomField.id = tempCustomFields[i].id;
+            tempCustomField.name = tempCustomFields[i].name;
+            tempCustomField.value = tempCustomFields[i].value;
+            tempVault.vaultCustomFields.push(tempCustomField);
+            delete customFields[vaultKeyHash];
+        }
 
         tempVault.index = vaultCount;
         tempVault.name = name;
@@ -277,7 +297,7 @@ contract OnePass {
         return true;
     }
 
-    function getVault(uint256 index) public view returns (Vault memory) {
+    function getVault(uint64 index) public view returns (Vault memory) {
         return vaults[index];
     }
 
@@ -288,52 +308,36 @@ contract OnePass {
     function getUserEncVaultKey(
         string memory email,
         string memory hashPass, 
-        uint256 vaultIndex
+        uint64 vaultIndex
         ) public view returns(string memory encVaultKey){
             require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
-            for(uint256 i; i < vaults[vaultIndex].numUsers; i++){
+            for(uint64 i; i < vaults[vaultIndex].numUsers; i++){
                 if(compareStrings(vaults[vaultIndex].vaultUsers[i].email, email) == true){
                     return vaults[vaultIndex].vaultUsers[i].encVaultPass;
                 }
             }
         }
 
-    function getUserVaults(
-        string memory email
-    ) public view returns(
-        Vault[] memory
-    ){
-        Vault[] memory userVaults = new Vault[](vaultCount);
-        uint256 counter = 0;
-        for(uint256 i = 0; i  < vaultCount; i++){
-            for(uint256 j = 0; j < vaults[i].numUsers; j++){
-                if(compareStrings(email, vaults[i].vaultUsers[j].email) == true){
-                    userVaults[counter] = vaults[i];
-                    counter++;
-                }
-            }
-        }
-        return userVaults;
-    }
-
-    function updateVault(
-        uint256 vaultIndex,
-        string memory userEmail,
-        string memory hashPass,
-        string memory name,
-        string memory note
-    ) public returns (bool success) {
-        requireOwner();
-        require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
-        require(compareStrings(users[userEmail].hashPassPhrase, hashPass) == true, "Invalid Password");
-        requireObjOwner(userEmail, vaults[vaultIndex].owner);
-        vaults[vaultIndex].name = name;
-        vaults[vaultIndex].note = note;
-        return true;
-    }
+    // function getUserVaults(
+    //     string memory email
+    // ) public view returns(
+    //     Vault[] memory
+    // ){
+    //     Vault[] memory userVaults = new Vault[](vaultCount);
+    //     uint64 counter = 0;
+    //     for(uint64 i = 0; i  < vaultCount; i++){
+    //         for(uint64 j = 0; j < vaults[i].numUsers; j++){
+    //             if(compareStrings(email, vaults[i].vaultUsers[j].email) == true){
+    //                 userVaults[counter] = vaults[i];
+    //                 counter++;
+    //             }
+    //         }
+    //     }
+    //     return userVaults;
+    // }
 
     function addVaultUser(
-        uint256 vaultIndex,
+        uint64 vaultIndex,
         string memory userEmail,
         string memory addUserEmail,
         string memory encVaultKey,
@@ -371,8 +375,8 @@ contract OnePass {
     function removeVaultUser(
         string memory email,
         string memory hashPass,
-        uint256 vaultIndex,
-        uint256 userIndex
+        uint64 vaultIndex,
+        uint64 userIndex
     ) public returns (bool success) {
         requireOwner();
         requireObjOwner(email, vaults[vaultIndex].owner);
@@ -382,7 +386,7 @@ contract OnePass {
         Vault storage tempVault = vaults[vaultIndex];
         User storage tempUser = users[email];
         
-        for(uint256 i = 0; i < tempUser.numVaults; i++){
+        for(uint64 i = 0; i < tempUser.numVaults; i++){
             if(compareStrings(tempUser.assignedVaults[i].vaultName, tempVault.name) == true){
                 tempUser.assignedVaults[i].vaultName = '';
                 tempUser.assignedVaults[i].note = '';
@@ -390,7 +394,7 @@ contract OnePass {
             }
         }
         
-        for(uint256 i = 0; i < tempVault.numUsers; i++){
+        for(uint64 i = 0; i < tempVault.numUsers; i++){
             if(compareStrings(tempVault.vaultUsers[i].email, vaults[vaultIndex].vaultUsers[userIndex].email) == true){
                 tempVault.vaultUsers[i].isOwner = false;
                 tempVault.vaultUsers[i].encVaultPass = "";
@@ -404,17 +408,17 @@ contract OnePass {
     function removeVault(
         string memory userEmail,
         string memory hashPass,
-        uint256 vaultIndex
+        uint64 vaultIndex
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
         require(compareStrings(users[userEmail].hashPassPhrase, hashPass) == true, "Invalid Password");
         requireObjOwner(userEmail, vaults[vaultIndex].owner);
         Vault storage tempVault = vaults[vaultIndex];
-        for(uint256 i = 0; i < tempVault.numUsers; i++){
+        for(uint64 i = 0; i < tempVault.numUsers; i++){
             if(compareStrings(tempVault.vaultUsers[i].email, "") == false){
                 User storage tempUser = users[tempVault.vaultUsers[i].email];
-                for(uint256 j = 0; j < tempUser.numVaults; j++){
+                for(uint64 j = 0; j < tempUser.numVaults; j++){
                     if(compareStrings(tempUser.assignedVaults[j].vaultName, tempVault.name) == true){
                         tempUser.assignedVaults[j].vaultName = "";
                         tempUser.assignedVaults[j].note = "";
@@ -437,13 +441,24 @@ contract OnePass {
         string memory userName,
         string memory password,
         string memory hashPass,
-        uint256 vaultIndex
+        uint64 vaultIndex,
+        CustomFields[] memory tempCustomFields,
+        uint8 size
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[email].email, "") == false, "User Not Found");
         require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         require(findVaultUser(email, vaultIndex) == true, "User not authorized");
         Login storage login = vaultLogins[loginCount];
+
+        for(uint8 i = 0; i < size; i++){
+            CustomFields storage tempCustomField = customFields[name];
+            tempCustomField.id = tempCustomFields[i].id;
+            tempCustomField.name = tempCustomFields[i].name;
+            tempCustomField.value = tempCustomFields[i].value;
+            login.loginCustomFields.push(tempCustomField);
+            delete customFields[name];
+        }
 
         login.owner = email;
         login.name = name;
@@ -460,38 +475,16 @@ contract OnePass {
     }
 
     function getAllVaultLogins(
-        uint256 vaultIndex
+        uint64 vaultIndex
     ) public view returns (Login[] memory) {
         return vaults[vaultIndex].logins;
-    }
-
-    function updateVaultLogin(
-        uint256 loginIndex,
-        uint256 vaultIndex,
-        string memory email,
-        string memory hashPass,
-        string memory name,
-        string memory website,
-        string memory userName,
-        string memory password
-    ) public returns (bool success) {
-        requireOwner();
-        require(compareStrings(users[email].email, "") == false, "User Not Found");
-        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
-        requireObjOwner(email, vaults[vaultIndex].logins[loginIndex].owner);
-
-        vaults[vaultIndex].logins[loginIndex].name = name;
-        vaults[vaultIndex].logins[loginIndex].website = website;
-        vaults[vaultIndex].logins[loginIndex].userName = userName;
-        vaults[vaultIndex].logins[loginIndex].password = password;
-        return true;
     }
 
     function removeVaultLogin(
         string memory email,
         string memory hashPass,
-        uint256 vaultIndex,
-        uint256 loginIndex
+        uint64 vaultIndex,
+        uint64 loginIndex
     ) public returns (bool success) {
         requireOwner();
         require(compareStrings(users[email].email, "") == false, "User Not Found");
@@ -504,4 +497,43 @@ contract OnePass {
     function getOwner() public view returns (address ownerAddress) {
         return owner;
     }
+
+    // function updateVault(
+    //     uint256 vaultIndex,
+    //     string memory userEmail,
+    //     string memory hashPass,
+    //     string memory name,
+    //     string memory note
+    // ) public returns (bool success) {
+    //     requireOwner();
+    //     require(compareStrings(users[userEmail].email, "") == false, "User Not Found");
+    //     require(compareStrings(users[userEmail].hashPassPhrase, hashPass) == true, "Invalid Password");
+    //     requireObjOwner(userEmail, vaults[vaultIndex].owner);
+    //     vaults[vaultIndex].name = name;
+    //     vaults[vaultIndex].note = note;
+    //     return true;
+    // }
+
+
+    // function updateVaultLogin(
+    //     uint256 loginIndex,
+    //     uint256 vaultIndex,
+    //     string memory email,
+    //     string memory hashPass,
+    //     string memory name,
+    //     string memory website,
+    //     string memory userName,
+    //     string memory password
+    // ) public returns (bool success) {
+    //     requireOwner();
+    //     require(compareStrings(users[email].email, "") == false, "User Not Found");
+    //     require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
+    //     requireObjOwner(email, vaults[vaultIndex].logins[loginIndex].owner);
+
+    //     vaults[vaultIndex].logins[loginIndex].name = name;
+    //     vaults[vaultIndex].logins[loginIndex].website = website;
+    //     vaults[vaultIndex].logins[loginIndex].userName = userName;
+    //     vaults[vaultIndex].logins[loginIndex].password = password;
+    //     return true;
+    // }
 }
