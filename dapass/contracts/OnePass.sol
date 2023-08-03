@@ -256,15 +256,17 @@ contract OnePass {
         User storage tempUser = users[email];
         Vault storage tempVault = vaults[vaultCount];
 
-        for(uint8 i = 0; i < size; i++){
-            CustomFields storage tempCustomField = customFields[vaultKeyHash];
-            tempCustomField.id = tempCustomFields[i].id;
-            tempCustomField.name = tempCustomFields[i].name;
-            tempCustomField.value = tempCustomFields[i].value;
-            tempVault.vaultCustomFields.push(tempCustomField);
-            delete customFields[vaultKeyHash];
+        if (size > 0){
+            for(uint8 i = 0; i < size; i++){
+                CustomFields storage tempCustomField = customFields[vaultKeyHash];
+                tempCustomField.id = tempCustomFields[i].id;
+                tempCustomField.name = tempCustomFields[i].name;
+                tempCustomField.value = tempCustomFields[i].value;
+                tempVault.vaultCustomFields.push(tempCustomField);
+                delete customFields[vaultKeyHash];
+            }
         }
-
+    
         tempVault.index = vaultCount;
         tempVault.name = name;
         tempVault.note = note;
@@ -451,13 +453,15 @@ contract OnePass {
         require(findVaultUser(email, vaultIndex) == true, "User not authorized");
         Login storage login = vaultLogins[loginCount];
 
-        for(uint8 i = 0; i < size; i++){
-            CustomFields storage tempCustomField = customFields[name];
-            tempCustomField.id = tempCustomFields[i].id;
-            tempCustomField.name = tempCustomFields[i].name;
-            tempCustomField.value = tempCustomFields[i].value;
-            login.loginCustomFields.push(tempCustomField);
-            delete customFields[name];
+        if (size > 0){
+            for(uint8 i = 0; i < size; i++){
+                CustomFields storage tempCustomField = customFields[name];
+                tempCustomField.id = tempCustomFields[i].id;
+                tempCustomField.name = tempCustomFields[i].name;
+                tempCustomField.value = tempCustomFields[i].value;
+                login.loginCustomFields.push(tempCustomField);
+                delete customFields[name];
+            }
         }
 
         login.owner = email;

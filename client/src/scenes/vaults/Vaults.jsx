@@ -7,17 +7,17 @@ import { toast } from 'react-hot-toast'
 import FlexBetween from 'components/FlexBetween'
 import { Search } from '@mui/icons-material';
 import { ThreeDots } from 'react-loader-spinner'
-import { MdDelete, MdRemoveRedEye, MdEdit, MdRefresh } from 'react-icons/md'
+import { MdRefresh } from 'react-icons/md'
 import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
+import { HiPlus } from 'react-icons/hi'
 import { NewModel } from 'components/Modal'
 import { Input } from 'components/input/input'
-import { Col, Container, Row, Table } from 'react-bootstrap'
-import Pagination from '@mui/material/Pagination';
-import Stack from '@mui/material/Stack';
+import { Col, Container, Row } from 'react-bootstrap'
 import Vault from 'components/Vault/Vault';
 import { addUserVault, getUserAssignedVaults, unlockUserVault } from 'actions/vaultActions';
 import "../../components/Vault/vault.css"
 import { useNavigate } from 'react-router-dom';
+import { MdOutlineDone } from 'react-icons/md'
 
 const Vaults = () => {
     const navigate = useNavigate()
@@ -155,23 +155,23 @@ const Vaults = () => {
                             }
                         </div> :
                         searchText.length > 0 ?
-                        <div style={{ height: '50vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #6d4aff, #cc00ee)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                No Vaults
-                            </Typography>
-                            <Typography variant='h5' sx={{ textAlign: 'center', paddingTop: '.5rem', paddingLeft: '.5rem' }}>
-                                No vaults match your search.
-                            </Typography>
-                        </div>
-                        :
-                        <div style={{ height: '50vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                            <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #6d4aff, #cc00ee)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                No Vaults
-                            </Typography>
-                            <Typography variant='h5' sx={{ textAlign: 'center', paddingTop: '.5rem', paddingLeft: '.5rem' }}>
-                                You have no vaults assigned to you, Try adding one.
-                            </Typography>
-                        </div>
+                            <div style={{ height: '50vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #6d4aff, #cc00ee)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
+                                    No Vaults
+                                </Typography>
+                                <Typography variant='h5' sx={{ textAlign: 'center', paddingTop: '.5rem', paddingLeft: '.5rem' }}>
+                                    No vaults match your search.
+                                </Typography>
+                            </div>
+                            :
+                            <div style={{ height: '50vh', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #6d4aff, #cc00ee)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
+                                    No Vaults
+                                </Typography>
+                                <Typography variant='h5' sx={{ textAlign: 'center', paddingTop: '.5rem', paddingLeft: '.5rem' }}>
+                                    You have no vaults assigned to you, Try adding one.
+                                </Typography>
+                            </div>
                 }
             </>
 
@@ -182,12 +182,81 @@ const Vaults = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [vaultName, setVaultName] = useState(undefined);
     const [vaultDescription, setVaultDescription] = useState(undefined);
+    const [customFields, setCustomFields] = useState([]);
+    const [customFieldSize, setCustomFieldSize] = useState(0);
+    const [renderCustomFields, setRenderCustomFields] = useState([]);
+    const [tempFieldName, setTempFieldName] = useState(undefined);
+    const [tempFieldValue, setTempFieldValue] = useState(undefined);
+
+    let tempField = ""
+    let tempValue = ""
+
+    const handleFieldNameChange = (e) => {
+        tempField = e.target.value
+    }
+
+    const handleFieldValueChange = (e, count) => {
+        tempValue = e.target.value
+    }
+
+    const handleTickClick = (customFieldSize) => {
+        if (tempField === "" || tempValue === "") {
+            toast.error('Please fill out all fields', {id : 'customFieldError'})
+        }
+        const  tempFiledObject = {
+            name: tempField,
+            value: tempValue
+        }
+        customFields[customFieldSize] = tempFiledObject
+        console.log(customFields)
+        tempField = ""
+        tempValue = ""
+    }
+
+    const handleAddCustomFieldButtonClick = () => {
+        if (customFieldSize < 3){
+            const template = <Row>
+            <Col md={5}>
+                <Typography sx={{ color: theme.palette.primary[500] }}>
+                    <Input
+                        label="Custom Field Name"
+                        onChange={(e) => handleFieldNameChange(e, customFieldSize)}
+                    />
+                </Typography>
+            </Col>
+            <Col md={5}>
+                <Typography sx={{ color: theme.palette.primary[500] }}>
+                    <Input
+                        label="Custom Field Value"
+                        onChange={(e) => handleFieldValueChange(e, customFieldSize)}
+                    />
+                </Typography>
+            </Col>
+            <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <IconButton onClick={() => handleTickClick(customFieldSize)}>
+                    <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
+                </IconButton>
+            </Col>
+        </Row>
+        setRenderCustomFields([...renderCustomFields, template])
+        setCustomFieldSize(customFieldSize + 1)
+        }
+        else {
+            toast.error('Maximum 3 custom fields are allowed')
+        }
+    }
+    const handleCustomFieldAdd = (name, value) => {
+
+        setCustomFields([...customFields, { "name": name, "value": value }])
+    }
 
     const closeAddModal = () => {
         setShowAddModal(false)
         setVaultName(undefined)
         setVaultDescription(undefined)
         setPassword(undefined)
+        setCustomFields([])
+        setCustomFieldSize(0)
     }
 
     const addVault = () => {
@@ -196,7 +265,8 @@ const Vaults = () => {
             vName: vaultName,
             vDesc: vaultDescription,
             publicKey: publicKey,
-            pass: password
+            pass: password,
+            customFields: customFields
         }
         dispatch(addUserVault(form))
         setShowAddModal(false)
@@ -204,6 +274,8 @@ const Vaults = () => {
         setVaultName(undefined)
         setPassword(undefined)
         setPassType('password')
+        setCustomFieldSize(0)
+        setCustomFields([])
     }
 
     const renderAddNewVault = () => {
@@ -213,50 +285,106 @@ const Vaults = () => {
                 close={closeAddModal}
                 handleClose={addVault}
                 ModalTitle="Create New Vault"
-                size='sm'>
+                size='lg'>
                 <Row>
-                    <Col md={12}>
-                        <Typography sx={{ color: theme.palette.primary[500] }} >
-                            <Input
-                                label="Vault Name"
-                                value={vaultName}
-                                placeholder={'Social Media'}
-                                onChange={(e) => setVaultName(e.target.value)}
-                            />
-                        </Typography>
-                    </Col>
-                    <Col md={12}>
-                        <Typography sx={{ color: theme.palette.primary[500] }} >
-                            <Input
-                                label="Description"
-                                value={vaultDescription}
-                                placeholder={'Description'}
-                                onChange={(e) => setVaultDescription(e.target.value)}
-                            />
-                        </Typography>
-                    </Col>
-                    <Col md={12} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
-                        <Typography sx={{ color: theme.palette.primary[500] }} >
-                            <Input
-                                label="Password"
-                                value={password}
-                                type={passType}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
 
+                    <Row>
+                        <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
+                            Vault Details
                         </Typography>
-                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
-                            {
-                                showPassword ?
-                                    <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
-                                    :
-                                    <AiFillEyeInvisible style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
-                            }
-                        </IconButton>
-                    </Col>
+                        <Col md={6}>
+                            <Typography sx={{ color: theme.palette.primary[500] }} >
+                                <Input
+                                    label="Vault Name"
+                                    value={vaultName}
+                                    placeholder={'Social Media'}
+                                    onChange={(e) => setVaultName(e.target.value)}
+                                />
+                            </Typography>
+                        </Col>
+                        <Col md={6}>
+                            <Typography sx={{ color: theme.palette.primary[500] }} >
+                                <Input
+                                    label="Description"
+                                    value={vaultDescription}
+                                    placeholder={'Description'}
+                                    onChange={(e) => setVaultDescription(e.target.value)}
+                                />
+                            </Typography>
+                        </Col>
+                    </Row>
+
+
+                    <Row>
+                        {
+                            <>
+                                <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
+                                    Custom Fields
+                                </Typography>
+                                {/* <Row>
+                                        <Col md={5}>
+                                            <Typography sx={{ color: theme.palette.primary[500] }}>
+                                                <Input
+                                                    label="Custom Field Name"
+                                                    value={vaultDescription}
+                                                    onChange={(e) => setVaultDescription(e.target.value)}
+                                                />
+                                            </Typography>
+                                        </Col>
+                                        <Col md={5}>
+                                            <Typography sx={{ color: theme.palette.primary[500] }}>
+                                                <Input
+                                                    label="Custom Field Value"
+                                                    value={vaultDescription}
+                                                    onChange={(e) => setVaultDescription(e.target.value)}
+                                                />
+                                            </Typography>
+                                        </Col>
+                                        <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                            <IconButton>
+                                                <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
+                                            </IconButton>
+                                        </Col>
+                                    </Row> */}
+                                {renderCustomFields}
+                            </>
+                        }
+                    </Row>
+                    <Row>
+                        <Col md={6} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                            <Typography sx={{ color: theme.palette.primary[500] }} >
+                                <Input
+                                    label="Your Password"
+                                    value={password}
+                                    type={passType}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+
+                            </Typography>
+                            <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
+                                {
+                                    showPassword ?
+                                        <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                                        :
+                                        <AiFillEyeInvisible style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                                }
+                            </IconButton>
+                        </Col>
+                        <Col md={6} style={{ display: 'flex', justifyContent: 'center', height: '5rem', alignItems: 'center' }}>
+                            <motion.button
+                                className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                whileHover={{ scale: [1, 1.1] }}
+                                onClick={() => handleAddCustomFieldButtonClick()}
+                            >
+                                Add Custom Field
+                            </motion.button>
+
+                        </Col>
+                    </Row>
+
                 </Row>
 
-            </NewModel>
+            </NewModel >
         )
     }
 

@@ -6,7 +6,7 @@ export const addLogin = async (req, res) => {
         console.log(req.body)
         const user = req.user
         if (req.body.email === user.email) {
-            const result = await addVaultLogin(req.body.email, req.body.loginName, req.body.loginUrl, req.body.loginUsername, req.body.loginPassword, user.hashPass, req.body.vaultIndex)
+            const result = await addVaultLogin(req.body.email, req.body.loginName, req.body.loginUrl, req.body.loginUsername, req.body.loginPassword, user.hashPass, req.body.vaultIndex, req.body.customFields)
             if (result) {
                 const logins = await getAllVaultLogins(req.body.vaultIndex)
                 if (logins === false) {

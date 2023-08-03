@@ -7,8 +7,9 @@ let sdk = undefined
 let contract = undefined
 try {
     sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
-    //contract = await sdk.getContract("0xc5E051b2bEB84F6b3103eA4b6e9c32E63F29796f");
-    contract = await sdk.getContract("0x422e6700498843d43f81155c3542CF9975Ec51B5");
+    // contract = await sdk.getContract("0xc5E051b2bEB84F6b3103eA4b6e9c32E63F29796f");
+    // contract = await sdk.getContract("0x422e6700498843d43f81155c3542CF9975Ec51B5");
+    contract = await sdk.getContract("0x12c79522b8eFCF49a099E6614c406FD769B10E1F")
 } catch (error) {
     console.log(error)
 }
@@ -227,9 +228,9 @@ export const removeUser = async (email, hashPass) => {
 }
 
 // Vault Functions
-export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyHash, hashPass) => {
+export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyHash, hashPass, customFields) => {
     try {
-        const result = await contract.call("createVault", [email, vaultName, note, encVaultKey, vaultKeyHash, hashPass])
+        const result = await contract.call("createVault", [email, vaultName, note, encVaultKey, vaultKeyHash, hashPass, customFields, customFields.length])
         if (result.receipt.confirmations != 0) {
             addTransactionHash(email, result.receipt.transactionHash)
             return result
@@ -393,9 +394,9 @@ export const getUserVaultEncKey = async (email, hashPass, vaultIndex) => {
 }
 
 // Login Functions
-export const addVaultLogin = async (email, loginName, url, userName, password, hashPass, vaultIndex) => {
+export const addVaultLogin = async (email, loginName, url, userName, password, hashPass, vaultIndex, customFields) => {
     try {
-        const result = await contract.call("addVaultLogin", [email, loginName, url, userName, password, hashPass, vaultIndex])
+        const result = await contract.call("addVaultLogin", [email, loginName, url, userName, password, hashPass, vaultIndex, customFields, customFields.length])
         if (result.receipt.confirmations != 0) {
             addTransactionHash(email, result.receipt.transactionHash)
             return result

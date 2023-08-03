@@ -19,7 +19,7 @@ export const addVault = async (req, res) => {
         const vault = req.body
         const vaultName = vault.vName + "_" + shortID.generate()
         if (vault.email === user.email) {
-            const result = await createVault(vault.email, vaultName, vault.vDesc, vault.encVaultKey, vault.vaultKeyHash, user.hashPass)
+            const result = await createVault(vault.email, vaultName, vault.vDesc, vault.encVaultKey, vault.vaultKeyHash, user.hashPass, vault.customFields)
             if (result === false) {
                 res.status(500).json({
                     message: "Something Went Wrong!"
