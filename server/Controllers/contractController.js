@@ -8,8 +8,7 @@ let contract = undefined
 try {
     sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
     // contract = await sdk.getContract("0xc5E051b2bEB84F6b3103eA4b6e9c32E63F29796f");
-    // contract = await sdk.getContract("0x422e6700498843d43f81155c3542CF9975Ec51B5");
-    contract = await sdk.getContract("0x12c79522b8eFCF49a099E6614c406FD769B10E1F")
+    contract = await sdk.getContract("0xD77E66f860350D847579067E3f6c477766E166b6")
 } catch (error) {
     console.log(error)
 }

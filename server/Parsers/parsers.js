@@ -20,6 +20,7 @@ export const vaultDataParser = (vault) => {
     vaultObj['ownerEmail'] = vault[3]
     vaultObj['vaultUsers'] = vaultUserParser(vault[7])
     vaultObj['vaultLogins'] = vaultLoginParser(vault[8])
+    vaultObj['customFields'] = customFieldsParser(vault[9])
     vaultObj['numUsers'] = vaultObj['vaultUsers'].length
     vaultObj['numLogins'] = vaultObj['vaultLogins'].length
     return vaultObj
@@ -35,6 +36,7 @@ export const vaultLoginParser = (logins) => {
         loginObj['loginUrl'] = logins[i][3]
         loginObj['loginUsername'] = logins[i][4]
         loginObj['loginPassword'] = logins[i][5]
+        loginObj['customFields'] = customFieldsParser(logins[i][6])
         if(logins[i][1] !== '' && logins[i][2] !== '' && logins[i][3] !== '' && logins[i][4] !== '' && logins[i][5] !== '') {
             loginArr.push(loginObj)
         }
@@ -56,3 +58,14 @@ export const vaultUserParser = (users) => {
     return userArr
 }
 
+export const customFieldsParser = (customFields) => {
+    let customFieldsArr = []
+    for (let i = 0; i < customFields.length; i++){
+        let customFieldObj = {}
+        customFieldObj['id'] = customFields[i][0]
+        customFieldObj['name'] = customFields[i][1]
+        customFieldObj['value'] = customFields[i][2]
+        customFieldsArr.push(customFieldObj)
+    }
+    return customFieldsArr
+}

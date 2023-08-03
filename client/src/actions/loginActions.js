@@ -13,27 +13,38 @@ export const addUserLogin = (form) => {
         const encLoginUrl = await encryptAES(form.loginUrl, form.vaultKey)
         const encLoginUserName = await encryptAES(form.loginUsername, form.vaultKey)
         const encLoginPassword = await encryptAES(form.loginPassword, form.vaultKey)
+
+        let encCustomFields = []
+        for (let field of form.customFields) {
+            const encFieldName = await encryptAES(field.name, form.vaultKey)
+            const encFieldValue = await encryptAES(field.value, form.vaultKey)
+            encCustomFields.push({
+                name: encFieldName,
+                value: encFieldValue
+            })
+        }
         const addLoginForm = {
             loginName: encLoginName,
             loginUrl: encLoginUrl,
             loginUsername: encLoginUserName,
             loginPassword: encLoginPassword,
             vaultIndex: form.vaultIndex,
-            email: form.email
+            email: form.email,
+            customFields: encCustomFields
         }
         const res = await axiosInstance.post("/login/add-login", addLoginForm)
 
-        if(res.status === 201){
+        if (res.status === 201) {
             const decLogins = await decryptVaultLogins(res.data.payload, form.vaultKey)
-            toast.success("Login Saved", {id: 'las'})
+            toast.success("Login Saved", { id: 'las' })
             dispatch({
                 type: vaultConsts.ADD_NEW_VAULT_LOGIN_SUCCESS,
                 payload: decLogins
             })
             return true
         }
-        else if(res.response){
-            toast.error(res.response.data.message, {id: 'lae'})
+        else if (res.response) {
+            toast.error(res.response.data.message, { id: 'lae' })
             dispatch({
                 type: vaultConsts.ADD_NEW_VAULT_LOGIN_FAILED
             })

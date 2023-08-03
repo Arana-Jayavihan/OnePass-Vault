@@ -185,8 +185,6 @@ const Vaults = () => {
     const [customFields, setCustomFields] = useState([]);
     const [customFieldSize, setCustomFieldSize] = useState(0);
     const [renderCustomFields, setRenderCustomFields] = useState([]);
-    const [tempFieldName, setTempFieldName] = useState(undefined);
-    const [tempFieldValue, setTempFieldValue] = useState(undefined);
 
     let tempField = ""
     let tempValue = ""
@@ -195,59 +193,95 @@ const Vaults = () => {
         tempField = e.target.value
     }
 
-    const handleFieldValueChange = (e, count) => {
+    const handleFieldValueChange = (e) => {
         tempValue = e.target.value
     }
 
     const handleTickClick = (customFieldSize) => {
         if (tempField === "" || tempValue === "") {
-            toast.error('Please fill out all fields', {id : 'customFieldError'})
+            toast.error('Please fill out all fields', { id: 'customFieldError' })
         }
-        const  tempFiledObject = {
-            name: tempField,
-            value: tempValue
+        else {
+            const tempFiledObject = {
+                name: tempField,
+                value: tempValue
+            }
+            toast.success("Custom Field Added", { id: "cas" })
+            customFields[customFieldSize] = tempFiledObject
+            console.log(customFields)
+            tempField = ""
+            tempValue = ""
         }
-        customFields[customFieldSize] = tempFiledObject
-        console.log(customFields)
-        tempField = ""
-        tempValue = ""
     }
 
     const handleAddCustomFieldButtonClick = () => {
-        if (customFieldSize < 3){
-            const template = <Row>
-            <Col md={5}>
-                <Typography sx={{ color: theme.palette.primary[500] }}>
-                    <Input
-                        label="Custom Field Name"
-                        onChange={(e) => handleFieldNameChange(e, customFieldSize)}
-                    />
-                </Typography>
-            </Col>
-            <Col md={5}>
-                <Typography sx={{ color: theme.palette.primary[500] }}>
-                    <Input
-                        label="Custom Field Value"
-                        onChange={(e) => handleFieldValueChange(e, customFieldSize)}
-                    />
-                </Typography>
-            </Col>
-            <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <IconButton onClick={() => handleTickClick(customFieldSize)}>
-                    <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
-                </IconButton>
-            </Col>
-        </Row>
-        setRenderCustomFields([...renderCustomFields, template])
-        setCustomFieldSize(customFieldSize + 1)
+        if (customFieldSize === 0) {
+            if (customFieldSize < 2) {
+                const template = <Row>
+                    <Col md={5}>
+                        <Typography sx={{ color: theme.palette.primary[500] }}>
+                            <Input
+                                label="Custom Field Name"
+                                onChange={(e) => handleFieldNameChange(e)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={5}>
+                        <Typography sx={{ color: theme.palette.primary[500] }}>
+                            <Input
+                                label="Custom Field Value"
+                                onChange={(e) => handleFieldValueChange(e)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <IconButton onClick={() => handleTickClick(customFieldSize)}>
+                            <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
+                        </IconButton>
+                    </Col>
+                </Row>
+                setRenderCustomFields([...renderCustomFields, template])
+                setCustomFieldSize(customFieldSize + 1)
+            }
+            else {
+                toast.error('Maximum 2 custom fields are allowed')
+            }
+        }
+        else if (customFieldSize > 0 && customFields[customFieldSize - 1]) {
+            if (customFieldSize < 2) {
+                const template = <Row>
+                    <Col md={5}>
+                        <Typography sx={{ color: theme.palette.primary[500] }}>
+                            <Input
+                                label="Custom Field Name"
+                                onChange={(e) => handleFieldNameChange(e)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={5}>
+                        <Typography sx={{ color: theme.palette.primary[500] }}>
+                            <Input
+                                label="Custom Field Value"
+                                onChange={(e) => handleFieldValueChange(e)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <IconButton onClick={() => handleTickClick(customFieldSize)}>
+                            <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
+                        </IconButton>
+                    </Col>
+                </Row>
+                setRenderCustomFields([...renderCustomFields, template])
+                setCustomFieldSize(customFieldSize + 1)
+            }
+            else {
+                toast.error('Maximum 2 custom fields are allowed')
+            }
         }
         else {
-            toast.error('Maximum 3 custom fields are allowed')
+            toast.error("Fill the current custom field first...")
         }
-    }
-    const handleCustomFieldAdd = (name, value) => {
-
-        setCustomFields([...customFields, { "name": name, "value": value }])
     }
 
     const closeAddModal = () => {
@@ -257,6 +291,7 @@ const Vaults = () => {
         setPassword(undefined)
         setCustomFields([])
         setCustomFieldSize(0)
+        setRenderCustomFields([])
     }
 
     const addVault = () => {
@@ -274,6 +309,7 @@ const Vaults = () => {
         setVaultName(undefined)
         setPassword(undefined)
         setPassType('password')
+        setRenderCustomFields([])
         setCustomFieldSize(0)
         setCustomFields([])
     }
@@ -313,45 +349,40 @@ const Vaults = () => {
                             </Typography>
                         </Col>
                     </Row>
-
-
-                    <Row>
+                    <Row style={{ marginTop: "1rem", marginBottom: '1rem' }}>
                         {
                             <>
-                                <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
-                                    Custom Fields
-                                </Typography>
-                                {/* <Row>
-                                        <Col md={5}>
-                                            <Typography sx={{ color: theme.palette.primary[500] }}>
-                                                <Input
-                                                    label="Custom Field Name"
-                                                    value={vaultDescription}
-                                                    onChange={(e) => setVaultDescription(e.target.value)}
-                                                />
+                                <Row>
+                                    <Col md={6}>
+                                        <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
+                                            Custom Fields
+                                        </Typography>
+                                    </Col>
+                                    <Col md={6} style={{ display: 'flex', justifyContent: 'right' }}>
+                                        <motion.button
+                                            className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                            whileHover={{ scale: [1, 1.1] }}
+                                            onClick={() => handleAddCustomFieldButtonClick()}
+                                        >
+                                            Add Custom Field
+                                        </motion.button>
+
+                                    </Col>
+                                </Row>
+                                {
+                                    renderCustomFields.length > 0 ? renderCustomFields : <Row>
+                                        <Col md={12}>
+                                            <Typography sx={{ color: theme.palette.primary[500], textAlign: 'center' }} >
+                                                No Custom Fields Added
                                             </Typography>
                                         </Col>
-                                        <Col md={5}>
-                                            <Typography sx={{ color: theme.palette.primary[500] }}>
-                                                <Input
-                                                    label="Custom Field Value"
-                                                    value={vaultDescription}
-                                                    onChange={(e) => setVaultDescription(e.target.value)}
-                                                />
-                                            </Typography>
-                                        </Col>
-                                        <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                            <IconButton>
-                                                <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
-                                            </IconButton>
-                                        </Col>
-                                    </Row> */}
-                                {renderCustomFields}
+                                    </Row>
+                                }
                             </>
                         }
                     </Row>
                     <Row>
-                        <Col md={6} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                        <Col md={6} style={{ display: 'flex', alignItems: "center" }}>
                             <Typography sx={{ color: theme.palette.primary[500] }} >
                                 <Input
                                     label="Your Password"
@@ -369,16 +400,6 @@ const Vaults = () => {
                                         <AiFillEyeInvisible style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
                                 }
                             </IconButton>
-                        </Col>
-                        <Col md={6} style={{ display: 'flex', justifyContent: 'center', height: '5rem', alignItems: 'center' }}>
-                            <motion.button
-                                className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
-                                whileHover={{ scale: [1, 1.1] }}
-                                onClick={() => handleAddCustomFieldButtonClick()}
-                            >
-                                Add Custom Field
-                            </motion.button>
-
                         </Col>
                     </Row>
 

@@ -56,12 +56,23 @@ export const addUserVault = (form) => {
                         const encVaultKey = await encryptAES(vaultKey, masterEncKey)
                         const vaultKeyHash = CryptoJS.SHA512(vaultKey).toString()
 
+                        let encCustomFields = []
+                        for (let field of form.customFields) {
+                            const encFieldName = await encryptAES(field.name, vaultKey)
+                            const encFieldValue = await encryptAES(field.value, vaultKey)
+                            encCustomFields.push({
+                                name: encFieldName,
+                                value: encFieldValue
+                            })
+                        }
+
                         form = {
                             email: form.email,
                             vName: form.vName,
                             vDesc: form.vDesc,
                             encVaultKey,
-                            vaultKeyHash
+                            vaultKeyHash,
+                            "customFields": encCustomFields,
                         }
 
                         const res = await axiosInstance.post("/vault/add-vault", form)
@@ -219,10 +230,11 @@ export const getVaultData = (form, vaultKey) => {
                 })
                 toast.success("Vault Data Fetched", { id: 'vds' })
                 const vaultData = res.data.payload
+                const decCustomFields = await decryptCustomFields(vaultData.customFields, vaultKey)
                 const decLogins = await decryptVaultLogins(vaultData.vaultLogins, vaultKey)
-                if (decLogins !== false) {
+                if (decLogins !== false && decCustomFields !== false) {
                     vaultData["vaultLogins"] = decLogins
-
+                    vaultData["customFields"] = decCustomFields
                     dispatch({
                         type: vaultConsts.GET_VAULT_DATA_SUCCESS,
                         payload: vaultData
@@ -469,6 +481,29 @@ export const lockUserVault = () => {
     }
 }
 
+export const decryptCustomFields = async (customFields, vaultKey) => {
+    try {
+        let customFieldsArr = []
+        if (customFields.length > 0) {
+            for (let field in customFields) {
+                const name = (await decryptAES(customFields[field].name, vaultKey)).toString(CryptoJS.enc.Utf8)
+                const value = (await decryptAES(customFields[field].value, vaultKey)).toString(CryptoJS.enc.Utf8)
+                customFieldsArr.push({
+                    name,
+                    value
+                })
+            }
+            return customFieldsArr
+        }
+        else {
+            return []
+        }
+    } catch (error) {
+        console.log(error)
+        return false
+    }
+}
+
 export const decryptVaultLogins = async (logins, vaultKey) => {
     try {
         let loginArr = []
@@ -478,6 +513,7 @@ export const decryptVaultLogins = async (logins, vaultKey) => {
             login["loginUrl"] = (await decryptAES(logins[i].loginUrl, vaultKey)).toString(CryptoJS.enc.Utf8)
             login["loginUsername"] = (await decryptAES(logins[i].loginUsername, vaultKey)).toString(CryptoJS.enc.Utf8)
             login["loginPassword"] = (await decryptAES(logins[i].loginPassword, vaultKey)).toString(CryptoJS.enc.Utf8)
+            login["customFields"] = await decryptCustomFields(logins[i].customFields, vaultKey)
             loginArr.push(login)
         }
         return loginArr

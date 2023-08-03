@@ -1,12 +1,19 @@
 import { addVaultLogin, getAllVaultLogins } from "./contractController.js"
 import { vaultLoginParser } from "../Parsers/parsers.js"
+import shortID from 'shortid'
 
 export const addLogin = async (req, res) => {
     try {
         console.log(req.body)
         const user = req.user
         if (req.body.email === user.email) {
-            const result = await addVaultLogin(req.body.email, req.body.loginName, req.body.loginUrl, req.body.loginUsername, req.body.loginPassword, user.hashPass, req.body.vaultIndex, req.body.customFields)
+            let customFields = req.body.customFields
+            if (customFields.length > 0) {
+                for (let field of customFields) {
+                    field['id']= shortID.generate()
+                }
+            }
+            const result = await addVaultLogin(req.body.email, req.body.loginName, req.body.loginUrl, req.body.loginUsername, req.body.loginPassword, user.hashPass, req.body.vaultIndex, customFields)
             if (result) {
                 const logins = await getAllVaultLogins(req.body.vaultIndex)
                 if (logins === false) {

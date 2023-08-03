@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast'
 import FlexBetween from 'components/FlexBetween'
 import { Search } from '@mui/icons-material';
 import { ThreeDots } from 'react-loader-spinner'
-import { MdDelete, MdRemoveRedEye, MdEdit, MdRefresh, MdFileCopy } from 'react-icons/md'
+import { MdDelete, MdRemoveRedEye, MdEdit, MdRefresh, MdFileCopy, MdOutlineDone } from 'react-icons/md'
 import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
 import { RiSendPlaneFill } from 'react-icons/ri'
 import { NewModel } from 'components/Modal'
@@ -159,6 +159,107 @@ const UnlockedVault = () => {
     const vaultKey = useSelector(state => state.vault.vaultKey)
 
     const [passType, setPassType] = useState('password')
+    const [customFields, setCustomFields] = useState([]);
+    const [customFieldSize, setCustomFieldSize] = useState(0);
+    const [renderCustomFields, setRenderCustomFields] = useState([]);
+
+    let tempField = ""
+    let tempValue = ""
+
+    const handleFieldNameChange = (e) => {
+        tempField = e.target.value
+    }
+
+    const handleFieldValueChange = (e) => {
+        tempValue = e.target.value
+    }
+
+    const handleTickClick = (customFieldSize) => {
+        if (tempField === "" || tempValue === "") {
+            toast.error('Please fill out all fields', { id: 'customFieldError' })
+        }
+        else {
+            const tempFiledObject = {
+                name: tempField,
+                value: tempValue
+            }
+            toast.success("Custom Field Added", { id: "cas" })
+            customFields[customFieldSize] = tempFiledObject
+            console.log(customFields)
+            tempField = ""
+            tempValue = ""
+        }
+    }
+
+    const handleAddCustomFieldButtonClick = () => {
+        if (customFieldSize === 0) {
+            if (customFieldSize < 2) {
+                const template = <Row>
+                    <Col md={5}>
+                        <Typography sx={{ color: theme.palette.primary[500] }}>
+                            <Input
+                                label="Custom Field Name"
+                                onChange={(e) => handleFieldNameChange(e)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={5}>
+                        <Typography sx={{ color: theme.palette.primary[500] }}>
+                            <Input
+                                label="Custom Field Value"
+                                onChange={(e) => handleFieldValueChange(e)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <IconButton onClick={() => handleTickClick(customFieldSize)}>
+                            <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
+                        </IconButton>
+                    </Col>
+                </Row>
+                setRenderCustomFields([...renderCustomFields, template])
+                setCustomFieldSize(customFieldSize + 1)
+            }
+            else {
+                toast.error('Maximum 2 custom fields are allowed')
+            }
+        }
+        else if (customFieldSize > 0 && customFields[customFieldSize - 1]) {
+            if (customFieldSize < 2) {
+                const template = <Row>
+                    <Col md={5}>
+                        <Typography sx={{ color: theme.palette.primary[500] }}>
+                            <Input
+                                label="Custom Field Name"
+                                onChange={(e) => handleFieldNameChange(e)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={5}>
+                        <Typography sx={{ color: theme.palette.primary[500] }}>
+                            <Input
+                                label="Custom Field Value"
+                                onChange={(e) => handleFieldValueChange(e)}
+                            />
+                        </Typography>
+                    </Col>
+                    <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <IconButton onClick={() => handleTickClick(customFieldSize)}>
+                            <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
+                        </IconButton>
+                    </Col>
+                </Row>
+                setRenderCustomFields([...renderCustomFields, template])
+                setCustomFieldSize(customFieldSize + 1)
+            }
+            else {
+                toast.error('Maximum 2 custom fields are allowed')
+            }
+        }
+        else {
+            toast.error("Fill the current custom field first...")
+        }
+    }
 
     const showPasswords = () => {
         if (showPassword === false) {
@@ -177,6 +278,9 @@ const UnlockedVault = () => {
         setLoginUrl(undefined)
         setLoginUsername(undefined)
         setLoginPassword(undefined)
+        setCustomFields([])
+        setCustomFieldSize(0)
+        setRenderCustomFields([])
     }
 
     const addLogin = () => {
@@ -187,7 +291,8 @@ const UnlockedVault = () => {
             loginUrl: loginUrl,
             loginUsername: loginUsername,
             loginPassword: loginPassword,
-            vaultKey: vaultKey
+            vaultKey: vaultKey,
+            customFields
         }
 
         dispatch(addUserLogin(form)).then((result) => {
@@ -255,7 +360,38 @@ const UnlockedVault = () => {
                         </IconButton>
                     </Col>
                 </Row>
+                <Row style={{ marginTop: "1rem", marginBottom: '1rem' }}>
+                    {
+                        <>
+                            <Row>
+                                <Col md={6}>
+                                    <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
+                                        Custom Fields
+                                    </Typography>
+                                </Col>
+                                <Col md={6} style={{ display: 'flex', justifyContent: 'right' }}>
+                                    <motion.button
+                                        className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                        whileHover={{ scale: [1, 1.1] }}
+                                        onClick={() => handleAddCustomFieldButtonClick()}
+                                    >
+                                        Add Custom Field
+                                    </motion.button>
 
+                                </Col>
+                            </Row>
+                            {
+                                renderCustomFields.length > 0 ? renderCustomFields : <Row>
+                                    <Col md={12}>
+                                        <Typography sx={{ color: theme.palette.primary[500], textAlign: 'center' }} >
+                                            No Custom Fields Added
+                                        </Typography>
+                                    </Col>
+                                </Row>
+                            }
+                        </>
+                    }
+                </Row>
             </NewModel>
         )
     }
@@ -276,9 +412,117 @@ const UnlockedVault = () => {
 
     }
 
+    // render login details
+    const [showLoginDetailsModal, setShowLoginDetailsModal] = useState(false);
+    const [selectedLogin, setSelectedLogin] = useState(undefined);
+
+    const closeLoginDetailsModal = () => {
+        setSelectedLogin(undefined)
+        setShowLoginDetailsModal(false)
+    }
+
+    const openLoginDetailsModal = (login) => {
+        setSelectedLogin(login)
+        setShowLoginDetailsModal(true)
+    }
+
+    const renderLoginDetailsModal = () => {
+        return (
+            <NewModel
+                show={showLoginDetailsModal}
+                close={closeLoginDetailsModal}
+                ModalTitle={`Login Details - ${selectedLogin?.loginName}`}
+                size='md'
+                buttons={[
+                    {
+                        label: 'Close',
+                        color: 'secondary',
+                        onClick: closeLoginDetailsModal
+                    }
+                ]}
+            >
+                <Row>
+                    <Col md={6}>
+                        <Typography sx={{ color: theme.palette.primary[600] }}>
+                            <label className='key' style={{ fontWeight: 'bold' }} >Name</label>
+                        </Typography>
+                        <Typography sx={{ color: theme.palette.primary[300] }}>
+                            <p className='value'>{selectedLogin?.loginName}</p>
+                        </Typography>
+                    </Col>
+                    <Col md={6}>
+                        <Typography sx={{ color: theme.palette.primary[600] }}>
+                            <label className='key' style={{ fontWeight: 'bold' }} >Website</label>
+                        </Typography>
+                        <Typography sx={{ color: theme.palette.primary[300] }}>
+                            <p className='value'>{selectedLogin?.loginUrl}</p>
+                        </Typography>
+                    </Col>
+                    <Col md={6}>
+                        <Typography sx={{ color: theme.palette.primary[600] }}>
+                            <label className='key' style={{ fontWeight: 'bold' }} >Username</label>
+                        </Typography>
+                        <Typography sx={{ color: theme.palette.primary[300] }}>
+                            <p className='value'>{selectedLogin?.loginUsername}</p>
+                        </Typography>
+                    </Col>
+                    <Col md={6} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                        <Typography sx={{ color: theme.palette.primary[600] }} >
+                            <label style={{ fontWeight: 'bold' }} >Password</label>
+                            <Input
+                                value={selectedLogin?.loginPassword}
+                                type={passType}
+                                disabled
+                            />
+
+                        </Typography>
+                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
+                            {
+                                showPassword ?
+                                    <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                                    :
+                                    <AiFillEyeInvisible style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
+                            }
+                        </IconButton>
+                    </Col>
+                </Row>
+                <Row style={{ marginTop: "1rem", marginBottom: '1rem' }}>
+                    {
+                        <>
+                            <Row>
+                                <Col md={12}>
+                                    <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
+                                        Custom Fields
+                                    </Typography>
+                                </Col>
+                            </Row>
+                            {
+                                selectedLogin?.customFields?.length > 0 ?
+                                    selectedLogin?.customFields.map((field, index) =>
+                                        <Col md={6} key={index}>
+                                            <Typography sx={{ color: theme.palette.primary[600] }}>
+                                                <label className='key' style={{ fontWeight: 'bold' }} >{field.name}</label>
+                                            </Typography>
+                                            <Typography sx={{ color: theme.palette.primary[300] }}>
+                                                <p className='value'>{field.value}</p>
+                                            </Typography>
+                                        </Col>
+                                    )
+                                    :
+                                    <Typography sx={{ color: theme.palette.primary[300] }}>
+                                        <p className='value'>No Custom Fields</p>
+                                    </Typography>
+                            }
+                        </>
+                    }
+                </Row>
+            </NewModel>
+        )
+    }
+
     const renderLoginTable = () => {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 <Table striped style={{ fontSize: 14, alignItems: '', height: '100%' }} responsive>
                     <thead>
                         <tr>
@@ -302,11 +546,11 @@ const UnlockedVault = () => {
                                     User Name
                                 </Typography>
                             </th>
-                            <th style={{ verticalAlign: 'baseline' }}>
+                            {/* <th style={{ verticalAlign: 'baseline' }}>
                                 <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
                                     Password
                                 </Typography>
-                            </th>
+                            </th> */}
                             <th style={{ verticalAlign: 'baseline' }}>
                                 <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
                                     Actions
@@ -342,14 +586,14 @@ const UnlockedVault = () => {
                                                 {login.loginUsername}
                                                 <span><IconButton onClick={() => {
                                                     navigator.clipboard.writeText(login.loginUsername)
-                                                    toast.success('Copied to Clipboard')
+                                                    toast.success('Username Copied to Clipboard')
                                                 }}>
                                                     <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
                                                 </IconButton>
                                                 </span>
                                             </Typography>
                                         </td>
-                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                        {/* <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
                                             <Typography
                                                 sx={{ color: theme.palette.primary[200], cursor: 'pointer', width: 'max-content' }}>
                                                 <input type='password' id={login.loginUsername} value={login.loginPassword} cursor='pointer' disabled />
@@ -361,23 +605,30 @@ const UnlockedVault = () => {
                                                 </IconButton>
                                                 </span>
                                             </Typography>
-                                        </td>
+                                        </td> */}
                                         <td>
                                             {
                                                 <div style={{ display: 'flex' }}>
                                                     <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
+                                                        <IconButton onClick={() => {
+                                                            navigator.clipboard.writeText(login.loginPassword)
+                                                            toast.success('Password Copied to Clipboard')
+                                                        }}>
+                                                            <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
+                                                        </IconButton>
                                                         <IconButton
-                                                            onClick={() => {
-                                                                let type = document.getElementById(login.loginUsername).getAttribute('type')
-                                                                let setType = undefined
-                                                                if (type === 'password') {
-                                                                    setType = 'text'
-                                                                }
-                                                                else if (type === 'text') {
-                                                                    setType = 'password'
-                                                                }
-                                                                document.getElementById(login.loginUsername).setAttribute('type', setType)
-                                                            }}
+                                                            // onClick={() => {
+                                                            //     let type = document.getElementById(login.loginUsername).getAttribute('type')
+                                                            //     let setType = undefined
+                                                            //     if (type === 'password') {
+                                                            //         setType = 'text'
+                                                            //     }
+                                                            //     else if (type === 'text') {
+                                                            //         setType = 'password'
+                                                            //     }
+                                                            //     document.getElementById(login.loginUsername).setAttribute('type', setType)
+                                                            // }}
+                                                            onClick={() => openLoginDetailsModal(login)}
                                                         >
                                                             <MdRemoveRedEye style={{ color: theme.palette.secondary[300] }} />
                                                         </IconButton>
@@ -591,6 +842,7 @@ const UnlockedVault = () => {
 
             }
             {renderAddLoginModal()}
+            {renderLoginDetailsModal()}
         </Container>
 
     )
