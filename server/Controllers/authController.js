@@ -347,9 +347,20 @@ export const signOut = async (req, res) => {
 }
 
 function clearTokenList() {
-    tokenlist = {}
-    console.log("token list cleared", tokenlist)
+    try {
+        const tokenObjArray = Object.values(tokenlist)
+        for (let tokenObj of tokenObjArray) {
+            const decodedRefreshToken = jwt.decode(tokenObj.refreshToken)
+            if (Date.now() >= decodedRefreshToken.exp * 1000) {
+                delete tokenlist[tokenObj.refreshToken]
+            }
+        }
+        console.log("Expired tokens cleared", tokenlist)
+    } catch (error) {
+        console.log(error)
+    }
+
 }
 
-setInterval(clearTokenList, 7200000)
+setInterval(clearTokenList, 3500000)
 //86400000
