@@ -7,6 +7,7 @@
   Access-Control-Allow-Credentials: true
   Access-Control-Allow-Methods: GET, POST
   Access-Control-Allow-Origin: https://onepass-vault-production.up.railway.app
+  Cross-Origin-Embedder-Policy: require-corp
   X-Frame-Options: DENY
   X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
