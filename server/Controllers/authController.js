@@ -172,7 +172,7 @@ export const signIn = async (req, res) => {
                 ) {
                     const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, process.env.JWT_SECRET, { expiresIn: '1h' })
                     const tokenHash = CryptoJS.SHA256(token).toString()
-                    const refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
+                    const refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '2h' })
                     const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
                         iv: CryptoJS.SHA256(sh.generate()).toString(),
                         mode: CryptoJS.mode.CBC,
@@ -254,7 +254,7 @@ export const tokenRefresh = async (req, res) => {
                             delete tokenlist[refreshToken]
                             token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, process.env.JWT_SECRET, { expiresIn: '1h' })
                             tokenHash = CryptoJS.SHA256(token).toString()
-                            refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '24h' })
+                            refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '2h' })
                             encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
                                 iv: CryptoJS.SHA256(sh.generate()).toString(),
                                 mode: CryptoJS.mode.CBC,
@@ -362,5 +362,5 @@ function clearTokenList() {
 
 }
 
-setInterval(clearTokenList, 3500000)
+setInterval(clearTokenList, 300000)
 //86400000

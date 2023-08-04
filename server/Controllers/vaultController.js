@@ -127,7 +127,7 @@ export const vaultUnlockRequest = async (req, res) => {
                 id: id,
                 ip: ip
             }
-            const vaultUnlockToken = jwt.sign({ vaultIndex: vaultIndex, email: email, id: id }, process.env.JWT_SECRET, { expiresIn: 600 })
+            const vaultUnlockToken = jwt.sign({ vaultIndex: vaultIndex, email: email, id: id }, process.env.JWT_SECRET, { expiresIn: '5m' })
             const encVaultUnlockToken = CryptoJS.AES.encrypt(vaultUnlockToken, process.env.AES_SECRET, {
                 iv: CryptoJS.SHA256(sh.generate()).toString(),
                 mode: CryptoJS.mode.CBC,
@@ -390,6 +390,7 @@ export const addVaultUserRequest = async (req, res) => {
                             const b64EncToken = Buffer.from(encToken).toString('base64')
                             const URL = `https://onepass-vault-v3.netlify.app/vault-invite/${b64EncToken}`
                             const URL1 = `https://localhost:3000/vault-invite/${b64EncToken}`
+                            token['addVaultUserToken'] = addVaultUserToken
                             addVaultUserTokens[token.id] = token
                             console.log(addVaultUserTokens, "new vault user add request")
                             const mailData = {
@@ -566,18 +567,34 @@ export const acceptVaultInvite = async (req, res) => {
 }
 
 function clearVaultUnlockTokens() {
-    if (vaultUnlockTokens.length > 0) {
-        console.log("clearing vault unlock tokens")
-        vaultUnlockTokens = {}
+    try {
+        const tokenObjArray = Object.values(vaultUnlockTokens)
+        for (let tokenObj of tokenObjArray) {
+            const decodedVaultUnlockToken = jwt.decode(tokenObj.vaultUnlockToken)
+            if (Date.now() >= decodedVaultUnlockToken.exp * 1000) {
+                delete tokenlist[tokenObj.id]
+            }
+        }
+        console.log("Expired vault unlock tokens cleared", vaultUnlockTokens)
+    } catch (error) {
+        console.log(error)
     }
 }
 function clearAddVaultUserTokens() {
-    if (addVaultUserTokens.length > 0) {
-        console.log("clearing add vault user tokens")
-        addVaultUserTokens = {}
+    try {
+        const tokenObjArray = Object.values(addVaultUserTokens)
+        for (let tokenObj of tokenObjArray) {
+            const decodedAddVaultUserToken = jwt.decode(tokenObj.addVaultUserToken)
+            if (Date.now() >= decodedAddVaultUserToken.exp * 1000) {
+                delete tokenlist[tokenObj.id]
+            }
+        }
+        console.log("Expired add vault user tokens cleared", addVaultUserTokens)
+    } catch (error) {
+        console.log(error)
     }
 }
-setInterval(clearAddVaultUserTokens, 21600000)
-setInterval(clearVaultUnlockTokens, 120000)
+setInterval(clearAddVaultUserTokens, 3600000)
+setInterval(clearVaultUnlockTokens, 60000)
 
 
