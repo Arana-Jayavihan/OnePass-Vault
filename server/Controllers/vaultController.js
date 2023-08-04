@@ -12,8 +12,10 @@ dotenv.config()
 
 let fiveMins = new Date()
 fiveMins.setTime(fiveMins.getTime() + (5 * 60 * 1000))
+
 let hours6 = new Date()
 hours6.setTime(hours6.getTime() + (6 * 60 * 60 * 1000))
+
 let vaultUnlockTokens = {}
 let addVaultUserTokens = {}
 sh.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
@@ -576,7 +578,7 @@ function clearVaultUnlockTokens() {
         for (let tokenObj of tokenObjArray) {
             const decodedVaultUnlockToken = jwt.decode(tokenObj.vaultUnlockToken)
             if (Date.now() >= decodedVaultUnlockToken.exp * 1000) {
-                delete tokenlist[tokenObj.id]
+                delete vaultUnlockTokens[tokenObj.id]
             }
         }
         console.log("Expired vault unlock tokens cleared", vaultUnlockTokens)
@@ -590,7 +592,7 @@ function clearAddVaultUserTokens() {
         for (let tokenObj of tokenObjArray) {
             const decodedAddVaultUserToken = jwt.decode(tokenObj.addVaultUserToken)
             if (Date.now() >= decodedAddVaultUserToken.exp * 1000) {
-                delete tokenlist[tokenObj.id]
+                delete addVaultUserTokens[tokenObj.id]
             }
         }
         console.log("Expired add vault user tokens cleared", addVaultUserTokens)
