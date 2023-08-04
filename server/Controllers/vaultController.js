@@ -10,8 +10,8 @@ import { vaultInvite } from "../emails/vaultInvite.js"
 import dotenv from 'dotenv'
 dotenv.config()
 
-let fiveMins = new Date()
-fiveMins.setTime(fiveMins.getTime() + (5 * 60 * 1000))
+let thirtyMins = new Date()
+thirtyMins.setTime(thirtyMins.getTime() + (30 * 60 * 1000))
 
 let hours6 = new Date()
 hours6.setTime(hours6.getTime() + (6 * 60 * 60 * 1000))
@@ -145,7 +145,7 @@ export const vaultUnlockRequest = async (req, res) => {
             console.log(vaultUnlockTokens, "new vault unlock request")
             res.cookie('encVaultUnlockToken', encVaultUnlockToken, {
                 path: `/`,
-                expires: fiveMins,
+                expires: thirtyMins,
                 sameSite: "none",
                 secure: true,
                 httpOnly: true
@@ -192,11 +192,13 @@ export const getEncVaultKey = async (req, res) => {
                         if (vaultUnlockTokens[decoded.id].email === email && vaultUnlockTokens[decoded.id].vaultIndex === vaultIndex && vaultUnlockTokens[decoded.id].email === user.email) {
                             const result = await getUserVaultEncKey(email, user.hashPass, vaultIndex)
                             if (result === false || result === "") {
+                                res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                                 res.status(500).json({
                                     message: "Something Went Wrong!"
                                 })
                             }
                             else if (result === "Invalid Password") {
+                                res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                                 res.status(401).json({
                                     message: "Invalid Password"
                                 })
@@ -209,6 +211,7 @@ export const getEncVaultKey = async (req, res) => {
                             }
                         }
                         else {
+                            res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                             res.status(400).json({
                                 message: "Invalid Token"
                             })
@@ -220,6 +223,7 @@ export const getEncVaultKey = async (req, res) => {
                         }
                     }
                     else {
+                        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(400).json({
                             message: "Invalid Token"
                         })
@@ -231,6 +235,7 @@ export const getEncVaultKey = async (req, res) => {
                     }
                 }
                 else {
+                    res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                     res.status(400).json({
                         message: "Invalid Session"
                     })
@@ -243,12 +248,14 @@ export const getEncVaultKey = async (req, res) => {
             }
         }
         else {
+            res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
             res.status(401).json({
                 message: "Unauthorized"
             })
         }
     } catch (error) {
         console.log(error)
+        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
         res.status(500).json({
             message: "Something Went Wrong!",
             error: error
@@ -285,18 +292,21 @@ export const getVaultData = async (req, res) => {
                                 } catch (error) {
                                     console.log(error)
                                 }
+                                res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                                 res.status(200).json({
                                     message: "Vault Data Fetched",
                                     payload: vaultData
                                 })
                             }
                             else if (result === false) {
+                                res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                                 res.status(500).json({
                                     message: "Something Went Wrong!"
                                 })
                             }
                         }
                         else {
+                            res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                             res.status(400).json({
                                 message: "Invalid Token"
                             })
@@ -309,6 +319,7 @@ export const getVaultData = async (req, res) => {
                         }
                     }
                     else {
+                        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(400).json({
                             message: "Invalid Session"
                         })
@@ -320,6 +331,7 @@ export const getVaultData = async (req, res) => {
                     }
                 }
                 else {
+                    res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                     res.status(400).json({
                         message: "Invalid Token"
                     })
@@ -333,11 +345,13 @@ export const getVaultData = async (req, res) => {
             }
         }
         else {
+            res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
             res.status(401).json({
                 message: "Unauthorized"
             })
         }
     } catch (error) {
+        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
         console.log(error)
         res.status(500).json({
             message: "Something Went Wrong!",
@@ -520,51 +534,60 @@ export const acceptVaultInvite = async (req, res) => {
                 if (addVaultUserTokens[decoded.id]) {
                     const result = await addVaultUser(addVaultUserTokens[decoded.id].vaultIndex, addVaultUserTokens[decoded.id].email, addVaultUserTokens[decoded.id].addUserEmail, body.encVaultKey, decoded.hashPass)
                     if (result === "User Already Assigned") {
+                        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(400).json({
                             message: "User Already Assigned To Vault"
                         })
                     }
                     else if (result === "User Not Found"){
+                        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(400).json({
                             message: "User Not Found"
                         })
                     }
                     else if (result === "Invalid Password") {
+                        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(401).json({
                             message: "Invalid Password"
                         })
                     }
                     else if (result === false) {
+                        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(500).json({
                             message: "Something Went Wrong!"
                         })
                     }
                     else if (result) {
                         delete addVaultUserTokens[decoded.id]
+                        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(201).json({
                             message: "Vault Invitation Accepted"
                         })
                     }
                 }
                 else {
+                    res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                     res.status(400).json({
                         message: "Invalid Invite Token"
                     })
                 }
             }
             else {
+                res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                 res.status(400).json({
                     message: "This Invitation Is Not For You!"
                 })
             }
         }
         else {
+            res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
             res.status(400).json({
                 message: "Invalid Invite Token"
             })
         }
     } catch (error) {
         console.log(error)
+        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
         res.status(500).json({
             message: "Something Went Wrong!",
             error: error
