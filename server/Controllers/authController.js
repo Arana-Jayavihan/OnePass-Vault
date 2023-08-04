@@ -5,6 +5,11 @@ import sh from 'shortid'
 import dotenv from 'dotenv'
 dotenv.config()
 
+let hours1 = new Date()
+hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
+let hours2 = new Date()
+hours2.setTime(hours2.getTime() + (2 * 60 * 60 * 1000))
+
 export let tokenlist = {}
 
 // User SignUp Functions
@@ -188,14 +193,14 @@ export const signIn = async (req, res) => {
                     console.log(userResult)
                     res.cookie('refreshToken', refreshToken, {
                         path: '/',
-                        maxAge: 7200000,
+                        expires: hours2,
                         sameSite: "none",
                         secure: true,
                         httpOnly: true
                     })
                     res.cookie('encToken', encToken, {
                         path: '/',
-                        maxAge: 3600000,
+                        expires: hours1,
                         sameSite: "none",
                         secure: true,
                         httpOnly: true
@@ -262,14 +267,14 @@ export const tokenRefresh = async (req, res) => {
                             }).toString()
                             res.cookie('refreshToken', refreshToken, {
                                 path: '/',
-                                maxAge: 7200000,
+                                expires: hours2,
                                 sameSite: "none",
                                 secure: true,
                                 httpOnly: true
                             })
                             res.cookie('encToken', encToken, {
                                 path: '/',
-                                maxAge: 3600000,
+                                expires: hours1,
                                 sameSite: "none",
                                 secure: true,
                                 httpOnly: true

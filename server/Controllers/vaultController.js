@@ -10,6 +10,10 @@ import { vaultInvite } from "../emails/vaultInvite.js"
 import dotenv from 'dotenv'
 dotenv.config()
 
+let fiveMins = new Date()
+fiveMins.setTime(fiveMins.getTime() + (5 * 60 * 1000))
+let hours6 = new Date()
+hours6.setTime(hours6.getTime() + (6 * 60 * 60 * 1000))
 let vaultUnlockTokens = {}
 let addVaultUserTokens = {}
 sh.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
@@ -139,7 +143,7 @@ export const vaultUnlockRequest = async (req, res) => {
             console.log(vaultUnlockTokens, "new vault unlock request")
             res.cookie('encVaultUnlockToken', encVaultUnlockToken, {
                 path: `/`,
-                maxAge: 300000,
+                expires: fiveMins,
                 sameSite: "none",
                 secure: true,
                 httpOnly: true
@@ -460,7 +464,7 @@ export const getInviteData = async (req, res) => {
                         console.log(payload)
                         res.cookie('addVaultUserToken', token, {
                             path: '/',
-                            maxAge: 300000,
+                            expires: fiveMins,
                             sameSite: "none",
                             secure: true,
                             httpOnly: true
