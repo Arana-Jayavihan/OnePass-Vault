@@ -5,10 +5,10 @@ import sh from 'shortid'
 import dotenv from 'dotenv'
 dotenv.config()
 
-let hours1 = new Date()
-hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
 let hours2 = new Date()
 hours2.setTime(hours2.getTime() + (2 * 60 * 60 * 1000))
+let hours4 = new Date()
+hours4.setTime(hours4.getTime() + (4 * 60 * 60 * 1000))
 
 export let tokenlist = {}
 
@@ -193,14 +193,14 @@ export const signIn = async (req, res) => {
                     console.log(userResult)
                     res.cookie('refreshToken', refreshToken, {
                         path: '/',
-                        expires: hours2,
+                        expires: hours4,
                         sameSite: "none",
                         secure: true,
                         httpOnly: true
                     })
                     res.cookie('encToken', encToken, {
                         path: '/',
-                        expires: hours1,
+                        expires: hours2,
                         sameSite: "none",
                         secure: true,
                         httpOnly: true
@@ -257,9 +257,9 @@ export const tokenRefresh = async (req, res) => {
                     if (tokenHash === tokenlist[refreshToken].tokenHash && decodedRefresh.tokenHash === tokenlist[refreshToken].tokenHash) {
                         try {
                             delete tokenlist[refreshToken]
-                            token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, process.env.JWT_SECRET, { expiresIn: '1h' })
+                            token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, process.env.JWT_SECRET, { expiresIn: '2h' })
                             tokenHash = CryptoJS.SHA256(token).toString()
-                            refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '2h' })
+                            refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '4h' })
                             encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
                                 iv: CryptoJS.SHA256(sh.generate()).toString(),
                                 mode: CryptoJS.mode.CBC,
@@ -267,14 +267,14 @@ export const tokenRefresh = async (req, res) => {
                             }).toString()
                             res.cookie('refreshToken', refreshToken, {
                                 path: '/',
-                                expires: hours2,
+                                expires: hours4,
                                 sameSite: "none",
                                 secure: true,
                                 httpOnly: true
                             })
                             res.cookie('encToken', encToken, {
                                 path: '/',
-                                expires: hours1,
+                                expires: hours2,
                                 sameSite: "none",
                                 secure: true,
                                 httpOnly: true

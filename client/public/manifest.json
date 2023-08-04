@@ -1,9 +1,9 @@
 {
-  "short_name": "TSPL Admin Dashboard",
-  "name": "Techno SPL Admin Dashboard",
+  "short_name": "OnePass",
+  "name": "OnePass Vault",
   "icons": [
     {
-      "src": "Tecno.png",
+      "src": "onepass.png",
       "type": "image/png",
       "sizes": "192x192 512x512"
     }
