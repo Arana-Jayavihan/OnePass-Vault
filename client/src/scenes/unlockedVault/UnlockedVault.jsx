@@ -546,11 +546,6 @@ const UnlockedVault = () => {
                                     User Name
                                 </Typography>
                             </th>
-                            {/* <th style={{ verticalAlign: 'baseline' }}>
-                                <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
-                                    Password
-                                </Typography>
-                            </th> */}
                             <th style={{ verticalAlign: 'baseline' }}>
                                 <Typography fontWeight='bold' sx={{ color: theme.palette.primary[200] }}>
                                     Actions
@@ -608,7 +603,7 @@ const UnlockedVault = () => {
                                         </td> */}
                                         <td>
                                             {
-                                                <div style={{ display: 'flex' }}>
+                                                <div style={{ display: 'flex', width: 'max-content' }}>
                                                     <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
                                                         <IconButton onClick={() => {
                                                             navigator.clipboard.writeText(login.loginPassword)
@@ -616,18 +611,9 @@ const UnlockedVault = () => {
                                                         }}>
                                                             <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
                                                         </IconButton>
+                                                    </Typography>
+                                                    <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
                                                         <IconButton
-                                                            // onClick={() => {
-                                                            //     let type = document.getElementById(login.loginUsername).getAttribute('type')
-                                                            //     let setType = undefined
-                                                            //     if (type === 'password') {
-                                                            //         setType = 'text'
-                                                            //     }
-                                                            //     else if (type === 'text') {
-                                                            //         setType = 'password'
-                                                            //     }
-                                                            //     document.getElementById(login.loginUsername).setAttribute('type', setType)
-                                                            // }}
                                                             onClick={() => openLoginDetailsModal(login)}
                                                         >
                                                             <MdRemoveRedEye style={{ color: theme.palette.secondary[300] }} />
