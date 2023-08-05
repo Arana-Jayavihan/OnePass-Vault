@@ -481,7 +481,7 @@ const UnlockedVault = () => {
                             <p className='value'>{selectedLogin?.loginUsername}</p>
                         </Typography>
                     </Col>
-                    <Col md={6} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                    <Col md={6} style={{ display: 'flex', justifyContent: isNonMobile ? 'space-between' : null, alignItems: "center" }}>
                         <Typography sx={{ color: theme.palette.primary[600] }} >
                             <label style={{ fontWeight: 'bold' }} >Password</label>
                             <Input

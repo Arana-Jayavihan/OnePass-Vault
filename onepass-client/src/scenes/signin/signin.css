@@ -54,7 +54,7 @@
 }
 
 .inputs_container input {
-  width: 95%;
+  width: 100%;
   margin: 1rem auto;
   padding: 1rem;
   border-radius: 15px;

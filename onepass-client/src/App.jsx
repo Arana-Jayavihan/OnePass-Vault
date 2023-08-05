@@ -98,7 +98,7 @@ function App() {
 								whileInView={{ opacity: [0, 1] }}
 								transition={{ duration: .75, ease: 'easeInOut' }}
 								initial={{ opacity: 0 }}
-								style={{ width: 'fit-content', height: 'fit-content', background: theme.palette.primary[400], borderRadius: '15px', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+								style={{ width: 'fit-content', height: 'fit-content', background: theme.palette.primary[900], borderRadius: '15px', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
 							>
 								<Typography
 									variant="h4" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', width: 'fit-content', backgroundImage: 'linear-gradient(to right, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }}
@@ -107,9 +107,9 @@ function App() {
 								</Typography>
 								{
 									Math.floor(remaining / 60) > 0 ?
-										<p style={{ color: theme.palette.primary[900] }} >Logging out in {Math.floor(remaining / 60)} minutes and {remaining % 60} seconds.</p>
+										<p style={{ color: theme.palette.primary[100] }} >Logging out in {Math.floor(remaining / 60)} minutes and {remaining % 60} seconds.</p>
 										:
-										<p style={{ color: theme.palette.primary[900] }} >Logging out in {remaining % 60} seconds.</p>
+										<p style={{ color: theme.palette.primary[100] }} >Logging out in {remaining % 60} seconds.</p>
 
 								}
 								<motion.button
