@@ -6,12 +6,10 @@ import { Toaster, toast } from "react-hot-toast";
 import React, { useEffect, useMemo } from "react";
 import { useDispatch } from "react-redux";
 
-
+import { lockUserVault } from "./actions/vaultActions";
 import { isLoggedIn, tokenRefresh } from "./actions/authActions";
 import { themeSettings } from "./theme";
 import './App.css'
-
-import { lockUserVault } from "./actions/vaultActions";
 
 import Dashboard from "./scenes/dashboard"
 import Layout from "./scenes/layout";
