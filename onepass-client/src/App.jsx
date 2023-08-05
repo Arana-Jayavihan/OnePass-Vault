@@ -1,7 +1,7 @@
 import { Backdrop, CssBaseline, ThemeProvider, Typography } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { useSelector } from "react-redux";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Toaster, toast } from "react-hot-toast";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
@@ -36,6 +36,7 @@ function App() {
 	const vaultKey = useSelector(state => state.vault.vaultKey)
 	const theme = useMemo(() => createTheme(themeSettings(mode)), [mode])
 	const location = useLocation()
+	const navigate = useNavigate()
 
 	const timeout = 1000 * 60 * 3
 	const promptBeforeIdle = 1000 * 60 * 2
@@ -45,22 +46,22 @@ function App() {
 
 	const onIdle = () => {
 		if (authenticated) {
+			setBlur(0)
 			setOpen(false)
 			dispatch(signout())
 		}
 	}
 
 	const onActive = () => {
+		setBlur(0)
 		setOpen(false)
 		dispatch(tokenRefresh())
 	}
 
 	const onPrompt = () => {
-		if (authenticated){
-			setOpen(true)
-		}
+		setOpen(true)
 	}
-	
+
 	const {
 		getRemainingTime,
 		activate,
@@ -85,24 +86,14 @@ function App() {
 	useEffect(() => {
 		const interval = setInterval(() => {
 			setRemaining(Math.ceil(getRemainingTime() / 1000))
-			console.log(remaining)
-		}, 500)
+			if (remaining <= 120) {
+				setBlur(blur + 0.1)
+			}
+		}, 100)
 
 		return () => {
 			clearInterval(interval)
 		}
-	})
-
-	useEffect(() => {
-		if (remaining <= 120) {
-			const blurInterval = setInterval(() => {
-				setBlur(blur+0.05)
-			}, 50)
-			return () => {
-				clearInterval(blurInterval)
-			}
-		}
-		
 	})
 
 	const renderTimeoutModal = () => {
@@ -128,7 +119,7 @@ function App() {
 								<Typography
 									variant="h4" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', width: 'fit-content', backgroundImage: 'linear-gradient(to right, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }}
 								>
-									Are you still here?
+									Are you still there?
 								</Typography>
 								{
 									Math.floor(remaining / 60) > 0 ?
