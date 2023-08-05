@@ -25,7 +25,7 @@ const SignIn = () => {
     const authenticated = useSelector(state => state.auth.authenticated)
     const hashPass = useSelector(state => state.auth.hashPass)
 
-    const userLoginReq = (e) => {
+    const userLoginReq = () => {
         if (email === '' || email === undefined) {
             toast.error("Please provide an Email...")
         }
@@ -41,33 +41,37 @@ const SignIn = () => {
         }
     }
 
-    const userLogin = (e) => {
+    const userLogin = () => {
         if (password === '' || password === undefined) {
             toast.error("Please enter your password")
         }
         else {
-            const passwordHash = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
-            if (passwordHash === hashPass) {
-                const form = {
-                    'hashEmail': email,
-                    'hashPass': passwordHash,
-                }
-                dispatch(login(form, password)).then(result => {
-                    if (result === false) {
-                        setEmailVerified(false)
+            try {
+                const passwordHash = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
+                if (passwordHash === hashPass) {
+                    const form = {
+                        'hashEmail': email,
+                        'hashPass': passwordHash,
                     }
-                })
-                setEmail('')
-                setPassword('')
-            }
-            else {
-                toast.error("Invalid Password...")
-                setPassword('')
+                    dispatch(login(form, password)).then(result => {
+                        if (result === false) {
+                            setEmailVerified(false)
+                        }
+                    })
+                    setEmail('')
+                    setPassword('')
+                }
+                else {
+                    toast.error("Invalid Password...")
+                    setPassword('')
+                }
+            } catch (error) {
+                console.log(error)
             }
         }
     }
 
-    const passResetReq = (e) => {
+    const passResetReq = () => {
         if (email === '') {
             toast.error("Please provide an Email...")
         }

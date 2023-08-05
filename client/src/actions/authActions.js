@@ -1,7 +1,6 @@
 import { toast } from "react-hot-toast"
 import axiosInstance from "../helpers/axios"
 import { authConsts } from "./constants"
-import Cookies from 'universal-cookie'
 import { decryptAES, decryptRSA, importRSAPrivKey } from "encrypt"
 import CryptoJS from "crypto-js"
 
@@ -80,42 +79,49 @@ export const signInReq = (form) => {
 
 export const login = (form, password) => {
     return async (dispatch) => {
+        try {
+            dispatch({ type: authConsts.LOGIN_REQUEST })
+            const res = await axiosInstance.post('/auth/signin', form)
+            if (res.status === 200) {
+                const user = res.data.user
 
-        dispatch({ type: authConsts.LOGIN_REQUEST })
-        const res = await axiosInstance.post('/auth/signin', form)
-        if (res.status === 200) {
-            const user = res.data.user
+                const decPrivate = (await decryptAES(user.privateKey, password)).toString(CryptoJS.enc.Utf8)
+                const importedPrivKey = await importRSAPrivKey(decPrivate)
 
-            const decPrivate = (await decryptAES(user.privateKey, password)).toString(CryptoJS.enc.Utf8)
-            const importedPrivKey = await importRSAPrivKey(decPrivate)
+                const masterKey = await decryptRSA(user.masterKey, importedPrivKey)
+                const firstName = (await decryptAES(user.firstName, masterKey)).toString(CryptoJS.enc.Utf8)
+                const lastName = (await decryptAES(user.lastName, masterKey)).toString(CryptoJS.enc.Utf8)
+                const contact = (await decryptAES(user.contact, masterKey)).toString(CryptoJS.enc.Utf8)
 
-            const masterKey = await decryptRSA(user.masterKey, importedPrivKey)
-            const firstName = (await decryptAES(user.firstName, masterKey)).toString(CryptoJS.enc.Utf8)
-            const lastName = (await decryptAES(user.lastName, masterKey)).toString(CryptoJS.enc.Utf8)
-            const contact = (await decryptAES(user.contact, masterKey)).toString(CryptoJS.enc.Utf8)
-
-            const decUser = {
-                'firstName': firstName,
-                'lastName': lastName,
-                'email': user.email,
-                'contact': contact,
-                'pubKey': user.publicKey
-            }
-
-            toast.success(`Login Success, Welcome ${decUser.firstName}`, {
-                id: 'login'
-            })
-
-            sessionStorage.setItem('user', JSON.stringify(decUser))
-            dispatch({
-                type: authConsts.LOGIN_SUCCESS,
-                payload: {
-                    'user': decUser
+                const decUser = {
+                    'firstName': firstName,
+                    'lastName': lastName,
+                    'email': user.email,
+                    'contact': contact,
+                    'pubKey': user.publicKey
                 }
-            })
-        }
-        else if (res.response) {
-            toast.error(res.response.data.message)
+
+                toast.success(`Login Success, Welcome ${decUser.firstName}`, {
+                    id: 'login'
+                })
+
+                sessionStorage.setItem('user', JSON.stringify(decUser))
+                dispatch({
+                    type: authConsts.LOGIN_SUCCESS,
+                    payload: {
+                        'user': decUser
+                    }
+                })
+            }
+            else if (res.response) {
+                toast.error(res.response.data.message, { id: 'loginf' })
+                dispatch({
+                    type: authConsts.LOGIN_FALIURE
+                })
+                return false
+            }
+        } catch (error) {
+            console.log(error)
             dispatch({
                 type: authConsts.LOGIN_FALIURE
             })
@@ -126,10 +132,15 @@ export const login = (form, password) => {
 
 export const isLoggedIn = () => {
     return async (dispatch) => {
+        dispatch({ type: authConsts.IS_LOGGEDIN_REQUEST })
         const user = JSON.parse(sessionStorage.getItem('user'))
         if (user) {
             const res = await axiosInstance.post('/auth/isloggedin', { 'email': user.email })
             if (res.status === 200) {
+                toast.success("Session Validated", { id: 'svs' })
+                dispatch({
+                    type: authConsts.IS_LOGGEDIN_SUCCESS,
+                })
                 dispatch({
                     type: authConsts.LOGIN_SUCCESS,
                     payload: {
@@ -138,14 +149,44 @@ export const isLoggedIn = () => {
                 })
             }
             else if (res.response) {
-                toast.error(res.response.data.message)
+                toast.error(res.response.data.message, { id: 'lOut' })
                 dispatch({
-                    type: authConsts.LOGIN_FALIURE
+                    type: authConsts.IS_LOGGEDIN_FAILED
                 })
+                toast.success("Please Log In", { id: 'pli' })
+                const res1 = await axiosInstance.post(`/auth/signout`)
+                if (res1.status === 200) {
+                    sessionStorage.clear()
+                    dispatch(
+                        { type: authConsts.LOGOUT_SUCCESS }
+                    )
+                }
+                else {
+                    dispatch(
+                        {
+                            type: authConsts.LOGOUT_FAILED
+                        })
+                }
             }
         }
         else {
-            signout()
+            dispatch({
+                type: authConsts.IS_LOGGEDIN_FAILED
+            })
+            toast.success("Please Log In", { id: 'pli' })
+            const res = await axiosInstance.post(`/auth/signout`)
+            if (res.status === 200) {
+                sessionStorage.clear()
+                dispatch(
+                    { type: authConsts.LOGOUT_SUCCESS }
+                )
+            }
+            else {
+                dispatch(
+                    {
+                        type: authConsts.LOGOUT_FAILED
+                    })
+            }
         }
     }
 }
@@ -175,13 +216,17 @@ export const signout = () => {
 export const tokenRefresh = () => {
     return async () => {
         const user = JSON.parse(sessionStorage.getItem('user'))
-        if (user){
+        if (user) {
             const form = {
                 'email': user.email
             }
             const res = await axiosInstance.post('/auth/token', form)
-            if (res.status === 200) {
+            if (res.status === 200 && res.data.message === "Session Extended") {
                 toast.success("Session Extended!", { id: 'token' })
+            }
+            else if (res.response) {
+                toast.error(res.response.data.message, { id: 'token' })
+                signout()
             }
         }
     }

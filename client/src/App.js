@@ -8,13 +8,11 @@ import Layout from "scenes/layout";
 import SignIn from "scenes/signin/SignIn";
 import { Toaster, toast } from "react-hot-toast";
 import { isLoggedIn, tokenRefresh } from "actions/authActions";
-import React, { useEffect, useMemo, useCallback, useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import './App.css'
-import { signout } from "actions/authActions";
 import PassReset from "scenes/pwReset/PassReset";
 import Signup from "scenes/signup/Signup";
-import Test from "scenes/Test/Test";
 import Transactions from "scenes/transactions/Transactions";
 import Vaults from "scenes/vaults/Vaults";
 import Billing from "scenes/billing/Billing";
@@ -26,42 +24,45 @@ import VaultInvite from "scenes/vaultInvite/vaultInvite";
 function App() {
 	const dispatch = useDispatch()
 	const loading = useSelector(state => state.auth.loading)
+	const checking = useSelector(state => state.auth.authChecking)
 	const verifying = useSelector(state => state.auth.verifying)
 	const mode = useSelector(state => state.general.mode)
 	const authenticated = useSelector(state => state.auth.authenticated);
+	const authenticating = useSelector(state => state.auth.authenticating)
 	const vaultKey = useSelector(state => state.vault.vaultKey)
 	const theme = useMemo(() => createTheme(themeSettings(mode)), [mode])
+	const location = useLocation()
+
 	useEffect(() => {
 		if (!authenticated) {
 			dispatch(isLoggedIn());
 		}
 	}, []);
 
-	const refreshToken = useCallback(() => {
-		dispatch(tokenRefresh())
-	}, [dispatch])
-
-	const lockVault = useCallback(() => {
-		if (vaultKey !== undefined) {
-			dispatch(lockUserVault())
+	useEffect(() => {
+		if (!location.pathname.includes("/unlock-vault")) {
+			if (vaultKey !== undefined) {
+				console.log(true, vaultKey)
+				dispatch(lockUserVault())
+			}
 		}
-	}, [dispatch])
+	}, [location.pathname]);
 
 	useEffect(() => {
-		const interval1 = setInterval(() => {
-			refreshToken()
-		}, 1800000);
-		return () => clearInterval(interval1);
-	}, []);
+			dispatch(tokenRefresh())
+	}, [location.pathname]);
 
-	// useEffect(() => {
-	// 	const interval2 = setInterval(() => {
-	// 		lockVault()
-	// 	}, 300000);
-	// 	return () => clearInterval(interval2);
-	// }, [])
+	useEffect(() => {
+		if (checking === true) {
+			toast.loading('Validating Session...', {
+				id: 'Validating Session'
+			})
+		}
+		else if (checking === false) {
+			toast.dismiss('Validating Session')
+		}
 
-	const authenticating = useSelector(state => state.auth.authenticating)
+	}, [checking]);
 
 	useEffect(() => {
 		if (authenticating === true) {

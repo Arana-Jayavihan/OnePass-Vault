@@ -4,16 +4,13 @@ import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useTheme, IconButton, InputBase, Typography } from '@mui/material'
+import { useTheme, IconButton, Typography } from '@mui/material'
 import { toast } from 'react-hot-toast'
-import FlexBetween from 'components/FlexBetween'
-import { Search } from '@mui/icons-material';
 import { ThreeDots } from 'react-loader-spinner'
-import { MdDelete, MdRemoveRedEye, MdEdit, MdRefresh } from 'react-icons/md'
 import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
 import { NewModel } from 'components/Modal'
 import { Input } from 'components/input/input'
-import { Col, Container, Row, Table } from 'react-bootstrap'
+import { Col, Container, Row } from 'react-bootstrap'
 
 const VaultInvite = () => {
     const dispatch = useDispatch()

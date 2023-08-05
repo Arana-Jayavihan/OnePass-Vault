@@ -1,6 +1,7 @@
 import { authConsts } from "../actions/constants"
 
 const initState = {
+    authChecking: false,
     user: {},
     verifying: false,
     authenticated: false,
@@ -107,6 +108,24 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 loading: false
+            }
+            break
+        case authConsts.IS_LOGGEDIN_REQUEST:
+            state = {
+                ...state,
+                authChecking: true
+            }
+            break
+        case authConsts.IS_LOGGEDIN_SUCCESS:
+            state = {
+                ...state,
+                authChecking: false,
+            }
+            break
+        case authConsts.IS_LOGGEDIN_FAILED:
+            state = {
+                ...state,
+                authChecking: false,
             }
             break
     }

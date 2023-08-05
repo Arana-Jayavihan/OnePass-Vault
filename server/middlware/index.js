@@ -40,7 +40,7 @@ export const isLoggedIn = (req, res) => {
             }
             else {
                 res.status(400).json({
-                    message: "Not Logged In"
+                    message: "Session Expired"
                 })
             }
         }

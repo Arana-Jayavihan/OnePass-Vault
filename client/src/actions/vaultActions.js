@@ -4,8 +4,6 @@ import { toast } from "react-hot-toast"
 import shortid from "shortid"
 import { decryptAES, decryptRSA, encryptAES, encryptRSA, generateMasterEncryptionKey, importRSAPrivKey, importRSAPubKey } from "encrypt"
 import CryptoJS from "crypto-js"
-import Cookies from 'universal-cookie'
-const cookies = new Cookies()
 
 export const getUserAssignedVaults = (form) => {
     return async dispatch => {
@@ -218,16 +216,13 @@ export const unlockUserVault = (form) => {
 }
 
 export const getVaultData = (form, vaultKey) => {
-    try {
-        return async dispatch => {
+    return async dispatch => {
+        try {
             dispatch({
                 type: vaultConsts.GET_VAULT_DATA_REQUEST
             })
             const res = await axiosInstance.post("/vault/get-vault-data", form)
             if (res.status === 200) {
-                cookies.remove("encVaultUnlockToken", {
-                    path: "/",
-                })
                 toast.success("Vault Data Fetched", { id: 'vds' })
                 const vaultData = res.data.payload
                 const decCustomFields = await decryptCustomFields(vaultData.customFields, vaultKey)
@@ -242,10 +237,13 @@ export const getVaultData = (form, vaultKey) => {
                     return true
                 }
                 else if (decLogins === false) {
-                    cookies.remove("encVaultUnlockToken", {
-                        path: "/",
-                    })
                     toast.error("Error Fetching Vault Data", { id: 'gvf' })
+                    dispatch({
+                        type: vaultConsts.LOCK_VAULT_SUCCESS
+                    })
+                    dispatch({
+                        type: loginConsts.REMOVE_LOGINS
+                    })
                     dispatch({
                         type: vaultConsts.GET_VAULT_DATA_FAILED
                     })
@@ -254,24 +252,27 @@ export const getVaultData = (form, vaultKey) => {
 
             }
             else if (res.response) {
-                cookies.remove("encVaultUnlockToken", {
-                    path: "/",
+                dispatch({
+                    type: vaultConsts.LOCK_VAULT_SUCCESS
                 })
-                toast.error("Vault Locked!", { id: 'gvf' })
+                dispatch({
+                    type: loginConsts.REMOVE_LOGINS
+                })
                 dispatch({
                     type: vaultConsts.GET_VAULT_DATA_FAILED
                 })
                 return false
             }
-
         }
-    } catch (error) {
-        console.log(error)
-        return async dispatch => {
-            cookies.remove("encVaultUnlockToken", {
-                path: "/",
-            })
+        catch (error) {
+            console.log(error)
             toast.error("Error Fetching Vault Data", { id: 'gvf' })
+            dispatch({
+                type: vaultConsts.LOCK_VAULT_SUCCESS
+            })
+            dispatch({
+                type: loginConsts.REMOVE_LOGINS
+            })
             dispatch({
                 type: vaultConsts.GET_VAULT_DATA_FAILED
             })
@@ -281,8 +282,8 @@ export const getVaultData = (form, vaultKey) => {
 }
 
 export const addVaultUser = (form) => {
-    try {
-        return async dispatch => {
+    return async dispatch => {
+        try {
             dispatch({
                 type: vaultConsts.ADD_VAULT_USER_REQUEST_REQUEST
             })
@@ -317,21 +318,19 @@ export const addVaultUser = (form) => {
                     type: vaultConsts.ADD_VAULT_USER_REQUEST_FAILED
                 })
             }
-        }
-    } catch (error) {
-        console.log(error)
-        return async dispatch => {
+        } catch (error) {
+            console.log(error)
             dispatch({
                 type: vaultConsts.ADD_VAULT_USER_REQUEST_FAILED
             })
         }
-    }
 
+    }
 }
 
 export const getVaultInvitationData = (form) => {
-    try {
-        return async dispatch => {
+    return async dispatch => {
+        try {
             dispatch({
                 type: vaultConsts.GET_VAULT_INVITE_DATA_REQUEST
             })
@@ -349,10 +348,8 @@ export const getVaultInvitationData = (form) => {
                     type: vaultConsts.GET_VAULT_INVITE_DATA_FAILED
                 })
             }
-        }
-    } catch (error) {
-        console.log(error)
-        return async dispatch => {
+        } catch (error) {
+            console.log(error)
             dispatch({
                 type: vaultConsts.GET_VAULT_INVITE_DATA_FAILED
             })
@@ -361,8 +358,8 @@ export const getVaultInvitationData = (form) => {
 }
 
 export const acceptVaultInvitation = (form) => {
-    try {
-        return async dispatch => {
+    return async dispatch => {
+        try {
             dispatch({
                 type: vaultConsts.VAULT_INVITE_ACCEPT_REQUEST
             })
@@ -451,9 +448,8 @@ export const acceptVaultInvitation = (form) => {
                 })
                 return false
             }
-        }
-    } catch (error) {
-        return async dispatch => {
+        } catch (error) {
+            console.log(error)
             dispatch({
                 type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
             })
@@ -462,22 +458,14 @@ export const acceptVaultInvitation = (form) => {
 }
 
 export const lockUserVault = () => {
-    try {
-        return async dispatch => {
-            dispatch({
-                type: vaultConsts.LOCK_VAULT_SUCCESS
-            })
-            dispatch({
-                type: loginConsts.REMOVE_LOGINS
-            })
-        }
-    } catch (error) {
-        console.log(error)
-        return async dispatch => {
-            dispatch({
-                type: vaultConsts.LOCK_VAULT_FAILED
-            })
-        }
+    return async dispatch => {
+        toast.success("Vault Locked", { id: 'vls' })
+        dispatch({
+            type: vaultConsts.LOCK_VAULT_SUCCESS
+        })
+        dispatch({
+            type: loginConsts.REMOVE_LOGINS
+        })
     }
 }
 
@@ -521,19 +509,4 @@ export const decryptVaultLogins = async (logins, vaultKey) => {
         console.log(error)
         return false
     }
-}
-
-
-
-const testEncrypt = async (vaultKey) => {
-    const loginName = "Instagram"
-    const loginUrl = "https://www.instagram.com"
-    const loginUsername = "_.arana._"
-    const loginPassword = "123456789"
-
-    const encLoginName = await encryptAES(loginName, vaultKey)
-    const encLoginUrl = await encryptAES(loginUrl, vaultKey)
-    const encLoginUsername = await encryptAES(loginUsername, vaultKey)
-    const encLoginPassword = await encryptAES(loginPassword, vaultKey)
-    console.log(encLoginName, encLoginUrl, encLoginUsername, encLoginPassword)
 }

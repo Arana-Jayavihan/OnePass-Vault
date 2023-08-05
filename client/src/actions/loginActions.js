@@ -1,6 +1,6 @@
 import { toast } from "react-hot-toast"
 import axiosInstance from "../helpers/axios"
-import { loginConsts, vaultConsts } from "./constants"
+import { vaultConsts } from "./constants"
 import { encryptAES } from "encrypt"
 import { decryptVaultLogins } from "./vaultActions"
 

@@ -258,44 +258,52 @@ export const tokenRefresh = async (req, res) => {
                 if (tokenlist[refreshToken].ip === ip) {
                     const decodedRefresh = jwt.verify(refreshToken, process.env.JWT_REFRESHSECRET)
                     if (tokenHash === tokenlist[refreshToken].tokenHash && decodedRefresh.tokenHash === tokenlist[refreshToken].tokenHash) {
-                        try {
-                            delete tokenlist[refreshToken]
-                            token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, process.env.JWT_SECRET, { expiresIn: '2h' })
-                            tokenHash = CryptoJS.SHA256(token).toString()
-                            refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '4h' })
-                            encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
-                                iv: CryptoJS.SHA256(sh.generate()).toString(),
-                                mode: CryptoJS.mode.CBC,
-                                padding: CryptoJS.pad.Pkcs7
-                            }).toString()
-                            res.cookie('refreshToken', refreshToken, {
-                                path: '/',
-                                expires: hours2,
-                                sameSite: "none",
-                                secure: true,
-                                httpOnly: true
-                            })
-                            res.cookie('encToken', encToken, {
-                                path: '/',
-                                expires: hours1,
-                                sameSite: "none",
-                                secure: true,
-                                httpOnly: true
-                            })
+                        const chekTime = jwt.decode(token)
+                        if (((chekTime.exp * 1000) - Date.now()) < (10 * 60 * 1000)) {
+                            try {
+                                delete tokenlist[refreshToken]
+                                token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, process.env.JWT_SECRET, { expiresIn: '2h' })
+                                tokenHash = CryptoJS.SHA256(token).toString()
+                                refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '4h' })
+                                encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
+                                    iv: CryptoJS.SHA256(sh.generate()).toString(),
+                                    mode: CryptoJS.mode.CBC,
+                                    padding: CryptoJS.pad.Pkcs7
+                                }).toString()
+                                res.cookie('refreshToken', refreshToken, {
+                                    path: '/',
+                                    expires: hours2,
+                                    sameSite: "none",
+                                    secure: true,
+                                    httpOnly: true
+                                })
+                                res.cookie('encToken', encToken, {
+                                    path: '/',
+                                    expires: hours1,
+                                    sameSite: "none",
+                                    secure: true,
+                                    httpOnly: true
+                                })
 
-                            tokenlist[refreshToken] = {
-                                'refreshToken': refreshToken,
-                                'hashPass': decodedToken.hashPass,
-                                'tokenHash': tokenHash,
-                                'ip': ip
+                                tokenlist[refreshToken] = {
+                                    'refreshToken': refreshToken,
+                                    'hashPass': decodedToken.hashPass,
+                                    'tokenHash': tokenHash,
+                                    'ip': ip
+                                }
+                                console.log(tokenlist, "New TokenRefresh")
+                                res.status(200).json({
+                                    message: "Session Extended"
+                                })
                             }
-                            console.log(tokenlist, "New TokenRefresh")
-                            res.status(200).json({
-                                message: "Session Extended"
-                            })
+                            catch (error) {
+                                console.log(error)
+                            }
                         }
-                        catch (error) {
-                            console.log(error)
+                        else {
+                            res.status(200).json({
+                                message: "Session Valid"
+                            })
                         }
                     }
                     else {
@@ -333,9 +341,13 @@ export const tokenRefresh = async (req, res) => {
 
 export const signOut = async (req, res) => {
     try {
-        const refreshToken = req.cookies.refreshToken
-        delete tokenlist[refreshToken]
-        console.log(tokenlist, "SignOut")
+        try {
+            const refreshToken = req.cookies.refreshToken
+            delete tokenlist[refreshToken]
+            console.log(tokenlist, "SignOut")
+        } catch (error) {
+            console.log(error)
+        }
         res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
         res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
         res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
@@ -346,6 +358,10 @@ export const signOut = async (req, res) => {
     }
     catch (error) {
         console.log(error)
+        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
         res.status(500).json({
             message: "Something Went Wrong!",
             error: error
@@ -363,7 +379,7 @@ function clearTokenList() {
                 delete tokenlist[tokenObj.refreshToken]
             }
         }
-        console.log("Expired tokens cleared", tokenlist)
+        console.log("Expired auth tokens cleared", tokenlist)
     } catch (error) {
         console.log(error)
     }

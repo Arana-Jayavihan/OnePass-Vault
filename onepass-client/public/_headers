@@ -1,0 +1,19 @@
+/*
+  cache-control: max-age=0
+  cache-control: no-cache
+  cache-control: no-store
+  cache-control: must-revalidate
+  content-language: en
+  Access-Control-Allow-Credentials: true
+  Access-Control-Allow-Methods: GET, POST
+  Access-Control-Allow-Origin: https://onepass-vault-production.up.railway.app
+  Cross-Origin-Embedder-Policy: require-corp
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: microphone=(), geolocation=()
+  Origin: https://onepass-vault-production.up.railway.app
+  Cross-Origin-Resource-Policy: cross-origin
+  Cross-Origin-Opener-Policy: same-origin
+  Content-Security-Policy: default-src 'self'; script-src https://onepass-vault-v3.netlify.app; style-src 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://onepass-vault-v3.netlify.app; font-src https://fonts.googleapis.com https://fonts.gstatic.com; manifest-src 'self'; media-src 'self'; img-src 'self'; connect-src https://onepass-vault-production.up.railway.app; object-src 'self';  frame-src 'self';

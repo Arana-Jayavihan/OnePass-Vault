@@ -70,14 +70,12 @@ const Signup = () => {
         }
     }
 
-    const generateKeys = async (e) => {
+    const generateKeys = async () => {
         try {
             if (password === confirmPassword) {
-                // Generate RSA Key Pair and Encrypt with Password
                 const { privExpB64, pubExpB64, keyPair } = await genRSAKeyPair()
                 const encPrivate = await encryptAES(privExpB64, password)
 
-                // Generate Master Encryption Key and Encrypt with Password
                 const masterEncryptionKey = await generateMasterEncryptionKey(password)
                 const encryptedMasterEncKey = await encryptRSA(masterEncryptionKey, keyPair.publicKey)
                 setMasterEncKey(masterEncryptionKey)
@@ -102,38 +100,42 @@ const Signup = () => {
             console.log(error)
         }
     }
-    const userSignup = async (e) => {
-        if (password === confirmPassword) {
-            const encFirstName = await encryptAES(firstName, masterEncKey)
-            const encLastName = await encryptAES(lastName, masterEncKey)
-            const encContact = await encryptAES(contact, masterEncKey)
-            const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
+    const userSignup = async () => {
+        try {
+            if (password === confirmPassword) {
+                const encFirstName = await encryptAES(firstName, masterEncKey)
+                const encLastName = await encryptAES(lastName, masterEncKey)
+                const encContact = await encryptAES(contact, masterEncKey)
+                const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
 
-            const form = {
-                'email': email,
-                'firstName': encFirstName,
-                'lastName': encLastName,
-                'contact': encContact,
-                'passwordHash': hashPassword
-            }
-            dispatch(addData(form)).then(result => {
-                if (result) {
-                    const form = {
-                        'hashEmail': email,
-                        'hashPass': hashPassword
-                    }
-                    dispatch(login(form, password))
+                const form = {
+                    'email': email,
+                    'firstName': encFirstName,
+                    'lastName': encLastName,
+                    'contact': encContact,
+                    'passwordHash': hashPassword
                 }
-            })
-            setEmail(undefined)
-            setFirstName(undefined)
-            setLastName(undefined)
-            setContact(undefined)
-            setPassword(undefined)
-            setConfirmPassword(undefined)
-        }
-        else {
-            toast.error("Passwords Mismatch")
+                dispatch(addData(form)).then(result => {
+                    if (result) {
+                        const form = {
+                            'hashEmail': email,
+                            'hashPass': hashPassword
+                        }
+                        dispatch(login(form, password))
+                    }
+                })
+                setEmail(undefined)
+                setFirstName(undefined)
+                setLastName(undefined)
+                setContact(undefined)
+                setPassword(undefined)
+                setConfirmPassword(undefined)
+            }
+            else {
+                toast.error("Passwords Mismatch")
+            }
+        } catch (error) {
+            console.log(error)
         }
     }
 
