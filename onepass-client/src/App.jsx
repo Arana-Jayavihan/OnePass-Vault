@@ -41,6 +41,7 @@ function App() {
 	const promptBeforeIdle = 1000 * 60 * 2
 	const [remaining, setRemaining] = useState(timeout);
 	const [open, setOpen] = useState(false);
+	const [blur, setBlur] = useState(0);
 
 	const onIdle = () => {
 		if (authenticated) {
@@ -83,6 +84,18 @@ function App() {
 		}
 	})
 
+	useEffect(() => {
+		if (remaining <= 120) {
+			const blurInterval = setInterval(() => {
+				setBlur(blur+0.05)
+			}, 50)
+			return () => {
+				clearInterval(blurInterval)
+			}
+		}
+		
+	})
+
 	const renderTimeoutModal = () => {
 		return (
 			<>
@@ -95,7 +108,7 @@ function App() {
 							className='modal123'
 							style={{
 								display: open ? 'flex' : 'none',
-								backdropFilter: `blur(${120 - remaining}px)`
+								backdropFilter: `blur(${blur}px)`
 							}}>
 							<motion.div
 								whileInView={{ opacity: [0, 1] }}
