@@ -63,11 +63,13 @@ function App() {
 	
 	const {
 		getRemainingTime,
-		activate
+		activate,
+		start
 	} = useIdleTimer({
 		onIdle,
 		onActive,
 		onPrompt,
+		startManually: true,
 		crossTab: true,
 		syncTimers: 200,
 		timeout,
@@ -75,8 +77,15 @@ function App() {
 	})
 
 	useEffect(() => {
+		if (authenticated) {
+			start()
+		}
+	}, [authenticated])
+
+	useEffect(() => {
 		const interval = setInterval(() => {
 			setRemaining(Math.ceil(getRemainingTime() / 1000))
+			console.log(remaining)
 		}, 500)
 
 		return () => {
