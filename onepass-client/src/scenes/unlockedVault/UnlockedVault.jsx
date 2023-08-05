@@ -2,7 +2,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion'
-import { useTheme, IconButton, InputBase, Typography } from '@mui/material'
+import { useTheme, IconButton, InputBase, Typography, useMediaQuery } from '@mui/material'
 import { toast } from 'react-hot-toast'
 import { Search } from '@mui/icons-material';
 import { ThreeDots } from 'react-loader-spinner'
@@ -24,6 +24,7 @@ const UnlockedVault = () => {
     const theme = useTheme()
     const dispatch = useDispatch()
     const navigate = useNavigate()
+    const isNonMobile = useMediaQuery("(min-width: 600px)");
     const email = useSelector(state => state.auth.user.email)
     const loading = useSelector(state => state.vault.loading)
     const adding = useSelector(state => state.vault.adding)
@@ -195,7 +196,7 @@ const UnlockedVault = () => {
     const handleAddCustomFieldButtonClick = () => {
         if (customFieldSize === 0) {
             if (customFieldSize < 2) {
-                const template = <Row>
+                const template = <Row style={{ marginTop: isNonMobile ? null : '1rem' }}>
                     <Col md={5}>
                         <Typography sx={{ color: theme.palette.primary[500] }}>
                             <Input
@@ -227,7 +228,7 @@ const UnlockedVault = () => {
         }
         else if (customFieldSize > 0 && customFields[customFieldSize - 1]) {
             if (customFieldSize < 2) {
-                const template = <Row>
+                const template = <Row style={{ marginTop: isNonMobile ? null : '1rem' }}>
                     <Col md={5}>
                         <Typography sx={{ color: theme.palette.primary[500] }}>
                             <Input
@@ -301,14 +302,14 @@ const UnlockedVault = () => {
                 vaultKey: vaultKey,
                 customFields
             }
-    
+
             dispatch(addUserLogin(form)).then((result) => {
                 console.log(result)
             })
             closeAddLogin()
         }
         else {
-            toast.error("Please fill all the fields...", {id: "nae"})
+            toast.error("Please fill all the fields...", { id: "nae" })
         }
     }
 
@@ -351,7 +352,7 @@ const UnlockedVault = () => {
                             />
                         </Typography>
                     </Col>
-                    <Col md={6} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                    <Col md={6} style={{ display: 'flex', justifyContent: isNonMobile ? 'space-between' : null, alignItems: "center" }}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
                                 label="Password"
@@ -374,13 +375,13 @@ const UnlockedVault = () => {
                 <Row style={{ marginTop: "1rem", marginBottom: '1rem' }}>
                     {
                         <>
-                            <Row>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }} >
                                 <Col md={6}>
                                     <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
                                         Custom Fields
                                     </Typography>
                                 </Col>
-                                <Col md={6} style={{ display: 'flex', justifyContent: 'right' }}>
+                                <Col md={6} style={{ display: 'flex', justifyContent: isNonMobile ? 'right' : 'left' }}>
                                     <motion.button
                                         className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
                                         whileHover={{ scale: [1, 1.1] }}
@@ -388,9 +389,8 @@ const UnlockedVault = () => {
                                     >
                                         Add Custom Field
                                     </motion.button>
-
                                 </Col>
-                            </Row>
+                            </div>
                             {
                                 renderCustomFields.length > 0 ? renderCustomFields : <Row>
                                     <Col md={12}>
@@ -410,7 +410,8 @@ const UnlockedVault = () => {
     // Add Vault User 
 
     const addUser = () => {
-        if (addUserEmail !== undefined || addUserEmail !== "") {
+        if (addUserEmail !== undefined) {
+            console.log(addUserEmail)
             let form = {
                 'email': email,
                 'addUserEmail': addUserEmail,
@@ -421,7 +422,8 @@ const UnlockedVault = () => {
             form = {}
         }
         else {
-            toast.error("Please enter an email...", {id: "nae"})
+            console.log(addUserEmail)
+            toast.error("Please enter an email...", { id: "nae" })
         }
     }
 
@@ -718,12 +720,12 @@ const UnlockedVault = () => {
                             </Row>
                             <Row>
                                 <Col md={3}
-                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: "75vh", overflowY: 'scroll' }}
+                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: isNonMobile ? "75vh" : 'max-content', overflowY: 'scroll' }}
                                 >
                                     <div style={{ backgroundColor: theme.palette.primary[100], borderRadius: '15px', padding: '1rem', height: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                         <div>
                                             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }} >
-                                                <div style={{ backgroundColor: theme.palette.background.default, padding: '10% 12%', borderRadius: '15px' }}>
+                                                <div style={{ backgroundColor: theme.palette.background.default, padding: isNonMobile ? '10% 12%' : '12% 15%', borderRadius: '15px' }}>
                                                     <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
                                                         Logins
                                                     </Typography>
@@ -731,7 +733,7 @@ const UnlockedVault = () => {
                                                         {vault?.vaultLogins?.length}
                                                     </Typography>
                                                 </div>
-                                                <div style={{ backgroundColor: theme.palette.background.default, padding: '10% 12%', borderRadius: '15px' }}>
+                                                <div style={{ backgroundColor: theme.palette.background.default, padding: isNonMobile ? '10% 12%' : '12% 15%', borderRadius: '15px' }}>
                                                     <Typography variant='h5' sx={{ textAlign: 'center', margin: 0, marginBottom: '.5rem', padding: 0, }}>
                                                         Users
                                                     </Typography>
@@ -799,7 +801,8 @@ const UnlockedVault = () => {
                                             backgroundColor={theme.palette.background.alt}
                                             borderRadius="9px"
                                             gap="3px"
-                                            padding="0.1rem 1.5rem"
+                                            padding={isNonMobile ? "0.1rem 1.5rem" : null}
+                                            paddingLeft={ isNonMobile ? null : "1rem"}
                                         >
                                             <InputBase
                                                 placeholder='Search...'
@@ -812,7 +815,7 @@ const UnlockedVault = () => {
                                         </FlexBetween>
                                     </div>
 
-                                    <Col md={12} style={{ overflowX: 'scroll', height: "65vh", overflowY: 'scroll' }}>
+                                    <Col md={12} style={{ overflowX: 'scroll', height: isNonMobile ? "65vh" : 'max-content', overflowY: 'scroll' }}>
                                         {
                                             loginList?.length > 0 ?
                                                 <motion.div

@@ -3,7 +3,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion'
-import { useTheme, IconButton, InputBase, Typography } from '@mui/material'
+import { useTheme, IconButton, InputBase, Typography, useMediaQuery } from '@mui/material'
 import { Col, Container, Row } from 'react-bootstrap'
 import { toast } from 'react-hot-toast'
 import { Search } from '@mui/icons-material';
@@ -32,6 +32,8 @@ const Vaults = () => {
     const updating = useSelector(state => state.vault.updating)
     const email = useSelector(state => state.auth.user.email)
     const publicKey = useSelector(state => state.auth.user.pubKey)
+    const isNonMobile = useMediaQuery("(min-width: 600px)");
+
     useEffect(() => {
         if (unlocking === true) {
             toast.loading('Unlocking...', {
@@ -125,7 +127,7 @@ const Vaults = () => {
             <>
                 {
                     vaultList && vaultList.length > 0 ?
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 400px))', gridGap: '2rem', paddingTop: '1rem' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 400px))', gridGap: '2rem', paddingTop: '1rem', justifyContent: isNonMobile ? 'left' : 'center' }}>
                             {
                                 vaultList.map((vault, index) => (
                                     vault.vaultName !== '' ?
@@ -220,7 +222,7 @@ const Vaults = () => {
     const handleAddCustomFieldButtonClick = () => {
         if (customFieldSize === 0) {
             if (customFieldSize < 2) {
-                const template = <Row>
+                const template = <Row style={{ marginTop: isNonMobile ? null : '1rem' }}>
                     <Col md={5}>
                         <Typography sx={{ color: theme.palette.primary[500] }}>
                             <Input
@@ -252,7 +254,7 @@ const Vaults = () => {
         }
         else if (customFieldSize > 0 && customFields[customFieldSize - 1]) {
             if (customFieldSize < 2) {
-                const template = <Row>
+                const template = <Row style={{ marginTop: isNonMobile ? null : '1rem' }}>
                     <Col md={5}>
                         <Typography sx={{ color: theme.palette.primary[500] }}>
                             <Input
@@ -332,9 +334,8 @@ const Vaults = () => {
                 close={closeAddModal}
                 handleClose={addVault}
                 ModalTitle="Create New Vault"
-                size='lg'>
-                <Row>
-
+                size='md'>
+                <>
                     <Row>
                         <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
                             Vault Details
@@ -363,13 +364,13 @@ const Vaults = () => {
                     <Row style={{ marginTop: "1rem", marginBottom: '1rem' }}>
                         {
                             <>
-                                <Row>
+                                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1rem'}} >
                                     <Col md={6}>
                                         <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
                                             Custom Fields
                                         </Typography>
                                     </Col>
-                                    <Col md={6} style={{ display: 'flex', justifyContent: 'right' }}>
+                                    <Col md={6} style={{ display: 'flex', justifyContent: isNonMobile ? 'right' : 'left' }}>
                                         <motion.button
                                             className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
                                             whileHover={{ scale: [1, 1.1] }}
@@ -377,9 +378,8 @@ const Vaults = () => {
                                         >
                                             Add Custom Field
                                         </motion.button>
-
                                     </Col>
-                                </Row>
+                                </div>
                                 {
                                     renderCustomFields.length > 0 ? renderCustomFields : <Row>
                                         <Col md={12}>
@@ -414,7 +414,7 @@ const Vaults = () => {
                         </Col>
                     </Row>
 
-                </Row>
+                </>
 
             </NewModel >
         )
@@ -483,7 +483,7 @@ const Vaults = () => {
                 ]}
             >
                 <Row>
-                    <Col md={12} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                    <Col md={12} style={{ display: 'flex', justifyContent: isNonMobile ? 'space-between': 'space-around', alignItems: "center" }}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
                                 autoFocus
@@ -544,7 +544,8 @@ const Vaults = () => {
                                 backgroundColor={theme.palette.background.alt}
                                 borderRadius="9px"
                                 gap="3px"
-                                padding="0.1rem 1.5rem"
+                                padding={ isNonMobile ? "0.1rem 1.5rem" : null}
+                                paddingLeft={ isNonMobile ? null : "1rem"}
                             >
                                 <InputBase
                                     placeholder='Search...'

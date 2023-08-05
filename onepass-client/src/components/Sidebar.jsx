@@ -120,11 +120,6 @@ const Sidebar = (props) => {
                                         OnePass Vault
                                     </Typography>
                                 </Box>
-                                {!props.isNonMobile && (
-                                    <IconButton onClick={() => props.setIsSidebarOpen(!props.isSidebarOpen)}>
-                                        <ChevronLeft className="p-2" />
-                                    </IconButton>
-                                )}
                             </FlexBetween>
                         </Box>
                         <List>

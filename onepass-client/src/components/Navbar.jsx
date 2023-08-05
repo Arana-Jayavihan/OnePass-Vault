@@ -12,7 +12,6 @@ import { AppBar, IconButton, Toolbar, useTheme, Box, Button, Typography, Menu, M
 import { switchMode } from '../actions/generalActions';
 import { signout } from '../actions/authActions';
 import './style.css'
-import zIndex from '@mui/material/styles/zIndex';
 
 const Navbar = (props) => {
     const mode = useSelector(state => state.general.mode)

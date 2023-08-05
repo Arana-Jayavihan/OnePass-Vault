@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useTheme, IconButton, Typography } from '@mui/material'
+import { useTheme, IconButton, Typography, useMediaQuery } from '@mui/material'
 import { toast } from 'react-hot-toast'
 import { ThreeDots } from 'react-loader-spinner'
 import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
@@ -23,6 +23,8 @@ const VaultInvite = () => {
     const inviteData = useSelector(state => state.vault.invite)
     const email = useSelector(state => state.auth.user.email)
     const [validInvite, setValidInvite] = useState(false);
+    const isNonMobile = useMediaQuery("(min-width: 600px)");
+
     const form = {
         'token': token.token
     }
@@ -123,7 +125,7 @@ const VaultInvite = () => {
                 ]}
             >
                 <Row>
-                    <Col md={12} style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+                    <Col md={12} style={{ display: 'flex', justifyContent: isNonMobile ? 'space-between': 'space-around', alignItems: "center" }}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
                                 autoFocus

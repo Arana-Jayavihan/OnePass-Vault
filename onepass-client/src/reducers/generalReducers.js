@@ -3,8 +3,8 @@ import { generalConstatnts, authConsts } from '../actions/constants'
 
 let mode = localStorage.getItem('mode')
 if (mode === null || mode === undefined) {
-    mode = 'light'
-    localStorage.setItem('mode', 'light')
+    mode = 'dark'
+    localStorage.setItem('mode', 'dark')
 }
 const initState = {
     mode: mode,

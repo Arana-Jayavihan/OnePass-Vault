@@ -46,6 +46,11 @@
   justify-content: space-between;
   height: fit-content;
   align-items: center;
+
+  @media screen {
+    margin: 0;
+    margin-bottom: 1rem;
+  }
 }
 
 .inputs_container input {
@@ -57,6 +62,7 @@
   outline: 0;
   border: 0;
 }
+
 .inputs_container1 input {
   width: 80%;
   margin: 1.5rem 1rem;
@@ -65,6 +71,10 @@
   font-size: 1rem;
   outline: 0;
   border: 0;
+
+  @media screen {
+    margin: 0%;
+  }
 }
 
 .login_button {
@@ -91,10 +101,12 @@
   display: flex;
   justify-content: space-between;
 }
+
 .link_container1 {
   display: flex;
   justify-content: center;
 }
+
 .small {
   color: rgb(218, 218, 218);
   text-align: center;
@@ -105,7 +117,7 @@
 
 }
 
-.small:hover{
+.small:hover {
   color: #854aff;
 }
 

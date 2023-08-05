@@ -107,9 +107,9 @@ function App() {
 								</Typography>
 								{
 									Math.floor(remaining / 60) > 0 ?
-										<p>Logging out in {Math.floor(remaining / 60)} minutes and {remaining % 60} seconds.</p>
+										<p style={{ color: theme.palette.primary[900] }} >Logging out in {Math.floor(remaining / 60)} minutes and {remaining % 60} seconds.</p>
 										:
-										<p>Logging out in {remaining % 60} seconds.</p>
+										<p style={{ color: theme.palette.primary[900] }} >Logging out in {remaining % 60} seconds.</p>
 
 								}
 								<motion.button
