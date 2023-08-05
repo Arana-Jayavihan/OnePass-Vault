@@ -5,11 +5,6 @@ import sh from 'shortid'
 import dotenv from 'dotenv'
 dotenv.config()
 
-let hours2 = new Date()
-hours2.setTime(hours2.getTime() + (2 * 60 * 60 * 1000))
-let hours4 = new Date()
-hours4.setTime(hours4.getTime() + (4 * 60 * 60 * 1000))
-
 export let tokenlist = {}
 
 // User SignUp Functions
@@ -149,6 +144,10 @@ export const signInRequest = async (req, res) => {
 
 export const signIn = async (req, res) => {
     try {
+        let hours1 = new Date()
+        hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
+        let hours2 = new Date()
+        hours2.setTime(hours2.getTime() + (2 * 60 * 60 * 1000))
         const user = req.body
         const IP = req.headers['x-forwarded-for']
         console.log(req.headers['x-forwarded-for'], "IP")
@@ -193,14 +192,14 @@ export const signIn = async (req, res) => {
                     console.log(userResult)
                     res.cookie('refreshToken', refreshToken, {
                         path: '/',
-                        expires: hours4,
+                        expires: hours2,
                         sameSite: "none",
                         secure: true,
                         httpOnly: true
                     })
                     res.cookie('encToken', encToken, {
                         path: '/',
-                        expires: hours2,
+                        expires: hours1,
                         sameSite: "none",
                         secure: true,
                         httpOnly: true
@@ -243,6 +242,10 @@ export const signIn = async (req, res) => {
 
 export const tokenRefresh = async (req, res) => {
     try {
+        let hours1 = new Date()
+        hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
+        let hours2 = new Date()
+        hours2.setTime(hours2.getTime() + (2 * 60 * 60 * 1000))
         let refreshToken = req.cookies.refreshToken
         let encToken = req.cookies.encToken
         let token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
@@ -267,14 +270,14 @@ export const tokenRefresh = async (req, res) => {
                             }).toString()
                             res.cookie('refreshToken', refreshToken, {
                                 path: '/',
-                                expires: hours4,
+                                expires: hours2,
                                 sameSite: "none",
                                 secure: true,
                                 httpOnly: true
                             })
                             res.cookie('encToken', encToken, {
                                 path: '/',
-                                expires: hours2,
+                                expires: hours1,
                                 sameSite: "none",
                                 secure: true,
                                 httpOnly: true

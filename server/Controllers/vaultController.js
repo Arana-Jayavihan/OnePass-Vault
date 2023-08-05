@@ -10,12 +10,6 @@ import { vaultInvite } from "../emails/vaultInvite.js"
 import dotenv from 'dotenv'
 dotenv.config()
 
-let thirtyMins = new Date()
-thirtyMins.setTime(thirtyMins.getTime() + (30 * 60 * 1000))
-
-let hours6 = new Date()
-hours6.setTime(hours6.getTime() + (6 * 60 * 60 * 1000))
-
 let vaultUnlockTokens = {}
 let addVaultUserTokens = {}
 sh.characters('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ$@');
@@ -28,7 +22,7 @@ export const addVault = async (req, res) => {
             let customFields = vault.customFields
             if (customFields.length > 0) {
                 for (let field of customFields) {
-                    field['id']= shortID.generate()
+                    field['id'] = shortID.generate()
                 }
             }
             const result = await createVault(vault.email, vaultName, vault.vDesc, vault.encVaultKey, vault.vaultKeyHash, user.hashPass, vault.customFields)
@@ -122,6 +116,8 @@ export const getUserAssignedVaults = async (req, res) => {
 
 export const vaultUnlockRequest = async (req, res) => {
     try {
+        let fiveMins = new Date()
+        fiveMins.setTime(fiveMins.getTime() + (5 * 60 * 1000))
         const vaultIndex = req.body.vaultIndex
         const email = req.user.email
         if (email === req.body.email) {
@@ -145,7 +141,7 @@ export const vaultUnlockRequest = async (req, res) => {
             console.log(vaultUnlockTokens, "new vault unlock request")
             res.cookie('encVaultUnlockToken', encVaultUnlockToken, {
                 path: `/`,
-                expires: thirtyMins,
+                expires: fiveMins,
                 sameSite: "none",
                 secure: true,
                 httpOnly: true
@@ -171,7 +167,6 @@ export const vaultUnlockRequest = async (req, res) => {
 
 export const getEncVaultKey = async (req, res) => {
     try {
-
         const vaultIndex = req.body.vaultIndex
         const email = req.body.email
         const user = req.user
@@ -457,6 +452,8 @@ export const addVaultUserRequest = async (req, res) => {
 
 export const getInviteData = async (req, res) => {
     try {
+        let fiveMins = new Date()
+        fiveMins.setTime(fiveMins.getTime() + (5 * 60 * 1000))
         const token = req.body.token
         const fromB64 = Buffer.from(token, 'base64').toString('ascii')
         const decToken = CryptoJS.AES.decrypt(fromB64, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
@@ -539,7 +536,7 @@ export const acceptVaultInvite = async (req, res) => {
                             message: "User Already Assigned To Vault"
                         })
                     }
-                    else if (result === "User Not Found"){
+                    else if (result === "User Not Found") {
                         res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(400).json({
                             message: "User Not Found"
