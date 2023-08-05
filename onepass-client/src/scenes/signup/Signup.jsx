@@ -75,13 +75,19 @@ const Signup = () => {
 
                 const masterEncryptionKey = await generateMasterEncryptionKey(password)
                 const encryptedMasterEncKey = await encryptRSA(masterEncryptionKey, keyPair.publicKey)
+
                 setMasterEncKey(masterEncryptionKey)
+
+                const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
+                const hashPasswordAlt = CryptoJS.SHA256(password).toString(CryptoJS.enc.Base64)
 
                 const form = {
                     'email': email,
                     'encPrivateKey': encPrivate,
                     'encPublicKey': pubExpB64,
-                    'masterEncKey': encryptedMasterEncKey
+                    'masterEncKey': encryptedMasterEncKey,
+                    'hashPass': hashPassword,
+                    'hashPassAlt': hashPasswordAlt
                 }
                 console.log(form)
                 dispatch(genKeys(form)).then(result => {
@@ -104,19 +110,21 @@ const Signup = () => {
                 const encLastName = await encryptAES(lastName, masterEncKey)
                 const encContact = await encryptAES(contact, masterEncKey)
                 const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
+                const hashPasswordAlt = CryptoJS.SHA256(password).toString(CryptoJS.enc.Base64)
 
                 const form = {
                     'email': email,
                     'firstName': encFirstName,
                     'lastName': encLastName,
                     'contact': encContact,
-                    'passwordHash': hashPassword
+                    'passwordHash': hashPassword,
                 }
                 dispatch(addData(form)).then(result => {
                     if (result) {
                         const form = {
                             'hashEmail': email,
-                            'hashPass': hashPassword
+                            'hashPass': hashPassword,
+                            'hashPassAlt': hashPasswordAlt
                         }
                         dispatch(login(form, password))
                     }
@@ -222,11 +230,13 @@ const Signup = () => {
                                 placeholder="First Name"
                                 value={firstName}
                                 onChange={(e) => setFirstName(e.target.value)}
+                                style={{ marginRight: '.5rem' }}
                             />
                             <input
                                 placeholder="Last Name"
                                 value={lastName}
                                 onChange={(e) => setLastName(e.target.value)}
+                                style={{ marginLeft: '.5rem' }}
                             />
                         </div>
                         <input

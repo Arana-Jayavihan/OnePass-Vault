@@ -1,4 +1,4 @@
-import { CssBaseline, ThemeProvider, Typography } from "@mui/material";
+import { Backdrop, CssBaseline, ThemeProvider, Typography } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { useSelector } from "react-redux";
 import { Route, Routes, useLocation } from "react-router-dom";
@@ -55,9 +55,11 @@ function App() {
 	}
 
 	const onPrompt = () => {
-		setOpen(true)
+		if (authenticated){
+			setOpen(true)
+		}
 	}
-
+	
 	const {
 		getRemainingTime,
 		activate
@@ -92,13 +94,14 @@ function App() {
 							initial={{ opacity: 0 }}
 							className='modal123'
 							style={{
-								display: open ? 'flex' : 'none'
+								display: open ? 'flex' : 'none',
+								backdropFilter: `blur(${120 - remaining}px)`
 							}}>
 							<motion.div
 								whileInView={{ opacity: [0, 1] }}
 								transition={{ duration: .75, ease: 'easeInOut' }}
 								initial={{ opacity: 0 }}
-								style={{ width: 'fit-content', height: 'fit-content', background: theme.palette.primary[900], borderRadius: '15px', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+								style={{ width: 'fit-content', height: 'fit-content', background: theme.palette.primary[900], borderRadius: '15px', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
 							>
 								<Typography
 									variant="h4" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', width: 'fit-content', backgroundImage: 'linear-gradient(to right, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }}

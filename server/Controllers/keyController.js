@@ -152,6 +152,43 @@ export const getUserHashPassword = async (req, res) => {
     }
 }
 
+// export const getUserAltHashPassword = async (req, res) => {
+//     try {
+//         const email = req.body.email
+//         const user = req.user
+//         if (email === user.email) {
+//             const result = await getUserHashPassAlt(email)
+//             if (result === "User Not Found") {
+//                 res.status(400).json({
+//                     message: "User Not Found"
+//                 })
+//             }
+//             else if (result === false) {
+//                 res.status(500).json({
+//                     message: "No User Found!"
+//                 })
+//             }
+//             else if (result) {
+//                 res.status(200).json({
+//                     message: "User AHash Fetched",
+//                     payload: result
+//                 })
+//             }
+//         }
+//         else {
+//             res.status(401).json({
+//                 message: "Unauthorized"
+//             })
+//         }
+//     } catch (error) {
+//         console.log(error)
+//         res.status(500).json({
+//             message: "Something Went Wrong!",
+//             error: error
+//         })
+//     }
+// }
+
 // export const getUserHashPassword = async (req, res) => {
 //     try {
 //         const email = req.body.email

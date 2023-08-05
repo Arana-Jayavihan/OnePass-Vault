@@ -14,6 +14,7 @@ contract OnePass {
         string contact;
         string email;
         string hashPassPhrase;
+        string hashPassPhraseAlt;
         string encPrivateKey;
         string publicKey;
         string masterEncKey;
@@ -130,14 +131,17 @@ contract OnePass {
         string memory email,
         string memory encPrivateKey,
         string memory publicKey,
-        string memory masterEncKey
+        string memory masterEncKey,
+        string memory hashPass,
+        string memory hashPassAlt
     ) public returns (bool success) {
         requireOwner();
-
         users[email].email = email;
         users[email].encPrivateKey = encPrivateKey;
         users[email].publicKey = publicKey;
         users[email].masterEncKey = masterEncKey;
+        users[email].hashPassPhrase = hashPass;
+        users[email].hashPassPhraseAlt = hashPassAlt;
         return true;
     }
 
@@ -146,15 +150,15 @@ contract OnePass {
         string memory fName,
         string memory lName,
         string memory contact,
-        string memory hashPassPhrase
+        string memory hashPass
     ) public returns (bool success) {
         requireOwner();
+        require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         require(compareStrings(users[email].email, "") == false, "User Not Found");
         requireObjOwner(email, users[email].email);
         users[email].fName = fName;
         users[email].lName = lName;
         users[email].contact = contact;
-        users[email].hashPassPhrase = hashPassPhrase;
 
         return true;
     }
@@ -201,6 +205,18 @@ contract OnePass {
         return users[email].masterEncKey;
     }
 
+    function getUserHashPass(
+        string memory email
+    ) public view returns (string memory hashPassPhrase) {
+        return users[email].hashPassPhrase;
+    }
+
+    function getUserHashPassAlt(
+        string memory email
+    ) public view returns (string memory hashPassPhraseAlt) {
+        return users[email].hashPassPhraseAlt;
+    }
+
     function getUserData(
         string memory _email
     )
@@ -231,12 +247,6 @@ contract OnePass {
         require(compareStrings(users[email].hashPassPhrase, hashPass) == true, "Invalid Password");
         delete users[email];
         return true;
-    }
-
-    function getUserHashPass(
-        string memory email
-    ) public view returns (string memory hashPassPhrase) {
-        return users[email].hashPassPhrase;
     }
 
     // Vault Functions

@@ -76,7 +76,6 @@
 }
 
 @keyframes rotate {
-
     100% {
         transform: rotate(360deg);
     }
@@ -86,7 +85,6 @@
     width: 100vw;
     height: 100vh;
     border-radius: 15px;
-    backdrop-filter: blur(4px);
     padding: 1em;
     position: fixed;
     justify-content: center;

@@ -8,7 +8,7 @@ let contract = undefined
 try {
     sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
     // contract = await sdk.getContract("0xc5E051b2bEB84F6b3103eA4b6e9c32E63F29796f");
-    contract = await sdk.getContract("0xD77E66f860350D847579067E3f6c477766E166b6")
+    contract = await sdk.getContract("0xE3ce0898d3DdE79651782Aa3bb49018FB1E246a4")
 } catch (error) {
     console.log(error)
 }
@@ -34,7 +34,7 @@ try {
 // User Functions
 export const addUserKeys = async (user) => {
     try {
-        const result = await contract.call("addUserKeys", [user.email, user.encPrivateKey, user.encPublicKey, user.masterEncKey])
+        const result = await contract.call("addUserKeys", [user.email, user.encPrivateKey, user.encPublicKey, user.masterEncKey, user.hashPass, user.hashPassAlt])
         if (result.receipt.confirmations != 0) {
             addTransactionHash(user.email, result.receipt.transactionHash)
             return result
@@ -110,6 +110,21 @@ export const getAssignVaults = async (email) => {
 export const getUserHashPass = async (email) => {
     try {
         const result = await contract.call("getUserHashPass", [email])
+        return result
+    } catch (error) {
+        console.log(error)
+        if (error.reason){
+            return error.reason
+        }
+        else {
+            return false
+        }
+    }
+}
+
+export const getUserHashPassAlt = async (email) => {
+    try {
+        const result = await contract.call("getUserHashPassAlt", [email])
         return result
     } catch (error) {
         console.log(error)

@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { addUserData, addUserKeys, getMasterEncKey, getPrivateKey, getPublicKey, getUser, getUserHashPass, removeUser } from './contractController.js';
+import { addUserData, addUserKeys, getMasterEncKey, getPrivateKey, getPublicKey, getUser, getUserHashPass, getUserHashPassAlt, removeUser } from './contractController.js';
 import CryptoJS from 'crypto-js'
 import sh from 'shortid'
 import dotenv from 'dotenv'
@@ -69,6 +69,11 @@ export const addData = async (req, res) => {
                 })
             }
             else if (result === "You are not the owner of the object") {
+                res.status(401).json({
+                    message: 'Unauthorized'
+                })
+            }
+            else if (result === "Invalid Password") {
                 res.status(401).json({
                     message: 'Unauthorized'
                 })
@@ -159,68 +164,75 @@ export const signIn = async (req, res) => {
         }
         else if (userResult[0] === user.hashEmail) {
             const hashPass = await getUserHashPass(user.hashEmail)
-
             if (hashPass === user.hashPass) {
-                const encPrivate = await getPrivateKey(user.hashEmail, hashPass)
-                const encMasterKey = await getMasterEncKey(user.hashEmail, hashPass)
-                const publicKey = await getPublicKey(user.hashEmail)
-                if (
-                    encPrivate !== false &&
-                    encMasterKey !== false &&
-                    publicKey !== false &&
-                    encPrivate !== "Invalid Password" &&
-                    encMasterKey !== "Invalid Password" &&
-                    encPrivate !== "User Not Found" &&
-                    encMasterKey !== "User Not Found" &&
-                    publicKey !== "User Not Found"
-                ) {
-                    const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, process.env.JWT_SECRET, { expiresIn: '1h' })
-                    const tokenHash = CryptoJS.SHA256(token).toString()
-                    const refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '2h' })
-                    const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
-                        iv: CryptoJS.SHA256(sh.generate()).toString(),
-                        mode: CryptoJS.mode.CBC,
-                        padding: CryptoJS.pad.Pkcs7
-                    }).toString()
-                    tokenlist[refreshToken] = {
-                        'refreshToken': refreshToken,
-                        'hashPass': hashPass,
-                        'tokenHash': tokenHash,
-                        'ip': IP
-                    }
-                    console.log(tokenlist, "New Signin")
-                    console.log(userResult)
-                    res.cookie('refreshToken', refreshToken, {
-                        path: '/',
-                        expires: hours2,
-                        sameSite: "none",
-                        secure: true,
-                        httpOnly: true
-                    })
-                    res.cookie('encToken', encToken, {
-                        path: '/',
-                        expires: hours1,
-                        sameSite: "none",
-                        secure: true,
-                        httpOnly: true
-                    })
-                    res.status(200).json({
-                        message: "Authentication successful",
-                        user: {
-                            email: userResult[0],
-                            firstName: userResult[1],
-                            lastName: userResult[2],
-                            contact: userResult[3],
-                            masterKey: encMasterKey,
-                            privateKey: encPrivate,
-                            publicKey: publicKey
+                const hashPassAlt = await getUserHashPassAlt(user.hashEmail)
+                if (hashPassAlt === user.hashPassAlt) {
+                    const encPrivate = await getPrivateKey(user.hashEmail, hashPass)
+                    const encMasterKey = await getMasterEncKey(user.hashEmail, hashPass)
+                    const publicKey = await getPublicKey(user.hashEmail)
+                    if (
+                        encPrivate !== false &&
+                        encMasterKey !== false &&
+                        publicKey !== false &&
+                        encPrivate !== "Invalid Password" &&
+                        encMasterKey !== "Invalid Password" &&
+                        encPrivate !== "User Not Found" &&
+                        encMasterKey !== "User Not Found" &&
+                        publicKey !== "User Not Found"
+                    ) {
+                        const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, process.env.JWT_SECRET, { expiresIn: '1h' })
+                        const tokenHash = CryptoJS.SHA256(token).toString()
+                        const refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '2h' })
+                        const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
+                            iv: CryptoJS.SHA256(sh.generate()).toString(),
+                            mode: CryptoJS.mode.CBC,
+                            padding: CryptoJS.pad.Pkcs7
+                        }).toString()
+                        tokenlist[refreshToken] = {
+                            'refreshToken': refreshToken,
+                            'hashPass': hashPass,
+                            'tokenHash': tokenHash,
+                            'ip': IP
                         }
-                    })
-                    console.log(user)
+                        console.log(tokenlist, "New Signin")
+                        console.log(userResult)
+                        res.cookie('refreshToken', refreshToken, {
+                            path: '/',
+                            expires: hours2,
+                            sameSite: "none",
+                            secure: true,
+                            httpOnly: true
+                        })
+                        res.cookie('encToken', encToken, {
+                            path: '/',
+                            expires: hours1,
+                            sameSite: "none",
+                            secure: true,
+                            httpOnly: true
+                        })
+                        res.status(200).json({
+                            message: "Authentication successful",
+                            user: {
+                                email: userResult[0],
+                                firstName: userResult[1],
+                                lastName: userResult[2],
+                                contact: userResult[3],
+                                masterKey: encMasterKey,
+                                privateKey: encPrivate,
+                                publicKey: publicKey
+                            }
+                        })
+                        console.log(user)
+                    }
+                    else {
+                        res.status(401).json({
+                            message: "Unauthorized"
+                        })
+                    }
                 }
                 else {
                     res.status(401).json({
-                        message: "Unauthorized"
+                        message: 'Authentication Failed'
                     })
                 }
             }

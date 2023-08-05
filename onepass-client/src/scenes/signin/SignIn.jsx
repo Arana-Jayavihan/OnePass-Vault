@@ -45,10 +45,12 @@ const SignIn = () => {
         else {
             try {
                 const passwordHash = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
+                const passwordHashAlt = CryptoJS.SHA256(password).toString(CryptoJS.enc.Base64)
                 if (passwordHash === hashPass) {
                     const form = {
                         'hashEmail': email,
                         'hashPass': passwordHash,
+                        'hashPassAlt': passwordHashAlt
                     }
                     dispatch(login(form, password)).then(result => {
                         if (result === false) {
