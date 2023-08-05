@@ -81,3 +81,17 @@
         transform: rotate(360deg);
     }
 }
+
+.modal123 {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 15px;
+    backdrop-filter: blur(4px);
+    padding: 1em;
+    position: fixed;
+    justify-content: center;
+    align-items: center;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+}

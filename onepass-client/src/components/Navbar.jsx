@@ -12,6 +12,7 @@ import { AppBar, IconButton, Toolbar, useTheme, Box, Button, Typography, Menu, M
 import { switchMode } from '../actions/generalActions';
 import { signout } from '../actions/authActions';
 import './style.css'
+import zIndex from '@mui/material/styles/zIndex';
 
 const Navbar = (props) => {
     const mode = useSelector(state => state.general.mode)
@@ -30,7 +31,8 @@ const Navbar = (props) => {
             position: 'fixed',
             background: 'none',
             boxShadow: 'none',
-            backgroundImage: "linear-gradient(to right, #cc00ee , #6d4aff)"
+            backgroundImage: "linear-gradient(to right, #cc00ee , #6d4aff)",
+            zIndex: '100'
         }}  >
             <Toolbar sx={{ justifyContent: 'space-between' }}>
                 <FlexBetween>

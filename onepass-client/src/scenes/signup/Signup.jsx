@@ -10,7 +10,7 @@ import '../signin/signin.css'
 import Card from "../../components/Card/Card";
 import { genKeys, addData, login } from "../../actions/authActions";
 import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
-import { encryptRSA, genRSAKeyPair, encryptAES, generateMasterEncryptionKey } from '../../encrypt';
+import { encryptRSA, genRSAKeyPair, encryptAES, generateMasterEncryptionKey } from '../../helpers/encrypt';
 
 const Signup = () => {
     const loading = useSelector(state => state.auth.loading)

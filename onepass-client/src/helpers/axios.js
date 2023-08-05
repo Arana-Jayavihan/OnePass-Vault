@@ -1,5 +1,5 @@
 import axios from "axios";
-import { api } from "../urlConfigs";
+import { api } from "../helpers/urlConfigs";
 import store from "../store/index";
 import { toast } from "react-hot-toast";
 import { signout } from "../actions/authActions";

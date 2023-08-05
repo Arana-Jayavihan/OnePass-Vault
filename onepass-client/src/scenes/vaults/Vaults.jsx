@@ -298,23 +298,31 @@ const Vaults = () => {
     }
 
     const addVault = () => {
-        const form = {
-            email: email,
-            vName: vaultName,
-            vDesc: vaultDescription,
-            publicKey: publicKey,
-            pass: password,
-            customFields: customFields
+        if (
+            (vaultName === undefined || vaultName === "") &&
+            (vaultDescription === undefined || vaultDescription === "")
+        ) {
+            toast.error("Please fill out all fields", { id: 'addVaultError' })
         }
-        dispatch(addUserVault(form))
-        setShowAddModal(false)
-        setVaultDescription(undefined)
-        setVaultName(undefined)
-        setPassword(undefined)
-        setPassType('password')
-        setRenderCustomFields([])
-        setCustomFieldSize(0)
-        setCustomFields([])
+        else {
+            const form = {
+                email: email,
+                vName: vaultName,
+                vDesc: vaultDescription,
+                publicKey: publicKey,
+                pass: password,
+                customFields: customFields
+            }
+            dispatch(addUserVault(form))
+            setShowAddModal(false)
+            setVaultDescription(undefined)
+            setVaultName(undefined)
+            setPassword(undefined)
+            setPassType('password')
+            setRenderCustomFields([])
+            setCustomFieldSize(0)
+            setCustomFields([])
+        }
     }
 
     const renderAddNewVault = () => {

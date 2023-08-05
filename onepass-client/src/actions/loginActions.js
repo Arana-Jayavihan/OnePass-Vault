@@ -1,7 +1,7 @@
 import { toast } from "react-hot-toast"
 import axiosInstance from "../helpers/axios.js"
 import { vaultConsts } from "./constants.js"
-import { encryptAES } from "../encrypt.js"
+import { encryptAES } from "../helpers/encrypt.js"
 import { decryptVaultLogins } from "./vaultActions.js"
 
 export const addUserLogin = (form) => {

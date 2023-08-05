@@ -4,7 +4,7 @@ import CryptoJS from "crypto-js"
 
 import axiosInstance from "../helpers/axios"
 import { loginConsts, vaultConsts } from "./constants.js"
-import { decryptAES, decryptRSA, encryptAES, encryptRSA, generateMasterEncryptionKey, importRSAPrivKey, importRSAPubKey } from "../encrypt"
+import { decryptAES, decryptRSA, encryptAES, encryptRSA, generateMasterEncryptionKey, importRSAPrivKey, importRSAPubKey } from "../helpers/encrypt"
 
 export const getUserAssignedVaults = (form) => {
     return async dispatch => {

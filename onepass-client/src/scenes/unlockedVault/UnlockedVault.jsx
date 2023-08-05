@@ -285,21 +285,31 @@ const UnlockedVault = () => {
     }
 
     const addLogin = () => {
-        const form = {
-            vaultIndex: vault?.vaultIndex,
-            email: email,
-            loginName: loginName,
-            loginUrl: loginUrl,
-            loginUsername: loginUsername,
-            loginPassword: loginPassword,
-            vaultKey: vaultKey,
-            customFields
+        if (
+            (loginName !== undefined || loginName !== "") &&
+            (loginUrl !== undefined || loginUrl !== "") &&
+            (loginUsername !== undefined || loginUsername !== "") &&
+            (loginPassword !== undefined || loginPassword !== "")
+        ) {
+            const form = {
+                vaultIndex: vault?.vaultIndex,
+                email: email,
+                loginName: loginName,
+                loginUrl: loginUrl,
+                loginUsername: loginUsername,
+                loginPassword: loginPassword,
+                vaultKey: vaultKey,
+                customFields
+            }
+    
+            dispatch(addUserLogin(form)).then((result) => {
+                console.log(result)
+            })
+            closeAddLogin()
         }
-
-        dispatch(addUserLogin(form)).then((result) => {
-            console.log(result)
-        })
-        closeAddLogin()
+        else {
+            toast.error("Please fill all the fields...", {id: "nae"})
+        }
     }
 
     const renderAddLoginModal = () => {
@@ -400,17 +410,19 @@ const UnlockedVault = () => {
     // Add Vault User 
 
     const addUser = () => {
-        console.log(addUserEmail)
-
-        let form = {
-            'email': email,
-            'addUserEmail': addUserEmail,
-            'vaultIndex': vault.vaultIndex,
-            'vaultKey': vaultUnlockKey
+        if (addUserEmail !== undefined || addUserEmail !== "") {
+            let form = {
+                'email': email,
+                'addUserEmail': addUserEmail,
+                'vaultIndex': vault.vaultIndex,
+                'vaultKey': vaultUnlockKey
+            }
+            dispatch(addVaultUser(form))
+            form = {}
         }
-        dispatch(addVaultUser(form))
-        form = {}
-
+        else {
+            toast.error("Please enter an email...", {id: "nae"})
+        }
     }
 
     // render login details

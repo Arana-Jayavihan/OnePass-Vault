@@ -1,7 +1,7 @@
 import { toast } from "react-hot-toast"
 import axiosInstance from "../helpers/axios.js"
 import { authConsts } from "./constants.js"
-import { decryptAES, decryptRSA, importRSAPrivKey } from "../encrypt.js"
+import { decryptAES, decryptRSA, importRSAPrivKey } from "../helpers/encrypt.js"
 import CryptoJS from "crypto-js"
 
 export const genKeys = (form) => {
