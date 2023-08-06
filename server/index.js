@@ -116,8 +116,6 @@ app.use((req, res, next) => {
         const params = req.params
         const query = req.query
 
-        console.log(req.cookies)
-        console.log(req.method)
         if (req.method !== "POST") {
             res.status(401).json({
                 message: "Method Not Allowed"
@@ -140,7 +138,6 @@ app.use((req, res, next) => {
                 sanitizedHeaders[`${key}`] = value
             }
             req.headers = sanitizedHeaders
-            console.log(req.headers)
         }
         next()
 

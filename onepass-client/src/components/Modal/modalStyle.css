@@ -8,4 +8,5 @@
 
 .modal-backdrop.show {
     opacity: 0;
+    z-index: -10;
 }
