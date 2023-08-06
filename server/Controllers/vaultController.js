@@ -414,10 +414,10 @@ export const addVaultUserRequest = async (req, res) => {
                                 iv: CryptoJS.SHA256(sh.generate()).toString(),
                                 mode: CryptoJS.mode.CBC,
                                 padding: CryptoJS.pad.Pkcs7
-                            }).toString('base64')
-                            //const b64EncToken = Buffer.from(encToken).toString('base64')
-                            const URL = `https://onepass-vault-v3.netlify.app/vault-invite/${encToken}`
-                            const URL1 = `https://localhost:3000/vault-invite/${encToken}`
+                            }).toString()
+                            const b64EncToken = Buffer.from(encToken).toString('base64')
+                            const URL = `https://onepass-vault-v3.netlify.app/vault-invite/${b64EncToken}`
+                            const URL1 = `https://localhost:3000/vault-invite/${b64EncToken}`
                             token['addVaultUserToken'] = addVaultUserToken
                             addVaultUserTokens[token.id] = token
                             console.log(addVaultUserTokens, "new vault user add request")
