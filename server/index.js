@@ -4,8 +4,6 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import helmet from "helmet"
 import morgan from "morgan"
-import { fileURLToPath } from "url"
-import path from "path"
 import { rateLimit } from "express-rate-limit"
 import { middleware } from "sanitize"
 import vd from 'validator'
@@ -18,11 +16,11 @@ import vaultRoutes from "./Routes/vaultRoutes.js"
 import keyRoutes from "./Routes/keyRoutes.js"
 import loginRoutes from "./Routes/loginRoutes.js"
 
-const filePath = fileURLToPath(import.meta.url);
-const dirName = path.dirname(filePath);
-
 dotenv.config()
 const app = express()
+
+//Blocked IP List 
+let blockedIPs = []
 
 // CORS
 const corsOptions = {
@@ -38,7 +36,6 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(express.json())
 app.use(express.json({ limit: "5mb" }));
-app.use(express.static(path.join(dirName, "Public")));
 
 // HELMET
 app.use(helmet())
@@ -67,7 +64,24 @@ app.use(helmet.ieNoOpen())
 // RATE LIMITER
 const limiter = rateLimit({
     windowMs: 5 * 60 * 1000,
-    max: 100
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: function (req, res) {
+        blockedIPs.push(req.ip)
+        console.log(blockedIPs, 'new blocked IP')
+        res.status(429).json({
+            message: "Too Many Requests"
+        })
+    },
+    skip: function (req, res) {
+        if (blockedIPs.includes(req.ip)) {
+            return false
+        }
+        else {
+            return true
+        }
+    }
 })
 app.use(limiter)
 
@@ -98,45 +112,38 @@ app.use((req, res, next) => {
 app.use(middleware)
 app.use((req, res, next) => {
     try {
-        // const body = req.body
         const headers = req.headers
         const params = req.params
         const query = req.query
 
-        // if (Object.keys(body).length > 0 && body.constructor === Object) {
-        //     let sanitizedBody = {}
-        //     for (let key in body) {
-        //         const value = vd.escape(req.bodyString(`${key}`))
-        //         sanitizedBody[`${key}`] = value
-        //     }
-        //     sanitizedBody['sanitized'] = true
-        //     req.body = sanitizedBody
-        // }
-        // if (Object.keys(headers).length > 0 && headers.constructor === Object) {
-        //     let sanitizedHeaders = {}
-        //     for (let key in headers) {
-        //         const value = req.headerString(`${key}`)
-        //         sanitizedHeaders[`${key}`] = value
-        //     }
-        //     req.headers = sanitizedHeaders
-        // }
+        console.log(req.cookies)
+        console.log(req.method)
+        if (req.method !== "POST") {
+            res.status(401).json({
+                message: "Method Not Allowed"
+            })
+        }
         if (Object.keys(params).length > 0 && params.constructor === Object) {
-            let sanitizedParams = {}
-            for (let key in params) {
-                const value = vd.escape(req.paramString(`${key}`))
-                sanitizedParams[`${key}`] = value
-            }
-            req.params = sanitizedParams
+            res.status(401).json({
+                message: "Parameters Not Allowed"
+            })
         }
         if (Object.keys(query).length > 0 && query.constructor === Object) {
-            let sanitizedQueries = {}
-            for (let key in query) {
-                const value = vd.escape(req.queryString(`${key}`))
-                sanitizedQueries[`${key}`] = value
+            res.status(401).json({
+                message: "Queries Not Allowed"
+            })
+        }
+        if (Object.keys(headers).length > 0 && headers.constructor === Object) {
+            let sanitizedHeaders = {}
+            for (let key in headers) {
+                const value = vd.escape(req.headerString(`${key}`))
+                sanitizedHeaders[`${key}`] = value
             }
-            req.query = sanitizedQueries
+            req.headers = sanitizedHeaders
+            console.log(req.headers)
         }
         next()
+
     }
     catch (error) {
         console.log(error)

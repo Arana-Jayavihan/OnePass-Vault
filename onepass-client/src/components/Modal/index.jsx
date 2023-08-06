@@ -1,6 +1,6 @@
 import { Typography } from '@mui/material'
 import React from 'react'
-import { Modal, Button } from 'react-bootstrap'
+import { Modal } from 'react-bootstrap'
 import { useTheme } from '@mui/material'
 import './modalStyle.css'
 import { motion } from "framer-motion"
@@ -8,8 +8,10 @@ import { motion } from "framer-motion"
 export const NewModel = (props) => {
     const theme = useTheme()
     return (
-        <Modal className='modal-dialog-centered' size={props.size} show={props.show} onHide={props.close} modalC aria-labelledby="contained-modal-title-vcenter" centered>
-            <Modal.Header closeButton>
+        <Modal className='modal-dialog-centered' size={props.size} show={props.show} onHide={props.close} modalC aria-labelledby="contained-modal-title-vcenter" centered
+            style={{ backdropFilter: 'blur(1px)', zIndex: '900', backgroundColor: 'rgba(0,0,0,0.5)' }}
+        >
+            <Modal.Header >
                 <Modal.Title>
                     <Typography sx={{ color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', fontSize: '1.5rem', fontWeight: 'bold' }}>
                         {props.ModalTitle}

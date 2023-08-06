@@ -5,3 +5,7 @@
 ::-webkit-scrollbar{
     display: none;
 }
+
+.modal-backdrop.show {
+    opacity: 0;
+}

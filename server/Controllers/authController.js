@@ -3,9 +3,20 @@ import { addUserData, addUserKeys, getMasterEncKey, getPrivateKey, getPublicKey,
 import CryptoJS from 'crypto-js'
 import sh from 'shortid'
 import dotenv from 'dotenv'
+import fs from 'fs'
+
 dotenv.config()
 
 export let tokenlist = {}
+let privateKey = undefined
+let publicKey = undefined
+
+try {
+    privateKey = fs.readFileSync('ecdsaPrivKey.pem', 'utf-8')
+    publicKey = fs.readFileSync('ecdsaPubKey.pem', 'utf-8')
+} catch (error) {
+    console.log(error)
+}
 
 // User SignUp Functions
 export const userKeyGeneration = async (req, res) => {
@@ -180,9 +191,9 @@ export const signIn = async (req, res) => {
                         encMasterKey !== "User Not Found" &&
                         publicKey !== "User Not Found"
                     ) {
-                        const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, process.env.JWT_SECRET, { expiresIn: '1h' })
+                        const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
                         const tokenHash = CryptoJS.SHA256(token).toString()
-                        const refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '2h' })
+                        const refreshToken = jwt.sign({ tokenHash: tokenHash }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
                         const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
                             iv: CryptoJS.SHA256(sh.generate()).toString(),
                             mode: CryptoJS.mode.CBC,
@@ -262,21 +273,21 @@ export const tokenRefresh = async (req, res) => {
         let encToken = req.cookies.encToken
         let token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
         if (token) {
-            const decodedToken = jwt.verify(token, process.env.JWT_SECRET)
+            const decodedToken = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
             let tokenHash = CryptoJS.SHA256(token).toString()
             let email = req.body.email
             let ip = req.headers['x-forwarded-for']
             if (Object.keys(tokenlist).length > 0 && tokenlist.constructor === Object) {
                 if (tokenlist[refreshToken].ip === ip) {
-                    const decodedRefresh = jwt.verify(refreshToken, process.env.JWT_REFRESHSECRET)
+                    const decodedRefresh = jwt.verify(refreshToken, publicKey, { algorithms: ['ES512'] })
                     if (tokenHash === tokenlist[refreshToken].tokenHash && decodedRefresh.tokenHash === tokenlist[refreshToken].tokenHash) {
-                        const chekTime = jwt.decode(token)
-                        if (((chekTime.exp * 1000) - Date.now()) < (10 * 60 * 1000)) {
+                        
+                        if (((decodedToken.exp * 1000) - Date.now()) < (10 * 60 * 1000)) {
                             try {
                                 delete tokenlist[refreshToken]
-                                token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, process.env.JWT_SECRET, { expiresIn: '2h' })
+                                token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
                                 tokenHash = CryptoJS.SHA256(token).toString()
-                                refreshToken = jwt.sign({ tokenHash: tokenHash }, process.env.JWT_REFRESHSECRET, { expiresIn: '4h' })
+                                refreshToken = jwt.sign({ tokenHash: tokenHash }, privateKey, { algorithm: 'ES512', expiresIn: '4h' })
                                 encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
                                     iv: CryptoJS.SHA256(sh.generate()).toString(),
                                     mode: CryptoJS.mode.CBC,
@@ -399,4 +410,3 @@ function clearTokenList() {
 }
 
 setInterval(clearTokenList, 300000)
-//86400000
