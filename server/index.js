@@ -28,7 +28,6 @@ let corsOptions = {}
 if (process.env.ENV === "PROD") {
     corsOptions = {
         origin: ["https://onepass-vault-v3.netlify.app"],
-        origin: ["https://onepass-vault-v3.netlify.app", "https://localhost:3000"],
         credentials: true,
     }
 }
