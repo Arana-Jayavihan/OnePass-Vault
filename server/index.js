@@ -6,7 +6,6 @@ import helmet from "helmet"
 import morgan from "morgan"
 import { rateLimit } from "express-rate-limit"
 import { middleware } from "sanitize"
-import vd from 'validator'
 import rfs from 'rotating-file-stream'
 import path from 'path'
 import { fileURLToPath } from "url"
@@ -17,6 +16,7 @@ import authRoutes from "./Routes/authRoutes.js"
 import vaultRoutes from "./Routes/vaultRoutes.js"
 import keyRoutes from "./Routes/keyRoutes.js"
 import loginRoutes from "./Routes/loginRoutes.js"
+import { checkRequest } from "./middlware/index.js"
 
 dotenv.config()
 const app = express()
@@ -131,56 +131,7 @@ app.use((req, res, next) => {
 
 // SANITIZE REQUEST
 app.use(middleware)
-app.use((req, res, next) => {
-    try {
-        const headers = req.headers
-        const params = req.params
-        const query = req.query
-        console.log(headers['x-forwarded-for'])
-        const ips = headers['x-forwarded-for'].split(",")
-        if (ips.length <= 1){
-            if (req.headers.origin === "https://onepass-vault-v3.netlify.app" && process.env.ENV === "PROD") {
-            if (req.method === "POST" || req.method === "GET") {
-                if (
-                    (Object.keys(params).length === 0 && params.constructor === Object) ||
-                    (Object.keys(query).length === 0 && query.constructor === Object)
-                ) {
-                    let sanitizedHeaders = {}
-                    for (let key in headers) {
-                        const value = vd.escape(req.headerString(`${key}`))
-                        sanitizedHeaders[`${key}`] = value
-                    }
-                    req.headers = sanitizedHeaders
-                    next()
-                }
-                else {
-                    res.status(401).json({
-                        message: "Parameters Not Allowed"
-                    })
-                }
-            }
-            else {
-                res.status(401).json({
-                    message: "Method Not Allowed"
-                })
-            }
-        }
-        else {
-            res.status(401).json({
-                message: "Origin Not Allowed"
-            })
-        }
-        }
-        else {
-            res.status(401).json({
-                message: "Proxy Detected"
-            })
-        }
-    }
-    catch (error) {
-        console.log(error)
-    }
-})
+app.use(checkRequest)
 
 // ROUTES
 app.use("/api", authRoutes)

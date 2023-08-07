@@ -3,70 +3,64 @@ import CryptoJS from 'crypto-js'
 import { tokenlist as authTokens } from '../Controllers/authController.js'
 import fs from 'fs'
 import dotenv from 'dotenv'
+import vd from 'validator'
 dotenv.config()
 
-let privateKey = undefined
 let publicKey = undefined
 
 try {
-    privateKey = fs.readFileSync('ecdsaPrivKey.pem', 'utf-8')
     publicKey = fs.readFileSync('ecdsaPubKey.pem', 'utf-8')
 } catch (error) {
     console.log(error)
 }
 
-// Check user is logged in
-export const isLoggedIn = (req, res) => {
+export const checkRequest = (req, res, next) =>{
     try {
-        if (req.cookies.encToken) {
-            const tokens = Object.values(authTokens)
-            const encToken = req.cookies.encToken
-            const token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
-            const tokenHash = CryptoJS.SHA256(token).toString()
-            const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
-            if (authToken) {
-                const user = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
-                if (user) {
-                    if (user.ip !== req.headers['x-forwarded-for'] && user.ip !== authToken.ip) {
-                        return res.status(400).json({
-                            message: "Invalid Session"
-                        })
+        const headers = req.headers
+        const params = req.params
+        const query = req.query
+        const ips = headers['x-forwarded-for'].split(",")
+        if (ips.length <= 1){
+            if (req.headers.origin === "https://onepass-vault-v3.netlify.app" && process.env.ENV === "PROD") {
+            if (req.method === "POST" || req.method === "GET") {
+                if (
+                    (Object.keys(params).length === 0 && params.constructor === Object) ||
+                    (Object.keys(query).length === 0 && query.constructor === Object)
+                ) {
+                    let sanitizedHeaders = {}
+                    for (let key in headers) {
+                        const value = vd.escape(req.headerString(`${key}`))
+                        sanitizedHeaders[`${key}`] = value
                     }
-                    else if (user.email !== req.body.email) {
-                        return res.status(400).json({
-                            message: "Invalid Session"
-                        })
-                    }
-                    else {
-                        res.status(200).json({
-                            message: "Logged In"
-                        })
-                    }
+                    req.headers = sanitizedHeaders
+                    next()
                 }
                 else {
-                    return res.status(400).json({
-                        message: "Invalid Token"
+                    res.status(401).json({
+                        message: "Parameters Not Allowed"
                     })
                 }
             }
             else {
-                res.status(400).json({
-                    message: "Session Expired"
+                res.status(401).json({
+                    message: "Method Not Allowed"
                 })
             }
         }
         else {
-            res.status(400).json({
-                message: "Not Logged In"
+            res.status(401).json({
+                message: "Origin Not Allowed"
+            })
+        }
+        }
+        else {
+            res.status(401).json({
+                message: "Proxy Detected"
             })
         }
     }
     catch (error) {
         console.log(error)
-        res.status(500).json({
-            message: "Something Went Wrong",
-            payload: error
-        })
     }
 }
 
@@ -81,21 +75,28 @@ export const requireSignin = (req, res, next) => {
                 const tokenHash = CryptoJS.SHA256(token).toString()
                 const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
                 if (authToken) {
-                    const user = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
-                    if (user) {
-                        if (req.headers['x-forwarded-for'] !== authToken.ip) {
-                            return res.status(400).json({
-                                message: "Invalid Session IP"
-                            })
+                    try {
+                        const user = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
+                        if (user) {
+                            if (req.headers['x-forwarded-for'] !== authToken.ip) {
+                                return res.status(400).json({
+                                    message: "Invalid Session IP"
+                                })
+                            }
+                            else {
+                                req.user = user
+                                next()
+                            }
                         }
                         else {
-                            req.user = user
-                            next()
+                            return res.status(400).json({
+                                message: "Invalid Token"
+                            })
                         }
-                    }
-                    else {
-                        return res.status(400).json({
-                            message: "Invalid Token"
+                    } catch (error) {
+                        console.log(error)
+                        return res.status(401).json({
+                            message: "Session Expired"
                         })
                     }
                 }

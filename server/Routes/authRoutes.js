@@ -1,6 +1,5 @@
 import express from 'express'
-import { addData, signIn, signInRequest, signOut, tokenRefresh, userKeyGeneration } from '../Controllers/authController.js'
-import { isLoggedIn } from '../middlware/index.js'
+import { addData, signIn, signInRequest, signOut, tokenRefresh, userKeyGeneration, isLoggedIn } from '../Controllers/authController.js'
 
 const router = express.Router()
 

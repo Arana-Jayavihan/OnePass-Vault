@@ -263,6 +263,60 @@ export const signIn = async (req, res) => {
     }
 }
 
+export const isLoggedIn = (req, res) => {
+    try {
+        if (req.cookies.encToken) {
+            const tokens = Object.values(authTokens)
+            const encToken = req.cookies.encToken
+            const token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+            const tokenHash = CryptoJS.SHA256(token).toString()
+            const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
+            if (authToken) {
+                const user = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
+                if (user) {
+                    if (user.ip !== req.headers['x-forwarded-for'] && user.ip !== authToken.ip) {
+                        return res.status(400).json({
+                            message: "Invalid Session"
+                        })
+                    }
+                    else if (user.email !== req.body.email) {
+                        return res.status(400).json({
+                            message: "Invalid Session"
+                        })
+                    }
+                    else {
+                        res.status(200).json({
+                            message: "Logged In"
+                        })
+                    }
+                }
+                else {
+                    return res.status(400).json({
+                        message: "Invalid Token"
+                    })
+                }
+            }
+            else {
+                res.status(400).json({
+                    message: "Session Expired"
+                })
+            }
+        }
+        else {
+            res.status(400).json({
+                message: "Not Logged In"
+            })
+        }
+    }
+    catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: "Something Went Wrong",
+            payload: error
+        })
+    }
+}
+
 export const tokenRefresh = async (req, res) => {
     try {
         let hours1 = new Date()
