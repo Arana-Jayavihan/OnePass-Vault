@@ -121,6 +121,7 @@ app.use((req, res, next) => {
 app.use(middleware)
 app.use((req, res, next) => {
     try {
+        console.log(req)
         const headers = req.headers
         const params = req.params
         const query = req.query
