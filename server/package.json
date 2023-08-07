@@ -1,5 +1,5 @@
 {
-  "name": "dapass_server",
+  "name": "onepass_server",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -30,8 +30,11 @@
     "morgan": "^1.10.0",
     "nodemailer": "^6.9.4",
     "nodemon": "^3.0.1",
+    "path": "^0.12.7",
+    "rotating-file-stream": "^3.1.1",
     "sanitize": "^2.1.2",
     "shortid": "^2.2.16",
+    "url": "^0.11.1",
     "validator": "^13.9.0"
   }
 }

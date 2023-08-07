@@ -7,7 +7,9 @@ import morgan from "morgan"
 import { rateLimit } from "express-rate-limit"
 import { middleware } from "sanitize"
 import vd from 'validator'
-import methodOverride from 'method-override'
+import rfs from 'rotating-file-stream'
+import path from 'path'
+import { fileURLToPath } from "url"
 import cookieParser from 'cookie-parser'
 
 //Routes
@@ -18,6 +20,22 @@ import loginRoutes from "./Routes/loginRoutes.js"
 
 dotenv.config()
 const app = express()
+const filePath = fileURLToPath(import.meta.url);
+const dirName = path.dirname(filePath);
+const date = new Date()
+const day = date.getDate()
+const month = date.getMonth()
+const year = date.getFullYear()
+const fullDate = `${day}-${month}-${year}`
+// LOGGER
+const logStream = rfs.createStream(`traffic-${fullDate}.log`, {
+    interval: '1d',
+    path: path.join(dirName, "logs")
+})
+if (process.env.ENV === "PROD"){
+    app.use(morgan("combined", { stream: logStream }))
+}
+app.use(morgan("combined"))
 
 //Blocked IP List 
 let blockedIPs = []
@@ -94,12 +112,6 @@ const limiter = rateLimit({
 })
 app.use(limiter)
 
-// LOGGER
-app.use(morgan("common"))
-
-// METHOD OVERRIDE
-app.use(methodOverride('X-HTTP-Method-Override'))
-
 // HEADER INTERCEPTOR
 app.use((req, res, next) => {
     // REMOVE
@@ -125,7 +137,9 @@ app.use((req, res, next) => {
         const params = req.params
         const query = req.query
         console.log(headers['x-forwarded-for'])
-        if (req.headers.origin === "https://onepass-vault-v3.netlify.app" && process.env.ENV === "PROD") {
+        const ips = headers['x-forwarded-for'].split(",")
+        if (ips.length <= 1){
+            if (req.headers.origin === "https://onepass-vault-v3.netlify.app" && process.env.ENV === "PROD") {
             if (req.method === "POST" || req.method === "GET") {
                 if (
                     (Object.keys(params).length === 0 && params.constructor === Object) ||
@@ -154,6 +168,12 @@ app.use((req, res, next) => {
         else {
             res.status(401).json({
                 message: "Origin Not Allowed"
+            })
+        }
+        }
+        else {
+            res.status(401).json({
+                message: "Proxy Detected"
             })
         }
     }

@@ -12,7 +12,6 @@ const axiosInstance = axios.create({
         'Upgrade-Insecure-Requests': '1',
         'Accept-Language': 'en-US',
         'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '0',
         'X-Content-Type-Options': 'nosniff',
         'Content-Type': 'application/json; charset=utf-8',
         'Content-Security-Policy': "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'",
@@ -66,8 +65,9 @@ axiosInstance.interceptors.response.use((res) => {
             (error.response.data.message === "Invalid Session" ||
                 error.response.data.message === "Invalid Token" ||
                 error.response.data.message === "Authorization Required!" ||
-                error.response.data.message === "Not Logged In")
-        )) {
+                error.response.data.message === "Not Logged In")) ||
+        (status === 500)
+        ) {
         store.dispatch(signout())
     }
     return error
