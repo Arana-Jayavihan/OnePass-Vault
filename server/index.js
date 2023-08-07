@@ -136,11 +136,6 @@ app.use((req, res, next) => {
                 message: "Method Not Allowed"
             })
         }
-        if (req.method !== "GET") {
-            res.status(401).json({
-                message: "Method Not Allowed"
-            })
-        }
         if (Object.keys(params).length > 0 && params.constructor === Object) {
             res.status(401).json({
                 message: "Parameters Not Allowed"
