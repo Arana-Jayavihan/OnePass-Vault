@@ -191,7 +191,7 @@ export const signIn = async (req, res) => {
                         encMasterKey !== "User Not Found" &&
                         publicKey !== "User Not Found"
                     ) {
-                        const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
+                        const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '30m' })
                         const tokenHash = CryptoJS.SHA256(token).toString()
                         const refreshToken = jwt.sign({ tokenHash: tokenHash }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
                         const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
@@ -285,9 +285,9 @@ export const tokenRefresh = async (req, res) => {
                         if (((decodedToken.exp * 1000) - Date.now()) < (10 * 60 * 1000)) {
                             try {
                                 delete tokenlist[refreshToken]
-                                token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
+                                token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '30m' })
                                 tokenHash = CryptoJS.SHA256(token).toString()
-                                refreshToken = jwt.sign({ tokenHash: tokenHash }, privateKey, { algorithm: 'ES512', expiresIn: '4h' })
+                                refreshToken = jwt.sign({ tokenHash: tokenHash }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
                                 encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
                                     iv: CryptoJS.SHA256(sh.generate()).toString(),
                                     mode: CryptoJS.mode.CBC,

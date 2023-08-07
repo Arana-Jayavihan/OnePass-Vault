@@ -121,11 +121,10 @@ app.use((req, res, next) => {
 app.use(middleware)
 app.use((req, res, next) => {
     try {
-        console.log(req.headers.origin)
         const headers = req.headers
         const params = req.params
         const query = req.query
-
+        console.log(headers['x-forwarded-for'])
         if (req.headers.origin === "https://onepass-vault-v3.netlify.app" && process.env.ENV === "PROD") {
             if (req.method === "POST" || req.method === "GET") {
                 if (
