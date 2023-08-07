@@ -112,7 +112,6 @@ app.use((req, res, next) => {
     // APPEND
     res.append('Access-Control-Allow-Methods', 'GET,POST');
     res.append('Access-Control-Allow-Headers', 'Content-Type');
-    res.append('Access-Control-Allow-Origin', "https://onepass-vault-v3.netlify.app")
     res.append('Permissions-Policy', 'geolocation=(self, microphone=()')
     res.append('Server', 'CLASSIFIED')
     next();
