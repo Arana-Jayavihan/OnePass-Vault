@@ -112,6 +112,7 @@ app.use((req, res, next) => {
     // APPEND
     res.append('Access-Control-Allow-Methods', 'GET,POST');
     res.append('Access-Control-Allow-Headers', 'Content-Type');
+    res.append('Access-Control-Allow-Origin', "https://onepass-vault-v3.netlify.app")
     res.append('Permissions-Policy', 'geolocation=(self, microphone=()')
     res.append('Server', 'CLASSIFIED')
     next();
@@ -125,31 +126,43 @@ app.use((req, res, next) => {
         const params = req.params
         const query = req.query
 
-        if (req.method !== "POST") {
+        if (!req.baseUrl.includes("https://onepass-vault-v3.netlify.app")) {
             res.status(401).json({
-                message: "Method Not Allowed"
+                message: "Origin Not Allowed"
             })
         }
-        if (Object.keys(params).length > 0 && params.constructor === Object) {
-            res.status(401).json({
-                message: "Parameters Not Allowed"
-            })
-        }
-        if (Object.keys(query).length > 0 && query.constructor === Object) {
-            res.status(401).json({
-                message: "Queries Not Allowed"
-            })
-        }
-        if (Object.keys(headers).length > 0 && headers.constructor === Object) {
-            let sanitizedHeaders = {}
-            for (let key in headers) {
-                const value = vd.escape(req.headerString(`${key}`))
-                sanitizedHeaders[`${key}`] = value
+        else {
+            if ((req.method !== "POST") || (req.method !== "GET")) {
+                res.status(401).json({
+                    message: "Method Not Allowed"
+                })
             }
-            req.headers = sanitizedHeaders
+            else {
+                if (Object.keys(params).length > 0 && params.constructor === Object) {
+                    res.status(401).json({
+                        message: "Parameters Not Allowed"
+                    })
+                }
+                else {
+                    if (Object.keys(query).length > 0 && query.constructor === Object) {
+                        res.status(401).json({
+                            message: "Queries Not Allowed"
+                        })
+                    }
+                    else if (Object.keys(headers).length > 0 && headers.constructor === Object) {
+                        let sanitizedHeaders = {}
+                        for (let key in headers) {
+                            const value = vd.escape(req.headerString(`${key}`))
+                            sanitizedHeaders[`${key}`] = value
+                        }
+                        req.headers = sanitizedHeaders
+                    }
+                    else {
+                        next()
+                    }
+                }
+            }
         }
-        next()
-
     }
     catch (error) {
         console.log(error)
