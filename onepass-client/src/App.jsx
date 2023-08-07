@@ -1,4 +1,4 @@
-import { Backdrop, CssBaseline, ThemeProvider, Typography } from "@mui/material";
+import { CssBaseline, ThemeProvider, Typography } from "@mui/material";
 import { createTheme } from "@mui/material/styles";
 import { useSelector } from "react-redux";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
@@ -48,14 +48,20 @@ function App() {
 		if (authenticated) {
 			setBlur(0)
 			setOpen(false)
-			dispatch(signout())
+			dispatch(signout()).then((result) => {
+				if (result && location.pathname !== "/"){
+					navigate("/")
+				}
+			})
 		}
 	}
 
 	const onActive = () => {
 		setBlur(0)
 		setOpen(false)
-		dispatch(tokenRefresh())
+		if (authenticated){
+			dispatch(tokenRefresh())
+		}
 	}
 
 	const onPrompt = () => {
@@ -159,7 +165,9 @@ function App() {
 	}, [location.pathname]);
 
 	useEffect(() => {
-		dispatch(tokenRefresh())
+		if (authenticated){
+			dispatch(tokenRefresh())
+		}
 	}, [location.pathname]);
 
 	useEffect(() => {

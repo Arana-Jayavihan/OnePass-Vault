@@ -203,6 +203,7 @@ export const signout = () => {
             dispatch(
                 { type: authConsts.LOGOUT_SUCCESS }
             )
+            return true
         }
         else {
             dispatch(

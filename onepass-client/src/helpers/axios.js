@@ -65,6 +65,7 @@ axiosInstance.interceptors.response.use((res) => {
         (status === 400 &&
             (error.response.data.message === "Invalid Session" ||
                 error.response.data.message === "Invalid Token" ||
+                error.response.data.message === "Authorization Required!" ||
                 error.response.data.message === "Not Logged In")
         )) {
         store.dispatch(signout())

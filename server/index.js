@@ -23,11 +23,22 @@ const app = express()
 let blockedIPs = []
 
 // CORS
-const corsOptions = {
-    // origin: ["https://onepass-vault-v3.netlify.app"],
-    origin: ["https://onepass-vault-v3.netlify.app", "https://localhost:3000"],
-    credentials: true,
+
+let corsOptions = {}
+if (process.env.ENV === "PROD") {
+    corsOptions = {
+        origin: ["https://onepass-vault-v3.netlify.app"],
+        origin: ["https://onepass-vault-v3.netlify.app", "https://localhost:3000"],
+        credentials: true,
+    }
 }
+else if (process.env.ENV === "DEV") {
+    corsOptions = {
+        origin: ["https://onepass-vault-v3.netlify.app", "https://localhost:3000"],
+        credentials: true,
+    }
+}
+
 app.use(cors(corsOptions))
 app.use(cookieParser())
 
@@ -39,7 +50,6 @@ app.use(express.json({ limit: "5mb" }));
 
 // HELMET
 app.use(helmet())
-//app.use(helmet.crossOriginResourcePolicy({ policy: 'cross-origin' }))
 app.use(helmet.hsts({ maxAge: 320000000, includeSubDomains: true, preload: true }))
 app.use(helmet.contentSecurityPolicy({
     browserSniff: false,
@@ -154,7 +164,7 @@ app.use("/api", keyRoutes)
 app.use("/api", loginRoutes)
 
 // DEFAULT ROUTE
-app.get('/', (req, res) => {
+app.post('/', (req, res) => {
     res.send(
         `
         <html lang="en">
