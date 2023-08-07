@@ -126,7 +126,7 @@ app.use((req, res, next) => {
         const params = req.params
         const query = req.query
 
-        if (!req.baseUrl.includes("https://onepass-vault-v3.netlify.app")) {
+        if (process.env.ENV === "PROD" && req.origin !=="https://onepass-vault-v3.netlify.app") {
             res.status(401).json({
                 message: "Origin Not Allowed"
             })
