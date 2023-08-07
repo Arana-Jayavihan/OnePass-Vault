@@ -131,7 +131,12 @@ app.use((req, res, next) => {
                 message: "Origin Not Allowed"
             })
         }
-        if ((req.method !== "POST") || (req.method !== "GET")) {
+        if (req.method !== "POST") {
+            res.status(401).json({
+                message: "Method Not Allowed"
+            })
+        }
+        if (req.method !== "GET") {
             res.status(401).json({
                 message: "Method Not Allowed"
             })
