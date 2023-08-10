@@ -403,7 +403,7 @@ const Vaults = () => {
                                 />
 
                             </Typography>
-                            <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
+                            <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} tabIndex='-1' onClick={() => showPasswords()} >
                                 {
                                     showPassword ?
                                         <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
@@ -494,7 +494,7 @@ const Vaults = () => {
                             />
 
                         </Typography>
-                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
+                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} tabIndex='-1' onClick={() => showPasswords()} >
                             {
                                 showPassword ?
                                     <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />

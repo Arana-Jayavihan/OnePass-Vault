@@ -125,7 +125,7 @@ const SignIn = () => {
                                             autoFocus
                                             onChange={(e) => setPassword(e.target.value)}
                                         />
-                                        <IconButton sx={{ width: 'fit-content', height: 'fit-content' }} onClick={() => showPasswords()} >
+                                        <IconButton sx={{ width: 'fit-content', height: 'fit-content' }} tabIndex='-1' onClick={() => showPasswords()} >
                                             {
                                                 showPassword ?
                                                     <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
