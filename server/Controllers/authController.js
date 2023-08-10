@@ -261,7 +261,7 @@ export const signIn = async (req, res) => {
 export const isLoggedIn = (req, res) => {
     try {
         if (req.cookies.encToken) {
-            const tokens = Object.values(authTokens)
+            const tokens = Object.values(tokenlist)
             const encToken = req.cookies.encToken
             const token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
             const tokenHash = CryptoJS.SHA256(token).toString()
