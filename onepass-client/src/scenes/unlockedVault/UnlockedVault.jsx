@@ -13,6 +13,7 @@ import { Col, Container, Row, Table } from 'react-bootstrap'
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import { useNavigate } from 'react-router-dom';
+import { Tooltip } from 'react-tooltip'
 
 import { addVaultUser, getVaultData, lockUserVault } from "../../actions/vaultActions";
 import { addUserLogin } from '../../actions/loginActions';
@@ -573,17 +574,17 @@ const UnlockedVault = () => {
                             renderList?.map((login, index) => {
                                 return (
                                     <tr key={index}>
-                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                        <td style={{ verticalAlign: 'middle' }}>
                                             <Typography sx={{ color: theme.palette.primary[200] }}>
                                                 {index + 1}
                                             </Typography>
                                         </td>
-                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                        <td style={{ verticalAlign: 'middle' }}>
                                             <Typography sx={{ color: theme.palette.primary[200] }}>
                                                 {login.loginName}
                                             </Typography>
                                         </td>
-                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
+                                        <td style={{ verticalAlign: 'middle' }}>
                                             <Typography
                                                 sx={{ color: theme.palette.primary[200], cursor: 'pointer' }}
                                                 onClick={() => window.open(`https://${login.loginUrl}`, '_blank')}
@@ -591,39 +592,43 @@ const UnlockedVault = () => {
                                                 {login.loginUrl}
                                             </Typography>
                                         </td>
-                                        <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                            <Typography sx={{ color: theme.palette.primary[200], cursor: 'pointer', width: 'max-content' }}>
+                                        <td style={{ verticalAlign: 'middle' }}>
+                                            <Tooltip
+                                                style={{ zIndex: 200, backgroundColor: theme.palette.primary[300] }}
+                                                id='copy-user' />
+
+                                            <Typography
+                                                sx={{ color: theme.palette.primary[200], cursor: 'pointer', width: 'max-content' }}>
                                                 {login.loginUsername}
-                                                <span><IconButton onClick={() => {
-                                                    navigator.clipboard.writeText(login.loginUsername)
-                                                    toast.success('Username Copied to Clipboard')
-                                                }}>
+                                                <span><IconButton
+                                                    data-tooltip-id='copy-user'
+                                                    data-tooltip-content='Copy Username'
+                                                    data-tooltip-place='bottom'
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(login.loginUsername)
+                                                        toast.success('Username Copied to Clipboard')
+                                                    }}>
                                                     <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
                                                 </IconButton>
                                                 </span>
                                             </Typography>
                                         </td>
-                                        {/* <td style={{ verticalAlign: 'middle', lineHeight: 3 }}>
-                                            <Typography
-                                                sx={{ color: theme.palette.primary[200], cursor: 'pointer', width: 'max-content' }}>
-                                                <input type='password' id={login.loginUsername} value={login.loginPassword} cursor='pointer' disabled />
-                                                <span><IconButton onClick={() => {
-                                                    navigator.clipboard.writeText(login.loginPassword)
-                                                    toast.success('Copied to Clipboard')
-                                                }}>
-                                                    <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
-                                                </IconButton>
-                                                </span>
-                                            </Typography>
-                                        </td> */}
                                         <td>
                                             {
                                                 <div style={{ display: 'flex', width: 'max-content' }}>
-                                                    <Typography sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
-                                                        <IconButton onClick={() => {
-                                                            navigator.clipboard.writeText(login.loginPassword)
-                                                            toast.success('Password Copied to Clipboard')
-                                                        }}>
+                                                    <Tooltip
+                                                        style={{ zIndex: 200, backgroundColor: theme.palette.primary[300] }}
+                                                        id='copy-pass' />
+                                                    <Typography
+                                                        sx={{ color: theme.palette.primary[200], fontSize: '1rem' }}>
+                                                        <IconButton
+                                                            data-tooltip-id='copy-pass'
+                                                            data-tooltip-content='Copy Password'
+                                                            data-tooltip-place='bottom'
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(login.loginPassword)
+                                                                toast.success('Password Copied to Clipboard')
+                                                            }}>
                                                             <MdFileCopy style={{ color: theme.palette.secondary[300] }} />
                                                         </IconButton>
                                                     </Typography>
@@ -802,7 +807,7 @@ const UnlockedVault = () => {
                                             borderRadius="9px"
                                             gap="3px"
                                             padding={isNonMobile ? "0.1rem 1.5rem" : null}
-                                            paddingLeft={ isNonMobile ? null : "1rem"}
+                                            paddingLeft={isNonMobile ? null : "1rem"}
                                         >
                                             <InputBase
                                                 placeholder='Search...'

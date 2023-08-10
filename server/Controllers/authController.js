@@ -22,9 +22,7 @@ try {
 export const userKeyGeneration = async (req, res) => {
     try {
         const user = req.body
-        console.log(user)
         const chkUser = await getUser(user.email)
-        console.log(chkUser)
         if (chkUser[0] !== user.email) {
             const result = await addUserKeys(user)
             if (result.receipt.confirmations !== 0) {
@@ -166,7 +164,6 @@ export const signIn = async (req, res) => {
         hours2.setTime(hours2.getTime() + (2 * 60 * 60 * 1000))
         const user = req.body
         const IP = req.headers['x-forwarded-for']
-        console.log(req.headers['x-forwarded-for'], "IP")
         const userResult = await getUser(user.hashEmail)
         if (userResult[0] !== user.hashEmail) {
             res.status(404).json({
@@ -206,7 +203,6 @@ export const signIn = async (req, res) => {
                             'ip': IP
                         }
                         console.log(tokenlist, "New Signin")
-                        console.log(userResult)
                         res.cookie('refreshToken', refreshToken, {
                             path: '/',
                             expires: hours2,
@@ -233,7 +229,6 @@ export const signIn = async (req, res) => {
                                 publicKey: publicKey
                             }
                         })
-                        console.log(user)
                     }
                     else {
                         res.status(401).json({

@@ -28,11 +28,11 @@ const month = date.getMonth()
 const year = date.getFullYear()
 const fullDate = `${day}-${month}-${year}`
 // LOGGER
-const logStream = rfs.createStream(`traffic-${fullDate}.log`, {
-    interval: '1d',
-    path: path.join(dirName, "logs")
-})
 if (process.env.ENV === "PROD"){
+    const logStream = rfs.createStream(`traffic-${fullDate}.log`, {
+        interval: '1d',
+        path: path.join(dirName, "logs")
+    })
     app.use(morgan("combined", { stream: logStream }))
 }
 app.use(morgan("combined"))
@@ -72,14 +72,14 @@ app.use(helmet.contentSecurityPolicy({
     browserSniff: false,
     setAllHeaders: false,
     directives: {
-        defaultSrc: ["'self'"],
+        defaultSrc: ["'none'"],
         childSrc: ["'none'"],
         objectSrc: ["'none'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'"],
-        imgSrc: ["'self'"],
-        fontSrc: ["'self'"],
-        connectSrc: ["'self'"],
+        scriptSrc: ["'none'"],
+        styleSrc: ["'none'"],
+        imgSrc: ["'none'"],
+        fontSrc: ["'none'"],
+        connectSrc: ["'none'"],
     }
 }));
 app.use(helmet.hidePoweredBy())
@@ -91,7 +91,7 @@ app.use(helmet.ieNoOpen())
 // RATE LIMITER
 const limiter = rateLimit({
     windowMs: 5 * 60 * 1000,
-    max: 100,
+    max: 50,
     standardHeaders: true,
     legacyHeaders: false,
     handler: function (req, res) {

@@ -14,49 +14,54 @@ try {
     console.log(error)
 }
 
-export const checkRequest = (req, res, next) =>{
+export const checkRequest = (req, res, next) => {
     try {
-        const headers = req.headers
-        const params = req.params
-        const query = req.query
-        const ips = headers['x-forwarded-for'].split(",")
-        if (ips.length <= 1){
-            if (req.headers.origin === "https://onepass-vault-v3.netlify.app" && process.env.ENV === "PROD") {
-            if (req.method === "POST" || req.method === "GET") {
-                if (
-                    (Object.keys(params).length === 0 && params.constructor === Object) ||
-                    (Object.keys(query).length === 0 && query.constructor === Object)
-                ) {
-                    let sanitizedHeaders = {}
-                    for (let key in headers) {
-                        const value = vd.escape(req.headerString(`${key}`))
-                        sanitizedHeaders[`${key}`] = value
+        if (process.env.ENV === "PROD") {
+            const headers = req.headers
+            const params = req.params
+            const query = req.query
+            const ips = headers['x-forwarded-for'].split(",")
+            if (ips.length <= 1) {
+                if (req.headers.origin === "https://onepass-vault-v3.netlify.app" && process.env.ENV === "PROD") {
+                    if (req.method === "POST" || req.method === "GET") {
+                        if (
+                            (Object.keys(params).length === 0 && params.constructor === Object) ||
+                            (Object.keys(query).length === 0 && query.constructor === Object)
+                        ) {
+                            let sanitizedHeaders = {}
+                            for (let key in headers) {
+                                const value = vd.escape(req.headerString(`${key}`))
+                                sanitizedHeaders[`${key}`] = value
+                            }
+                            req.headers = sanitizedHeaders
+                            next()
+                        }
+                        else {
+                            res.status(401).json({
+                                message: "Parameters Not Allowed"
+                            })
+                        }
                     }
-                    req.headers = sanitizedHeaders
-                    next()
+                    else {
+                        res.status(401).json({
+                            message: "Method Not Allowed"
+                        })
+                    }
                 }
                 else {
                     res.status(401).json({
-                        message: "Parameters Not Allowed"
+                        message: "Origin Not Allowed"
                     })
                 }
             }
             else {
                 res.status(401).json({
-                    message: "Method Not Allowed"
+                    message: "Proxy Detected"
                 })
             }
         }
         else {
-            res.status(401).json({
-                message: "Origin Not Allowed"
-            })
-        }
-        }
-        else {
-            res.status(401).json({
-                message: "Proxy Detected"
-            })
+            next()
         }
     }
     catch (error) {
