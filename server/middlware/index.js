@@ -6,12 +6,62 @@ import dotenv from 'dotenv'
 import vd from 'validator'
 dotenv.config()
 
+import { webSessionList } from '../Controllers/webSessionController.js'
 let publicKey = undefined
 
 try {
     publicKey = fs.readFileSync('ecdsaPubKey.pem', 'utf-8')
 } catch (error) {
     console.log(error)
+}
+
+export const decryptBody = (req, res, next) => {
+    try {
+        const url = req.url
+        if (url.includes('/webSession/init') || url.includes('/auth/signout') || url.includes("/auth/isloggedin")) {
+            next()
+        }
+        else {
+            const sessionToken = req.cookies.sessionId
+            if (sessionToken) {
+                try {
+                    const verifiedToken = jwt.verify(sessionToken, publicKey, { algorithms: ['ES512'] })
+                    if (verifiedToken) {
+                        const webSessions = Object.values(webSessionList)
+                        const webSession = webSessions.find(webSession => webSession.sessionId === verifiedToken.sessionId)
+                        if (webSession) {
+                            webSessionList[webSession.sessionId].lastAccessed = new Date().getTime()
+                            const sessionEncKey = webSession.secretKey
+                            const decData = CryptoJS.AES.decrypt(req.body.encData, sessionEncKey).toString(CryptoJS.enc.Utf8)
+                            req.body = JSON.parse(decData)
+                            next()
+                        }
+                        else {
+                            res.status(401).json({
+                                message: "Invalid Web Session"
+                            })
+                        }
+                    }
+                } catch (error) {
+                    console.log(error)
+                    res.status(500).json({
+                        message: "Token Verification Failed"
+                    })
+                }
+
+            }
+            else {
+                res.status(401).json({
+                    message: "Invalid Web Session"
+                })
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: "Oops! Something Went Wrong"
+        })
+    }
 }
 
 export const checkRequest = (req, res, next) => {

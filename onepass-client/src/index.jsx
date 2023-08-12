@@ -5,13 +5,14 @@ import App from './App';
 import store from './store';
 import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
+import WebSessionHandler from './webSessionHandler';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
 	<BrowserRouter>
 		<React.StrictMode>
 			<Provider store={store}>
-				<App />
+				<WebSessionHandler app={<App />} />
 			</Provider>
 		</React.StrictMode>
 	</BrowserRouter>

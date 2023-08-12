@@ -5,6 +5,7 @@ import sh from 'shortid'
 import dotenv from 'dotenv'
 import fs from 'fs'
 
+import { webSessionList } from './webSessionController.js';
 dotenv.config()
 
 export let tokenlist = {}
@@ -158,10 +159,10 @@ export const signInRequest = async (req, res) => {
 
 export const signIn = async (req, res) => {
     try {
+        let thirtyMins = new Date()
+        thirtyMins.setTime(thirtyMins.getTime() + (1 / 2 * 60 * 60 * 1000))
         let hours1 = new Date()
         hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
-        let hours2 = new Date()
-        hours2.setTime(hours2.getTime() + (2 * 60 * 60 * 1000))
         const user = req.body
         const IP = req.headers['x-forwarded-for']
         const userResult = await getUser(user.hashEmail)
@@ -205,14 +206,14 @@ export const signIn = async (req, res) => {
                         console.log(tokenlist, "New Signin")
                         res.cookie('refreshToken', refreshToken, {
                             path: '/',
-                            expires: hours2,
+                            expires: hours1,
                             sameSite: "none",
                             secure: true,
                             httpOnly: true
                         })
                         res.cookie('encToken', encToken, {
                             path: '/',
-                            expires: hours1,
+                            expires: thirtyMins,
                             sameSite: "none",
                             secure: true,
                             httpOnly: true
@@ -314,10 +315,10 @@ export const isLoggedIn = (req, res) => {
 
 export const tokenRefresh = async (req, res) => {
     try {
+        let thirtyMins = new Date()
+        thirtyMins.setTime(thirtyMins.getTime() + (1 / 2 * 60 * 60 * 1000))
         let hours1 = new Date()
         hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
-        let hours2 = new Date()
-        hours2.setTime(hours2.getTime() + (2 * 60 * 60 * 1000))
         let refreshToken = req.cookies.refreshToken
         let encToken = req.cookies.encToken
         let token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
@@ -330,7 +331,7 @@ export const tokenRefresh = async (req, res) => {
                 if (tokenlist[refreshToken].ip === ip) {
                     const decodedRefresh = jwt.verify(refreshToken, publicKey, { algorithms: ['ES512'] })
                     if (tokenHash === tokenlist[refreshToken].tokenHash && decodedRefresh.tokenHash === tokenlist[refreshToken].tokenHash) {
-                        
+
                         if (((decodedToken.exp * 1000) - Date.now()) < (10 * 60 * 1000)) {
                             try {
                                 delete tokenlist[refreshToken]
@@ -344,14 +345,14 @@ export const tokenRefresh = async (req, res) => {
                                 }).toString()
                                 res.cookie('refreshToken', refreshToken, {
                                     path: '/',
-                                    expires: hours2,
+                                    expires: hours1,
                                     sameSite: "none",
                                     secure: true,
                                     httpOnly: true
                                 })
                                 res.cookie('encToken', encToken, {
                                     path: '/',
-                                    expires: hours1,
+                                    expires: thirtyMins,
                                     sameSite: "none",
                                     secure: true,
                                     httpOnly: true
@@ -413,20 +414,38 @@ export const tokenRefresh = async (req, res) => {
 
 export const signOut = async (req, res) => {
     try {
+        const webSessionCookie = req.cookies.sessionId
         try {
-            const refreshToken = req.cookies.refreshToken
-            delete tokenlist[refreshToken]
-            console.log(tokenlist, "SignOut")
+            const verifiedToken = jwt.verify(webSessionCookie, publicKey, { algorithms: ['ES512'] })
+            if (verifiedToken) {
+                try {
+                    delete webSessionList[verifiedToken.sessionId]
+                    console.log(webSessionList, "SignOut")
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+            try {
+                const refreshToken = req.cookies.refreshToken
+                delete tokenlist[refreshToken]
+                console.log(tokenlist, "SignOut")
+            } catch (error) {
+                console.log(error)
+            }
+            res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
+            res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
+            res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
+            res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
+            res.status(200).json({
+                message: "Signout successfully :)"
+            })
         } catch (error) {
             console.log(error)
+            res.status(400).json({
+                message: "Invalid Web Session Token"
+            })
         }
-        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.status(200).json({
-            message: "Signout successfully :)"
-        })
+
     }
     catch (error) {
         console.log(error)

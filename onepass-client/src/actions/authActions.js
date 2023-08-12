@@ -1,8 +1,80 @@
 import { toast } from "react-hot-toast"
 import axiosInstance from "../helpers/axios.js"
-import { authConsts } from "./constants.js"
-import { decryptAES, decryptRSA, importRSAPrivKey } from "../helpers/encrypt.js"
+import { authConsts, generalConstatnts } from "./constants.js"
+import { decryptAES, decryptRSA, importRSAPrivKey, byteArrayToB64, b64ToByteArray } from "../helpers/encrypt.js"
 import CryptoJS from "crypto-js"
+
+export const keyExchange = () => {
+    return async (dispatch) => {
+        try {
+            dispatch({
+                type: generalConstatnts.KEY_EXCHANGE_REQUEST
+            })
+            sessionStorage.setItem('sessionEncKey', null)
+            const sessionKeyPair = await window.crypto.subtle.generateKey(
+                {
+                    name: "ECDH",
+                    namedCurve: "P-384",
+                },
+                false,
+                ["deriveKey"],
+            );
+            const webPubKey = byteArrayToB64(await window.crypto.subtle.exportKey("raw", sessionKeyPair.publicKey))
+            const form = {
+                "webPubKey": webPubKey
+            }
+
+            const res = await axiosInstance.post('/webSession/init', form)
+            if (res.status === 201) {
+                const serverPubKey = await window.crypto.subtle.importKey(
+                    'raw',
+                    b64ToByteArray(res.data.payload.serverPubKey),
+                    {
+                        name: "ECDH",
+                        namedCurve: "P-384"
+                    },
+                    false,
+                    []
+                )
+                const sessionEncKey = await window.crypto.subtle.deriveKey(
+                    {
+                        name: "ECDH",
+                        public: serverPubKey,
+                    },
+                    sessionKeyPair.privateKey,
+                    {
+                        name: "AES-CBC",
+                        length: 256,
+                    },
+                    true,
+                    ["encrypt", "decrypt"],
+                );
+                const webAESKey = byteArrayToB64(await window.crypto.subtle.exportKey("raw", sessionEncKey))
+
+                sessionStorage.setItem('sessionEncKey', webAESKey)
+                sessionStorage.setItem('webSessionId', res.data.payload.webSessionId)
+                dispatch({
+                    type: generalConstatnts.KEY_EXCHANGE_SUCCESS
+                })
+                return true
+            }
+            else if (res.response) {
+                sessionStorage.setItem('sessionEncKey', null)
+                sessionStorage.setItem('webSessionId', null)
+                dispatch({
+                    type: generalConstatnts.KEY_EXCHANGE_FAILED
+                })
+            }
+        } catch (error) {
+            sessionStorage.setItem('sessionEncKey', null)
+            sessionStorage.setItem('webSessionId', null)
+            console.log(error)
+            dispatch({
+                type: generalConstatnts.KEY_EXCHANGE_FAILED
+            })
+        }
+    }
+}
 
 export const genKeys = (form) => {
     return async dispatch => {
@@ -156,12 +228,14 @@ export const isLoggedIn = () => {
                 toast.success("Please Log In", { id: 'pli' })
                 const res1 = await axiosInstance.post(`/auth/signout`)
                 if (res1.status === 200) {
-                    sessionStorage.clear()
+                    dispatch(keyExchange())
+                    sessionStorage.removeItem('user')
                     dispatch(
                         { type: authConsts.LOGOUT_SUCCESS }
                     )
                 }
                 else {
+                    dispatch(keyExchange())
                     dispatch(
                         {
                             type: authConsts.LOGOUT_FAILED
@@ -176,12 +250,14 @@ export const isLoggedIn = () => {
             toast.success("Please Log In", { id: 'pli' })
             const res = await axiosInstance.post(`/auth/signout`)
             if (res.status === 200) {
-                sessionStorage.clear()
+                dispatch(keyExchange())
+                sessionStorage.removeItem('user')
                 dispatch(
                     { type: authConsts.LOGOUT_SUCCESS }
                 )
             }
             else {
+                dispatch(keyExchange())
                 dispatch(
                     {
                         type: authConsts.LOGOUT_FAILED
@@ -199,13 +275,15 @@ export const signout = () => {
 
         if (res.status === 200) {
             toast.success("Logged Out Successfully!", { id: 'lOut' })
-            sessionStorage.clear()
+            dispatch(keyExchange())
+            sessionStorage.removeItem('user')
             dispatch(
                 { type: authConsts.LOGOUT_SUCCESS }
             )
             return true
         }
         else {
+            keyExchange()
             dispatch(
                 {
                     type: authConsts.LOGOUT_FAILED
@@ -227,7 +305,7 @@ export const tokenRefresh = () => {
             }
             else if (res.response) {
                 toast.error(res.response.data.message, { id: 'token' })
-                signout()
+                dispatch(signout())
             }
         }
     }

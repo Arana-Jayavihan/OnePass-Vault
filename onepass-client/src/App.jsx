@@ -25,7 +25,7 @@ import Profile from "./scenes/profile/Profile";
 import UnlockedVault from "./scenes/unlockedVault/UnlockedVault";
 import VaultInvite from "./scenes/vaultInvite/vaultInvite";
 
-function App() {
+const App = () => {
 	const dispatch = useDispatch()
 	const loading = useSelector(state => state.auth.loading)
 	const checking = useSelector(state => state.auth.authChecking)

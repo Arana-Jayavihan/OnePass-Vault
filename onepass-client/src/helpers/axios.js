@@ -3,6 +3,8 @@ import { api } from "../helpers/urlConfigs";
 import store from "../store/index";
 import { toast } from "react-hot-toast";
 import { signout } from "../actions/authActions";
+import { encryptAES } from "./encrypt";
+import { keyExchange } from "../actions/authActions";
 
 const axiosInstance = axios.create({
     withCredentials: true,
@@ -21,6 +23,26 @@ const axiosInstance = axios.create({
         'Pragma': 'no-cache',
         'Expires': '0',
         'Access-Control-Allow-Methods': 'GET,POST'
+    }
+})
+
+axiosInstance.interceptors.request.use(async (req) => {
+    try {
+        if (req.data && (req.url !== '/webSession/init') && (req.url !== '/auth/signout') && (req.url !== '/auth/isloggedin')) {
+            const sessionEncKey = sessionStorage.getItem('sessionEncKey')
+            if (sessionEncKey) {
+                const encData = await encryptAES(JSON.stringify(req.data), sessionEncKey)
+                req.data = {
+                    encData
+                }
+            }
+            else {
+                console.log("sessionEncKey not found")
+            }
+        }
+        return req
+    } catch (error) {
+        console.log(error)
     }
 })
 
@@ -70,6 +92,13 @@ axiosInstance.interceptors.response.use((res) => {
         ) {
         store.dispatch(signout())
     }
+    else if (
+        (status === 401 && error.response.data.message === "Invalid Web Session") ||
+        (status === 500 && error.response.data.message === "Token Verification Failed")
+        ) {
+            toast.error("Web Session Validation Failed...")
+            store.dispatch(signout())
+        }
     return error
 })
 

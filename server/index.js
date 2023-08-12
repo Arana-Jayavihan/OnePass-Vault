@@ -16,7 +16,8 @@ import authRoutes from "./Routes/authRoutes.js"
 import vaultRoutes from "./Routes/vaultRoutes.js"
 import keyRoutes from "./Routes/keyRoutes.js"
 import loginRoutes from "./Routes/loginRoutes.js"
-import { checkRequest } from "./middlware/index.js"
+import webSesionRoutes from "./Routes/webSessionRoutes.js"
+import { checkRequest, decryptBody } from "./middlware/index.js"
 
 dotenv.config()
 const app = express()
@@ -35,7 +36,7 @@ if (process.env.ENV === "PROD"){
     })
     app.use(morgan("combined", { stream: logStream }))
 }
-app.use(morgan("combined"))
+app.use(morgan("common"))
 
 //Blocked IP List 
 let blockedIPs = []
@@ -131,6 +132,7 @@ app.use((req, res, next) => {
 
 // SANITIZE REQUEST
 app.use(middleware)
+app.use(decryptBody)
 app.use(checkRequest)
 
 // ROUTES
@@ -138,6 +140,7 @@ app.use("/api", authRoutes)
 app.use("/api", vaultRoutes)
 app.use("/api", keyRoutes)
 app.use("/api", loginRoutes)
+app.use("/api", webSesionRoutes)
 
 // DEFAULT ROUTE
 app.post('/', (req, res) => {
