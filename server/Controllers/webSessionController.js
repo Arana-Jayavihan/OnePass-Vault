@@ -2,6 +2,7 @@ import { webcrypto } from 'crypto'
 import jwt from 'jsonwebtoken';
 import shortid from 'shortid';
 import fs from "fs"
+import CryptoJS from 'crypto-js';
 
 export let webSessionList = {}
 let privateKey = undefined
@@ -60,6 +61,13 @@ export const importPubKey = async (b64EncPubKey) => {
 
 export const initWebSession = async (req, res) => {
     try {
+        const ip = req.headers['x-forwarded-for']
+        const webSessions = Object.values(webSessionList)
+        for (let webSession in webSessions) {
+            if (webSessions[webSession].ip === ip) {
+                delete webSessionList[webSessions[webSession].sessionId]
+            }
+        }
         let hours1 = new Date()
         hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
         const serverKeyPair = await webcrypto.subtle.generateKey(
@@ -81,8 +89,8 @@ export const initWebSession = async (req, res) => {
         const webSessionObj = {
             'sessionId': shortid.generate(),
             'secretKey': serverAESKey,
-            'sequenceNumber': 0,
-            'lastAccessed': new Date().getTime()
+            'lastAccessed': new Date().getTime(),
+            'ip': req.headers['x-forwarded-for'],
         }
         webSessionList[webSessionObj.sessionId] = webSessionObj
         console.log(webSessionList, "New Web Session")
@@ -103,6 +111,37 @@ export const initWebSession = async (req, res) => {
         })
     } catch (error) {
         console.log(error)
+        res.status(500).json({
+            message: "Something Went Wrong"
+        })
+    }
+}
+
+export const updateWebSession = async (webSessionId, webPubKey) => {
+    try {
+        const serverKeyPair = await webcrypto.subtle.generateKey(
+            {
+                name: "ECDH",
+                namedCurve: "P-384"
+            },
+            false,
+            ["deriveKey"],
+        );
+        const importedWebPubKey = await importPubKey(webPubKey)
+        const serverSecretKey = await deriveSecretKey(
+            serverKeyPair.privateKey,
+            importedWebPubKey,
+        );
+        const newServerAESKey = byteArrayToB64(await webcrypto.subtle.exportKey("raw", serverSecretKey))
+        webSessionList[webSessionId].secretKey = newServerAESKey
+        webSessionList[webSessionId].lastAccessed = new Date().getTime()
+
+        const serverPubKey = byteArrayToB64(await webcrypto.subtle.exportKey("raw", serverKeyPair.publicKey))
+        return {serverPubKey, newServerAESKey}
+
+    } catch (error) {
+        console.log(error)
+        return false
     }
 }
 
@@ -110,14 +149,17 @@ const clearWebSessionTokens = () => {
     try {
         const webSessions = Object.values(webSessionList)
         const currentTime = new Date().getTime()
+        let count = 0
         webSessions.forEach(webSession => {
-            if (currentTime - webSession.lastAccessed > 15 * 60 * 1000) {
+            if (currentTime - webSession.lastAccessed > 5 * 60 * 1000) {
                 delete webSessionList[webSession.sessionId]
+                count++
             }
         })
+        console.log(webSessionList, `Cleared ${count} Web Sessions`)
     } catch (error) {
         console.log(error)
     }
 }
 
-setInterval(clearWebSessionTokens, 5 * 60 * 1000)
+setInterval(clearWebSessionTokens, 15 * 60 * 1000)

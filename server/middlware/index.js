@@ -4,9 +4,10 @@ import { tokenlist as authTokens } from '../Controllers/authController.js'
 import fs from 'fs'
 import dotenv from 'dotenv'
 import vd from 'validator'
+import sh from 'shortid'
 dotenv.config()
 
-import { webSessionList } from '../Controllers/webSessionController.js'
+import { updateWebSession, webSessionList } from '../Controllers/webSessionController.js'
 let publicKey = undefined
 
 try {
@@ -15,46 +16,78 @@ try {
     console.log(error)
 }
 
-export const decryptBody = (req, res, next) => {
+export const decryptRequest = async (req, res, next) => {
     try {
         const url = req.url
-        if (url.includes('/webSession/init') || url.includes('/auth/signout') || url.includes("/auth/isloggedin")) {
-            next()
-        }
-        else {
+        if (
+            url.includes('/auth/signin-request') ||
+            url.includes('/auth/signin') ||
+            url.includes('/auth/add-user-data') ||
+            url.includes('/auth/genkeys') ||
+            url.includes('/auth/token')
+        ) {
             const sessionToken = req.cookies.sessionId
             if (sessionToken) {
-                try {
-                    const verifiedToken = jwt.verify(sessionToken, publicKey, { algorithms: ['ES512'] })
-                    if (verifiedToken) {
-                        const webSessions = Object.values(webSessionList)
-                        const webSession = webSessions.find(webSession => webSession.sessionId === verifiedToken.sessionId)
-                        if (webSession) {
-                            webSessionList[webSession.sessionId].lastAccessed = new Date().getTime()
+                const verifiedToken = jwt.verify(sessionToken, publicKey, { algorithms: ['ES512'] })
+                if (verifiedToken) {
+                    const webSessions = Object.values(webSessionList)
+                    const webSession = webSessions.find(webSession => webSession.sessionId === verifiedToken.sessionId)
+                    if (webSession) {
+                        if (req.headers['x-forwarded-for'] === webSession.ip) {
                             const sessionEncKey = webSession.secretKey
-                            const decData = CryptoJS.AES.decrypt(req.body.encData, sessionEncKey).toString(CryptoJS.enc.Utf8)
-                            req.body = JSON.parse(decData)
-                            next()
+                            try {
+                                const decData = CryptoJS.AES.decrypt(req.body.encData, sessionEncKey).toString(CryptoJS.enc.Utf8)
+                                req.body = JSON.parse(decData)
+                                const result = await updateWebSession(webSession.sessionId, req.body.webPubKey)
+                                if (result) {
+                                    const encServerPubKey = CryptoJS.AES.encrypt(result.serverPubKey, sessionEncKey, {
+                                        iv: CryptoJS.SHA256(sh.generate()).toString(),
+                                        mode: CryptoJS.mode.CBC,
+                                        padding: CryptoJS.pad.Pkcs7
+                                    }).toString()
+                                    req.body['serverPubKey'] = encServerPubKey
+                                    req.body['newServerAESKey'] = result.newServerAESKey
+                                    req.body['webSessionId'] = webSession.sessionId
+                                    next()
+                                }
+                                else {
+                                    res.status(401).json({
+                                        message: "Something Went Wrong"
+                                    })
+                                }
+                            } catch (error) {
+                                res.status(401).json({
+                                    message: "Request Not Allowed"
+                                })
+                            }
                         }
                         else {
                             res.status(401).json({
-                                message: "Invalid Web Session"
+                                message: "Invalid Web Session IP"
                             })
                         }
                     }
-                } catch (error) {
-                    console.log(error)
-                    res.status(500).json({
-                        message: "Token Verification Failed"
+                    else {
+                        res.status(401).json({
+                            message: "Invalid Web Session"
+                        })
+                    }
+                }
+                else {
+                    res.status(401).json({
+                        message: "Invalid Web Session Token"
                     })
                 }
-
             }
             else {
                 res.status(401).json({
                     message: "Invalid Web Session"
                 })
             }
+        }
+        else {
+            next()
+
         }
     } catch (error) {
         console.log(error)

@@ -3,8 +3,6 @@ import { api } from "../helpers/urlConfigs";
 import store from "../store/index";
 import { toast } from "react-hot-toast";
 import { signout } from "../actions/authActions";
-import { encryptAES } from "./encrypt";
-import { keyExchange } from "../actions/authActions";
 
 const axiosInstance = axios.create({
     withCredentials: true,
@@ -26,32 +24,12 @@ const axiosInstance = axios.create({
     }
 })
 
-axiosInstance.interceptors.request.use(async (req) => {
-    try {
-        if (req.data && (req.url !== '/webSession/init') && (req.url !== '/auth/signout') && (req.url !== '/auth/isloggedin')) {
-            const sessionEncKey = sessionStorage.getItem('sessionEncKey')
-            if (sessionEncKey) {
-                const encData = await encryptAES(JSON.stringify(req.data), sessionEncKey)
-                req.data = {
-                    encData
-                }
-            }
-            else {
-                console.log("sessionEncKey not found")
-            }
-        }
-        return req
-    } catch (error) {
-        console.log(error)
-    }
-})
-
 axiosInstance.interceptors.response.use((res) => {
     if (res) {
         console.log(res)
     }
     return res
-}, (error) => {
+}, async (error) => {
     try {
         toast.dismiss('loading')
         toast.dismiss('Deleting')
@@ -82,23 +60,19 @@ axiosInstance.interceptors.response.use((res) => {
         (status === 401 &&
             (error.response.data.message === "Session Expired" ||
                 error.response.data.message === "Unauthorized" ||
-                error.response.data.message === "Potential Malicious Atempt")) ||
+                error.response.data.message === "Potential Malicious Atempt" ||
+                error.response.data.message === "Invalid Web Session" ||
+                error.response.data.message === "Invalid Web Session Token" ||
+                error.response.data.message === "Invalid Web Session IP")) ||
         (status === 400 &&
             (error.response.data.message === "Invalid Session" ||
                 error.response.data.message === "Invalid Token" ||
                 error.response.data.message === "Authorization Required!" ||
                 error.response.data.message === "Not Logged In")) ||
         (status === 500)
-        ) {
+    ) {
         store.dispatch(signout())
     }
-    else if (
-        (status === 401 && error.response.data.message === "Invalid Web Session") ||
-        (status === 500 && error.response.data.message === "Token Verification Failed")
-        ) {
-            toast.error("Web Session Validation Failed...")
-            store.dispatch(signout())
-        }
     return error
 })
 

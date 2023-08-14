@@ -17,7 +17,7 @@ import vaultRoutes from "./Routes/vaultRoutes.js"
 import keyRoutes from "./Routes/keyRoutes.js"
 import loginRoutes from "./Routes/loginRoutes.js"
 import webSesionRoutes from "./Routes/webSessionRoutes.js"
-import { checkRequest, decryptBody } from "./middlware/index.js"
+import { checkRequest, decryptRequest } from "./middlware/index.js"
 
 dotenv.config()
 const app = express()
@@ -132,8 +132,8 @@ app.use((req, res, next) => {
 
 // SANITIZE REQUEST
 app.use(middleware)
-app.use(decryptBody)
 app.use(checkRequest)
+app.use(decryptRequest)
 
 // ROUTES
 app.use("/api", authRoutes)
@@ -141,6 +141,7 @@ app.use("/api", vaultRoutes)
 app.use("/api", keyRoutes)
 app.use("/api", loginRoutes)
 app.use("/api", webSesionRoutes)
+
 
 // DEFAULT ROUTE
 app.post('/', (req, res) => {

@@ -4,8 +4,6 @@ import CryptoJS from 'crypto-js'
 import sh from 'shortid'
 import dotenv from 'dotenv'
 import fs from 'fs'
-
-import { webSessionList } from './webSessionController.js';
 dotenv.config()
 
 export let tokenlist = {}
@@ -22,13 +20,21 @@ try {
 // User SignUp Functions
 export const userKeyGeneration = async (req, res) => {
     try {
-        const user = req.body
+        const user = {
+            'email': req.body.email,
+            'encPrivateKey': req.body.encPrivateKey,
+            'encPublicKey': req.body.encPublicKey,
+            'masterEncKey': req.body.masterEncKey,
+            'hashPass': req.body.hashPass,
+            'hashPassAlt': req.body.hashPassAlt
+        }
         const chkUser = await getUser(user.email)
         if (chkUser[0] !== user.email) {
             const result = await addUserKeys(user)
             if (result.receipt.confirmations !== 0) {
                 res.status(201).json({
-                    message: 'User Key Generation Success'
+                    message: 'User Key Generation Success',
+                    serverPubKey: req.body.serverPubKey
                 })
             }
             else if (result === false) {
@@ -51,7 +57,7 @@ export const userKeyGeneration = async (req, res) => {
 
     } catch (error) {
         console.log(error)
-        const result = await removeUser(user.email, "")
+        const result = await removeUser(req.body.email, "")
         if (result.receipt.confirmations !== 0) {
             res.status(500).json({
                 message: 'Something went wrong... Please try again',
@@ -69,13 +75,20 @@ export const userKeyGeneration = async (req, res) => {
 
 export const addData = async (req, res) => {
     try {
-        const user = req.body
+        const user = {
+            'email': req.body.email,
+            'firstName': req.body.firstName,
+            'lastName': req.body.lastName,
+            'contact': req.body.contact,
+            'passwordHash': req.body.passwordHash,
+        }
         const chkUser = await getUser(user.email)
         if (chkUser[0] === user.email) {
             const result = await addUserData(user)
             if (result.receipt.confirmations !== 0) {
                 res.status(201).json({
-                    message: "User Data Added"
+                    message: "User Data Added",
+                    serverPubKey: req.body.serverPubKey
                 })
             }
             else if (result === "You are not the owner of the object") {
@@ -127,13 +140,24 @@ export const signInRequest = async (req, res) => {
                 res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
                 res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
                 res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
+                const payload = {
+                    'hashPass': hashPass
+                }
+                const encodedPayload = JSON.stringify(payload)
+                const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
+                    iv: CryptoJS.SHA256(sh.generate()).toString(),
+                    mode: CryptoJS.mode.CBC,
+                    padding: CryptoJS.pad.Pkcs7
+                }).toString()
+
                 res.status(200).json({
                     message: "User Hash Fetch Success",
-                    payload: hashPass
+                    payload: encPayload,
+                    serverPubKey: req.body.serverPubKey
                 })
             }
             else if (hashPass === "User Not Found") {
-                res.status(500).json({
+                res.status(404).json({
                     message: 'User Not Found...'
                 })
             }
@@ -218,8 +242,7 @@ export const signIn = async (req, res) => {
                             secure: true,
                             httpOnly: true
                         })
-                        res.status(200).json({
-                            message: "Authentication successful",
+                        const payload = {
                             user: {
                                 email: userResult[0],
                                 firstName: userResult[1],
@@ -229,6 +252,17 @@ export const signIn = async (req, res) => {
                                 privateKey: encPrivate,
                                 publicKey: publicKey
                             }
+                        }
+                        const encodedPayload = JSON.stringify(payload)
+                        const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
+                            iv: CryptoJS.SHA256(sh.generate()).toString(),
+                            mode: CryptoJS.mode.CBC,
+                            padding: CryptoJS.pad.Pkcs7
+                        }).toString()
+                        res.status(200).json({
+                            message: "Authentication successful",
+                            payload: encPayload,
+                            serverPubKey: req.body.serverPubKey
                         })
                     }
                     else {
@@ -331,7 +365,6 @@ export const tokenRefresh = async (req, res) => {
                 if (tokenlist[refreshToken].ip === ip) {
                     const decodedRefresh = jwt.verify(refreshToken, publicKey, { algorithms: ['ES512'] })
                     if (tokenHash === tokenlist[refreshToken].tokenHash && decodedRefresh.tokenHash === tokenlist[refreshToken].tokenHash) {
-
                         if (((decodedToken.exp * 1000) - Date.now()) < (10 * 60 * 1000)) {
                             try {
                                 delete tokenlist[refreshToken]
@@ -366,7 +399,8 @@ export const tokenRefresh = async (req, res) => {
                                 }
                                 console.log(tokenlist, "New TokenRefresh")
                                 res.status(200).json({
-                                    message: "Session Extended"
+                                    message: "Session Extended",
+                                    serverPubKey: req.body.serverPubKey
                                 })
                             }
                             catch (error) {
@@ -375,7 +409,8 @@ export const tokenRefresh = async (req, res) => {
                         }
                         else {
                             res.status(200).json({
-                                message: "Session Valid"
+                                message: "Session Valid",
+                                serverPubKey: req.body.serverPubKey
                             })
                         }
                     }
@@ -414,37 +449,17 @@ export const tokenRefresh = async (req, res) => {
 
 export const signOut = async (req, res) => {
     try {
-        const webSessionCookie = req.cookies.sessionId
-        try {
-            const verifiedToken = jwt.verify(webSessionCookie, publicKey, { algorithms: ['ES512'] })
-            if (verifiedToken) {
-                try {
-                    delete webSessionList[verifiedToken.sessionId]
-                    console.log(webSessionList, "SignOut")
-                } catch (error) {
-                    console.log(error)
-                }
-            }
-            try {
-                const refreshToken = req.cookies.refreshToken
-                delete tokenlist[refreshToken]
-                console.log(tokenlist, "SignOut")
-            } catch (error) {
-                console.log(error)
-            }
-            res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
-            res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
-            res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
-            res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
-            res.status(200).json({
-                message: "Signout successfully :)"
-            })
-        } catch (error) {
-            console.log(error)
-            res.status(400).json({
-                message: "Invalid Web Session Token"
-            })
-        }
+        const refreshToken = req.cookies.refreshToken
+        delete tokenlist[refreshToken]
+        console.log(tokenlist, "SignOut")
+
+        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.status(200).json({
+            message: "Signout successfully :)"
+        })
 
     }
     catch (error) {
