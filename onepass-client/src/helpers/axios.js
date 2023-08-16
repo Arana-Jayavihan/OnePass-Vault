@@ -4,6 +4,13 @@ import store from "../store/index";
 import { toast } from "react-hot-toast";
 import { signout } from "../actions/authActions";
 
+const abortController = new AbortController()
+    const timeout = setTimeout(() => {
+        abortController.abort()
+        store.dispatch(signout())
+        console.log("Aborted")
+    }, 2000)
+
 const axiosInstance = axios.create({
     withCredentials: true,
     baseURL: api,
@@ -21,15 +28,19 @@ const axiosInstance = axios.create({
         'Pragma': 'no-cache',
         'Expires': '0',
         'Access-Control-Allow-Methods': 'GET,POST'
-    }
+    },
+    timeout: 20000,
+    signal: abortController.signal,
 })
 
 axiosInstance.interceptors.response.use((res) => {
     if (res) {
         console.log(res)
+        clearTimeout(timeout)
     }
     return res
 }, async (error) => {
+    clearTimeout(timeout)
     try {
         toast.dismiss('loading')
         toast.dismiss('Deleting')
@@ -47,6 +58,9 @@ axiosInstance.interceptors.response.use((res) => {
     }
 
     console.log(error.response)
+    if(error.response === undefined){
+        store.dispatch(signout())
+    }
     const { status } = error.response
 
     if (status === 429) {
