@@ -26,7 +26,8 @@ export const decryptRequest = async (req, res, next) => {
             url.includes('/auth/genkeys') ||
             url.includes('/auth/token')
         ) {
-            const sessionToken = req.cookies.sessionId
+            const encSessionToken = req.cookies.sessionId
+            const sessionToken = CryptoJS.AES.decrypt(encSessionToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
             if (sessionToken) {
                 const verifiedToken = jwt.verify(sessionToken, publicKey, { algorithms: ['ES512'] })
                 if (verifiedToken) {

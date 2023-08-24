@@ -95,21 +95,21 @@ const limiter = rateLimit({
     max: 50,
     standardHeaders: true,
     legacyHeaders: false,
-    handler: function (req, res) {
-        blockedIPs.push(req.ip)
-        console.log(blockedIPs, 'new blocked IP')
-        res.status(429).json({
-            message: "Too Many Requests"
-        })
-    },
-    skip: function (req, res) {
-        if (blockedIPs.includes(req.ip)) {
-            return false
-        }
-        else {
-            return true
-        }
-    }
+    // handler: function (req, res) {
+    //     blockedIPs.push(req.ip)
+    //     console.log(blockedIPs, 'new blocked IP')
+    //     res.status(429).json({
+    //         message: "Too Many Requests"
+    //     })
+    // },
+    // skip: function (req, res) {
+    //     if (blockedIPs.includes(req.ip)) {
+    //         return false
+    //     }
+    //     else {
+    //         return true
+    //     }
+    // }
 })
 app.use(limiter)
 

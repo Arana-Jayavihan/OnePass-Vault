@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import shortid from 'shortid';
 import fs from "fs"
 import CryptoJS from 'crypto-js';
+import dotenv from 'dotenv'
+dotenv.config()
 
 export let webSessionList = {}
 let privateKey = undefined
@@ -95,7 +97,12 @@ export const initWebSession = async (req, res) => {
         webSessionList[webSessionObj.sessionId] = webSessionObj
         console.log(webSessionList, "New Web Session")
         const webSessionToken = jwt.sign({ "sessionId": webSessionObj.sessionId }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
-        res.cookie('sessionId', webSessionToken, {
+        const encWebSessionToken = CryptoJS.AES.encrypt(webSessionToken, process.env.AES_SECRET, {
+            iv: CryptoJS.SHA256(shortid.generate()).toString(),
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.Pkcs7
+        }).toString()
+        res.cookie('sessionId', encWebSessionToken, {
             path: '/',
             expires: hours1,
             httpOnly: true,
@@ -105,8 +112,7 @@ export const initWebSession = async (req, res) => {
         res.status(201).json({
             message: "Web Session Created",
             payload: {
-                serverPubKey: serverPubKey,
-                webSessionId: webSessionObj.sessionId
+                serverPubKey: serverPubKey
             }
         })
     } catch (error) {

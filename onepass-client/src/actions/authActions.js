@@ -52,7 +52,6 @@ export const keyExchange = () => {
                 );
                 const webAESKey = byteArrayToB64(await window.crypto.subtle.exportKey("raw", requestEncKey))
                 sessionStorage.setItem('requestEncKey', webAESKey)
-                sessionStorage.setItem('webSessionId', res.data.payload.webSessionId)
                 dispatch({
                     type: generalConstatnts.KEY_EXCHANGE_SUCCESS
                 })
@@ -60,14 +59,12 @@ export const keyExchange = () => {
             }
             else if (res.response) {
                 sessionStorage.setItem('requestEncKey', null)
-                sessionStorage.setItem('webSessionId', null)
                 dispatch({
                     type: generalConstatnts.KEY_EXCHANGE_FAILED
                 })
             }
         } catch (error) {
             sessionStorage.setItem('requestEncKey', null)
-            sessionStorage.setItem('webSessionId', null)
             console.log(error)
             dispatch({
                 type: generalConstatnts.KEY_EXCHANGE_FAILED
