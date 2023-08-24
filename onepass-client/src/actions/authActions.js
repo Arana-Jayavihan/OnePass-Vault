@@ -26,6 +26,7 @@ export const keyExchange = () => {
             }
 
             const res = await axiosInstance.post('/webSession/init', form)
+            console.log(res)
             if (res.status === 201) {
                 const serverPubKey = await window.crypto.subtle.importKey(
                     'raw',
@@ -53,7 +54,8 @@ export const keyExchange = () => {
                 const webAESKey = byteArrayToB64(await window.crypto.subtle.exportKey("raw", requestEncKey))
                 sessionStorage.setItem('requestEncKey', webAESKey)
                 dispatch({
-                    type: generalConstatnts.KEY_EXCHANGE_SUCCESS
+                    type: generalConstatnts.KEY_EXCHANGE_SUCCESS,
+                    payload: res.data.payload.sessionId
                 })
                 return true
             }

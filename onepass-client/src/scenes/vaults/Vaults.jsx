@@ -448,7 +448,7 @@ const Vaults = () => {
         setPassType("password")
         setShowPassword(false)
     }
-
+    const sessionId = useSelector(state => state.general.sessionId)
     const unlockVault = () => {
         const form = {
             vaultIndex: selectedVault.vaultIndex,
@@ -462,7 +462,7 @@ const Vaults = () => {
                     setPassword(undefined)
                     setPassType("password")
                     setShowPassword(false)
-                    navigate(`/unlock-vault/${result.tokenHash}`)
+                    navigate(`/${sessionId}/unlock-vault/${result.tokenHash}`)
                 }
             })
     }

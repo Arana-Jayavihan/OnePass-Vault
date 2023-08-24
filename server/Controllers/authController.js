@@ -132,15 +132,16 @@ export const addData = async (req, res) => {
 // User SignIn Functions
 export const signInRequest = async (req, res) => {
     try {
+        const sessionId = req.body.webSessionId
         const email = req.body.email
         const chkUser = await getUser(email)
         if (chkUser[0] === email) {
             const hashPass = await getUserHashPass(email)
             if (hashPass) {
-                res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
-                res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
-                res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
-                res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
+                res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
+                res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
+                res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
+                res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
                 const payload = {
                     'hashPass': hashPass
                 }
@@ -214,6 +215,7 @@ export const signIn = async (req, res) => {
                         encMasterKey !== "User Not Found" &&
                         publicKey !== "User Not Found"
                     ) {
+                        const sessionId = req.body.webSessionId
                         const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '30m' })
                         const tokenHash = CryptoJS.SHA256(token).toString()
                         const refreshToken = jwt.sign({ tokenHash: tokenHash }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
@@ -231,14 +233,14 @@ export const signIn = async (req, res) => {
                         webSessionList[req.body.webSessionId]['userSession'] = tokenHash
                         console.log(tokenlist, "New Signin")
                         res.cookie('refreshToken', refreshToken, {
-                            path: '/',
+                            path: `/${sessionId}/vaults/`,
                             expires: hours1,
                             sameSite: "none",
                             secure: true,
                             httpOnly: true
                         })
                         res.cookie('encToken', encToken, {
-                            path: '/',
+                            path: `/${sessionId}/vaults/`,
                             expires: thirtyMins,
                             sameSite: "none",
                             secure: true,
@@ -379,14 +381,14 @@ export const tokenRefresh = async (req, res) => {
                                     padding: CryptoJS.pad.Pkcs7
                                 }).toString()
                                 res.cookie('refreshToken', refreshToken, {
-                                    path: '/',
+                                    path: `/${sessionId}/vaults/`,
                                     expires: hours1,
                                     sameSite: "none",
                                     secure: true,
                                     httpOnly: true
                                 })
                                 res.cookie('encToken', encToken, {
-                                    path: '/',
+                                    path: `/${sessionId}/vaults/`,
                                     expires: thirtyMins,
                                     sameSite: "none",
                                     secure: true,
@@ -450,15 +452,18 @@ export const tokenRefresh = async (req, res) => {
 }
 
 export const signOut = async (req, res) => {
+    //console.log(jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] }))
     try {
         const refreshToken = req.cookies.refreshToken
         delete tokenlist[refreshToken]
+        const webSessionCookie = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
+        const sessionId = webSessionCookie.sessionId
         console.log(tokenlist, "SignOut")
 
-        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
+        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
+        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
+        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
+        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
         res.status(200).json({
             message: "Signout successfully :)"
         })
@@ -466,11 +471,13 @@ export const signOut = async (req, res) => {
     }
     catch (error) {
         console.log(error)
-        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
-        res.status(500).json({
+        // const webSessionCookie = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
+        // const sessionId = webSessionCookie.sessionId
+        // res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/` })
+        // res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/` })
+        // res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/` })
+        // res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/` })
+        res.status(200).json({
             message: "Something Went Wrong!",
             error: error
         })

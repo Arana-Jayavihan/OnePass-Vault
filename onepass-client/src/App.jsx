@@ -24,6 +24,7 @@ import Billing from "./scenes/billing/Billing";
 import Profile from "./scenes/profile/Profile";
 import UnlockedVault from "./scenes/unlockedVault/UnlockedVault";
 import VaultInvite from "./scenes/vaultInvite/vaultInvite";
+import Redirect from "./redirect";
 
 const App = () => {
 	const dispatch = useDispatch()
@@ -49,7 +50,7 @@ const App = () => {
 			setBlur(0)
 			setOpen(false)
 			dispatch(signout()).then((result) => {
-				if (result && location.pathname !== "/"){
+				if (result && location.pathname !== "/") {
 					navigate("/")
 				}
 			})
@@ -59,7 +60,7 @@ const App = () => {
 	const onActive = () => {
 		setBlur(0)
 		setOpen(false)
-		if (authenticated){
+		if (authenticated) {
 			dispatch(tokenRefresh())
 		}
 	}
@@ -165,7 +166,7 @@ const App = () => {
 	}, [location.pathname]);
 
 	useEffect(() => {
-		if (authenticated){
+		if (authenticated) {
 			dispatch(tokenRefresh())
 		}
 	}, [location.pathname]);
@@ -217,6 +218,11 @@ const App = () => {
 		}
 
 	}, [loading]);
+	const sessionId = useSelector(state => state.general.sessionId)
+	const [curSID, setCurSID] = useState(sessionId);
+	useEffect(() => {
+		setCurSID(sessionId)
+	}, [sessionId])
 
 	return (
 		<>
@@ -233,24 +239,31 @@ const App = () => {
 							}
 						}}
 					/>
-					<Routes>
-						<Route path="/" element={<SignIn />} />
-						<Route path="/signup" element={<Signup />} />
+					{
+						curSID !== undefined || curSID !== null ?
+							<Routes>
 
-						{/* <Route path="/test" element={<Test />} /> */}
-						{/* <Route path="pw-reset/:token" element={<PassReset />} /> */}
+								<Route path={`${curSID}`} element={<SignIn />} />
+								<Route path={`/${curSID}/signup`} element={<Signup />} />
 
-						<Route element={authenticated ? <Layout /> : <SignIn />}>
-							{/* <Route path="/dashboard" element={<Test />} /> */}
-							<Route path="/dashboard" element={<Dashboard />} />
-							<Route path="/transactions" element={<Transactions />} />
-							<Route path="/vaults" element={<Vaults />} />
-							<Route path="/billing" element={<Billing />} />
-							<Route path="/profile" element={<Profile />} />
-							<Route path="/unlock-vault/:id" element={<UnlockedVault />} />
-							<Route path="/vault-invite/:token" element={<VaultInvite />} />
-						</Route>
-					</Routes>
+								{/* <Route path="/test" element={<Test />} /> */}
+								{/* <Route path="pw-reset/:token" element={<PassReset />} /> */}
+
+								<Route element={authenticated ? <Layout /> : <SignIn />}>
+									{/* <Route path="/dashboard" element={<Test />} /> */}
+									<Route path={`/${curSID}/dasboard`} element={<Dashboard />} />
+									<Route path={`/${curSID}/transactions`} element={<Transactions />} />
+									<Route path={`/${curSID}/vaults`} element={<Vaults />} />
+									<Route path={`/${curSID}/billing`} element={<Billing />} />
+									<Route path={`/${curSID}/profile`} element={<Profile />} />
+									<Route path={`/${curSID}/unlock-vault/:id`} element={<UnlockedVault />} />
+									<Route path={`/vault-invite/:token`} element={<VaultInvite />} />
+								</Route>
+								<Route path="*" element={<Redirect />} />
+							</Routes>
+
+							: null
+					}
 
 				</ThemeProvider>
 			</div>

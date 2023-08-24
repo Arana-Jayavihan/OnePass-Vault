@@ -9,7 +9,8 @@ if (mode === null || mode === undefined) {
 const initState = {
     mode: mode,
     loading: false,
-    keyExTriggered: false
+    keyExTriggered: false,
+    sessionId: undefined
 }
 export default (state = initState, action) => {
     switch (action.type) {
@@ -59,12 +60,25 @@ export default (state = initState, action) => {
             localStorage.setItem('mode', 'light')
             break
         
+        case generalConstatnts.KEY_EXCHANGE_REQUEST:
+            state = {
+                ...state,
+                loading: true
+            }
+            break
         case generalConstatnts.KEY_EXCHANGE_SUCCESS:
             state = {
                 ...state,
-                keyExTriggered: true
+                keyExTriggered: true,
+                sessionId: action.payload
             }
             break
+        case generalConstatnts.KEY_EXCHANGE_FAILED:
+            state = {
+                ...state,
+                keyExTriggered: false,
+                loading: false
+            }
         
         case authConsts.LOGOUT_SUCCESS:
             state = {

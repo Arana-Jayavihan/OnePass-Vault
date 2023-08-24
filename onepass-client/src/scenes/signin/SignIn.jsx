@@ -21,6 +21,7 @@ const SignIn = () => {
     const [password, setPassword] = useState('');
     const authenticated = useSelector(state => state.auth.authenticated)
     const hashPass = useSelector(state => state.auth.hashPass)
+    const sessionId = useSelector(state => state.general.sessionId)
 
     const userLoginReq = () => {
         if (email === '' || email === undefined) {
@@ -98,7 +99,7 @@ const SignIn = () => {
     }
 
     if (authenticated) {
-        return <Navigate to='/vaults' />
+        return <Navigate to={`/${sessionId}/vaults`} />
     }
 
     const renderSignin = () => {
@@ -145,7 +146,7 @@ const SignIn = () => {
                                     </div>
                                     <div className="link_container">
                                         <p className="small" onClick={() => setResetMode(true)} >Forgot Password?</p>
-                                        <p onClick={() => navigate("/signup")} className="small">
+                                        <p onClick={() => navigate(`/${sessionId}/signup`)} className="small">
                                             Create an Account
                                         </p>
                                     </div>
@@ -186,7 +187,7 @@ const SignIn = () => {
                                         </motion.button>
                                     </div>
                                     <div className="link_container1">
-                                        <p onClick={() => navigate("/signup")} className="small">
+                                        <p onClick={() => navigate(`/${sessionId}/signup`)} className="small">
                                             Create an Account
                                         </p>
                                     </div>

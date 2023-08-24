@@ -63,13 +63,26 @@ export const importPubKey = async (b64EncPubKey) => {
 
 export const initWebSession = async (req, res) => {
     try {
-        const ip = req.headers['x-forwarded-for']
-        const webSessions = Object.values(webSessionList)
-        for (let webSession in webSessions) {
-            if (webSessions[webSession].ip === ip) {
-                delete webSessionList[webSessions[webSession].sessionId]
+        let oldWebSessionToken = undefined
+        try {
+            oldWebSessionToken = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
+            const webSessions = Object.values(webSessionList)
+            for (let webSession in webSessions) {
+                if (webSessions[webSession].sessionId === oldWebSessionToken.sessionId) {
+                    delete webSessionList[webSessions[webSession].sessionId]
+                }
             }
+        } catch (error) {
+            console.log("No old sessions")
         }
+
+        // const ip = req.headers['x-forwarded-for']
+        // const webSessions = Object.values(webSessionList)
+        // for (let webSession in webSessions) {
+        //     if (webSessions[webSession].ip === ip) {
+        //         delete webSessionList[webSessions[webSession].sessionId]
+        //     }
+        // }
         let hours1 = new Date()
         hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
         const serverKeyPair = await webcrypto.subtle.generateKey(
@@ -112,7 +125,8 @@ export const initWebSession = async (req, res) => {
         res.status(201).json({
             message: "Web Session Created",
             payload: {
-                serverPubKey: serverPubKey
+                serverPubKey: serverPubKey,
+                sessionId: webSessionObj.sessionId
             }
         })
     } catch (error) {
@@ -143,7 +157,7 @@ export const updateWebSession = async (webSessionId, webPubKey) => {
         webSessionList[webSessionId].lastAccessed = new Date().getTime()
 
         const serverPubKey = byteArrayToB64(await webcrypto.subtle.exportKey("raw", serverKeyPair.publicKey))
-        return {serverPubKey, newServerAESKey}
+        return { serverPubKey, newServerAESKey }
 
     } catch (error) {
         console.log(error)

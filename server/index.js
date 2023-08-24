@@ -92,7 +92,7 @@ app.use(helmet.ieNoOpen())
 // RATE LIMITER
 const limiter = rateLimit({
     windowMs: 5 * 60 * 1000,
-    max: 50,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     // handler: function (req, res) {

@@ -156,6 +156,7 @@ export const checkRequest = (req, res, next) => {
 // checks whether the user have a valid session
 export const requireSignin = (req, res, next) => {
     try {
+        console.log(req.cookies)
         const tokens = Object.values(authTokens)
         const webSessions = Object.values(webSessionList)
         const webSessionToken = jwt.verify(CryptoJS.AES.decrypt(req.cookies.sessionId, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8), publicKey, { algorithms: ['ES512'] })

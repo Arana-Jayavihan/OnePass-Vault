@@ -1,6 +1,4 @@
 node_modules
 .env
 thirdwebAPIKey.txt
-.vscode
-ecdsaPrivKey.pem
-ecdsaPubKey.pem
+.vscode 
