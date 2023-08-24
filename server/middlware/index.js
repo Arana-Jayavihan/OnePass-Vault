@@ -157,41 +157,47 @@ export const checkRequest = (req, res, next) => {
 export const requireSignin = (req, res, next) => {
     try {
         const tokens = Object.values(authTokens)
+        const webSessions = Object.values(webSessionList)
+        const webSessionToken = jwt.verify(CryptoJS.AES.decrypt(req.cookies.sessionId, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8), publicKey, { algorithms: ['ES512'] })
+        const webSession = webSessions.find(webSession => webSession.sessionId === webSessionToken.sessionId)
         if (req.cookies.encToken) {
             const encToken = req.cookies.encToken
             const token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
             if (token) {
                 const tokenHash = CryptoJS.SHA256(token).toString()
-                const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
-                if (authToken) {
-                    try {
-                        const user = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
-                        if (user) {
-                            if (req.headers['x-forwarded-for'] !== authToken.ip) {
-                                return res.status(400).json({
-                                    message: "Invalid Session IP"
-                                })
+                if (tokenHash === webSession.userSession) {
+                    const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
+                    if (authToken) {
+                        try {
+                            const user = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
+                            if (user) {
+                                if (req.headers['x-forwarded-for'] !== authToken.ip) {
+                                    return res.status(400).json({
+                                        message: "Invalid Session IP"
+                                    })
+                                }
+                                else {
+                                    req.user = user
+                                    next()
+                                }
                             }
                             else {
-                                req.user = user
-                                next()
+                                return res.status(400).json({
+                                    message: "Invalid Token"
+                                })
                             }
-                        }
-                        else {
-                            return res.status(400).json({
-                                message: "Invalid Token"
+                        } catch (error) {
+                            console.log(error)
+                            return res.status(401).json({
+                                message: "Session Expired"
                             })
                         }
-                    } catch (error) {
-                        console.log(error)
-                        return res.status(401).json({
-                            message: "Session Expired"
-                        })
                     }
+
                 }
                 else {
                     return res.status(400).json({
-                        message: "Invalid Token"
+                        message: "User and Web sessions mismatch"
                     })
                 }
             }

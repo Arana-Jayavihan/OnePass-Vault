@@ -6,6 +6,8 @@ import dotenv from 'dotenv'
 import fs from 'fs'
 dotenv.config()
 
+import {webSessionList} from './webSessionController.js'
+
 export let tokenlist = {}
 let privateKey = undefined
 let publicKey = undefined
@@ -44,8 +46,7 @@ export const userKeyGeneration = async (req, res) => {
             }
             else {
                 res.status(500).json({
-                    message: 'User Key Generation Unsuccessful',
-                    error: result
+                    message: 'User Key Generation Unsuccessful'
                 })
             }
         }
@@ -227,6 +228,7 @@ export const signIn = async (req, res) => {
                             'tokenHash': tokenHash,
                             'ip': IP
                         }
+                        webSessionList[req.body.webSessionId]['userSession'] = tokenHash
                         console.log(tokenlist, "New Signin")
                         res.cookie('refreshToken', refreshToken, {
                             path: '/',
