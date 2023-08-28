@@ -1,20 +1,22 @@
+import { Typography } from '@mui/material'
 import React, { useEffect } from 'react'
-import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
 const Redirect = () => {
     const navigate = useNavigate()
-    const sessionId = useSelector(state => state.general.sessionId)
     useEffect(() => {
-        if (sessionId !== undefined) {
-            navigate(`${sessionId}`)
-        }
-        else
+        const redirectTimeOut = setTimeout(() => {
             navigate('/')
-
-    }, [sessionId])
+            
+        }, 3000)
+        return clearTimeout(redirectTimeOut)
+    }, [])
     return (
-        null
+        <>
+            <Typography varient='h1' >
+                Oops bad URL!
+            </Typography>
+        </>
     )
 }
 

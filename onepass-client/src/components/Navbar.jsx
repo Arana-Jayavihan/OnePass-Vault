@@ -8,7 +8,7 @@ import {
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import FlexBetween from './FlexBetween';
 import { useDispatch, useSelector } from 'react-redux';
-import { AppBar, IconButton, Toolbar, useTheme, Box, Button, Typography, Menu, MenuItem } from '@mui/material';
+import { AppBar, IconButton, Toolbar, useTheme, Box, Button, Typography, Menu, MenuItem, useMediaQuery } from '@mui/material';
 import { switchMode } from '../actions/generalActions';
 import { signout } from '../actions/authActions';
 import './style.css'
@@ -18,6 +18,7 @@ const Navbar = (props) => {
     const user = props.user
     const dispatch = useDispatch()
     const theme = useTheme()
+    const isNonMobile = useMediaQuery("(min-width: 600px)");
 
     const [anchorEl, setAnchorEl] = useState(null);
     const isOpen = Boolean(anchorEl);
@@ -36,7 +37,7 @@ const Navbar = (props) => {
             <Toolbar sx={{ justifyContent: 'space-between' }}>
                 <FlexBetween>
                     <IconButton onClick={() => props.setIsSidebarOpen(!props.isSidebarOpen)} >
-                        <MenuIcon sx={{ color:'#fff' }} />
+                        <MenuIcon sx={{ color: '#fff' }} />
                     </IconButton>
                 </FlexBetween>
 
@@ -63,9 +64,12 @@ const Navbar = (props) => {
                                 gap: "1rem",
                             }}
                         >
-                            <AccountCircleIcon
-                                sx={{ color: "#fff", fontSize: "35px" }}
-                            />
+                            {
+                                isNonMobile ? <AccountCircleIcon
+                                    sx={{ color: "#fff", fontSize: "35px" }}
+                                /> : null
+                            }
+
                             <Box textAlign="left">
                                 <Typography
                                     fontWeight="bold"
@@ -73,9 +77,9 @@ const Navbar = (props) => {
                                     sx={{ color: "#fff" }}
                                 >
                                     {
-                                        user ? 
+                                        user ?
                                             user.firstName + " " + user.lastName
-                                        : null
+                                            : null
                                     }
                                 </Typography>
                                 <Typography

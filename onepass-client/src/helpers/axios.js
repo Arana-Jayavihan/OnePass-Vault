@@ -2,22 +2,25 @@ import axios from "axios";
 import { api } from "../helpers/urlConfigs";
 import store from "../store/index";
 import { toast } from "react-hot-toast";
-import { signout } from "../actions/authActions";
+import { keyExchange, signout } from "../actions/authActions";
 
 const abortController = new AbortController()
-    const timeout = setTimeout(() => {
-        abortController.abort()
-        store.dispatch(signout())
-        console.log("Aborted")
-    }, 2000)
+const timeout = setTimeout(() => {
+    abortController.abort()
+    store.dispatch(signout())
+    console.log("Aborted")
+}, 2000)
+
 
 const axiosInstance = axios.create({
     withCredentials: true,
     baseURL: api,
+    
     headers: {
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
         'Upgrade-Insecure-Requests': '1',
         'Accept-Language': 'en-US',
+        'Accept': 'application/json',
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Content-Type': 'application/json; charset=utf-8',
@@ -27,9 +30,10 @@ const axiosInstance = axios.create({
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
-        'Access-Control-Allow-Methods': 'GET,POST'
+        'Access-Control-Allow-Methods': 'GET,POST',
+        'Access-Control-Allow-Origin': "http://localhost:9000/api"
     },
-    timeout: 20000,
+    timeout: 50000,
     signal: abortController.signal,
 })
 
@@ -40,6 +44,7 @@ axiosInstance.interceptors.response.use((res) => {
     }
     return res
 }, async (error) => {
+    //store.dispatch(keyExchange())
     clearTimeout(timeout)
     try {
         toast.dismiss('loading')
@@ -58,7 +63,7 @@ axiosInstance.interceptors.response.use((res) => {
     }
 
     console.log(error.response)
-    if(error.response === undefined){
+    if (error.response === undefined) {
         store.dispatch(signout())
     }
     const { status } = error.response
@@ -82,7 +87,8 @@ axiosInstance.interceptors.response.use((res) => {
             (error.response.data.message === "Invalid Session" ||
                 error.response.data.message === "Invalid Token" ||
                 error.response.data.message === "Authorization Required!" ||
-                error.response.data.message === "Not Logged In")) ||
+                error.response.data.message === "Not Logged In" ||
+                error.response.data.message === "User and Web sessions mismatch")) ||
         (status === 500)
     ) {
         store.dispatch(signout())

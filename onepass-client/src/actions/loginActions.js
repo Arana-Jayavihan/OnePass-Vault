@@ -3,12 +3,14 @@ import axiosInstance from "../helpers/axios.js"
 import { vaultConsts } from "./constants.js"
 import { encryptAES } from "../helpers/encrypt.js"
 import { decryptVaultLogins } from "./vaultActions.js"
+import { decryptRequest, encryptRequest } from "./requestActions.js"
 
 export const addUserLogin = (form) => {
     return async dispatch => {
         dispatch({
             type: vaultConsts.ADD_NEW_VAULT_LOGIN_REQUEST
         })
+        
         const encLoginName = await encryptAES(form.loginName, form.vaultKey)
         const encLoginUrl = await encryptAES(form.loginUrl, form.vaultKey)
         const encLoginUserName = await encryptAES(form.loginUsername, form.vaultKey)
@@ -32,10 +34,13 @@ export const addUserLogin = (form) => {
             email: form.email,
             customFields: encCustomFields
         }
-        const res = await axiosInstance.post("/login/add-login", addLoginForm)
+        const webAESKey = sessionStorage.getItem('requestEncKey')
+        const { encForm, privateKey } = await encryptRequest(addLoginForm, webAESKey)
+        const res = await axiosInstance.post("/login/add-login", { 'encData': encForm })
 
         if (res.status === 201) {
-            const decLogins = await decryptVaultLogins(res.data.payload, form.vaultKey)
+            const decData = await decryptRequest(res.data.payload, res.data.serverPubKey, privateKey, webAESKey)
+            const decLogins = await decryptVaultLogins(decData, form.vaultKey)
             toast.success("Login Saved", { id: 'las' })
             dispatch({
                 type: vaultConsts.ADD_NEW_VAULT_LOGIN_SUCCESS,

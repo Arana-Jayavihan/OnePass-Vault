@@ -9,7 +9,7 @@ const store = configureStore({
         general: generalReducers,
         vault: vaultReducers
     },
-    devTools: true
+    devTools: false
 })
 
 export default store

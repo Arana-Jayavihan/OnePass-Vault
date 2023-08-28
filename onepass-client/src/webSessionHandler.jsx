@@ -1,16 +1,14 @@
 import { useDispatch, useSelector } from 'react-redux'
 import { keyExchange } from "./actions/authActions"
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Typography } from '@mui/material'
 
 const WebSessionHandler = (props) => {
     const dispatch = useDispatch()
     const triggered = useSelector(state => state.general.keyExTriggered)
+    const logged = useSelector(state => state.general.logged)
     const [count, setCount] = useState(0);
     const [render, setRender] = useState(false);
-    const navigate = useNavigate()
-    const sessionId = useSelector(state => state.general.sessionId)
-    const loading = useSelector(state => state.general.loading)
     const keyEx = useCallback(async () => {
         dispatch(keyExchange()).then((result) => {
             if (result) {
@@ -28,14 +26,18 @@ const WebSessionHandler = (props) => {
             setRender(true)
         }
     }, [triggered])
-
-    useEffect(() => {
-        if ( loading === false && render && sessionId !== null && sessionId !== undefined) {
-            navigate(`${sessionId}`)
-        }
-    }, [sessionId, loading])
+    
     if (render) {
         return props.app
+    }
+    if (logged) {
+        return (
+            <>
+                <Typography variant='h1' >
+                    Already Logged In
+                </Typography>
+            </>
+        )
     }
 }
 

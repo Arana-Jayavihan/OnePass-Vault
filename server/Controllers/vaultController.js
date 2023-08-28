@@ -67,9 +67,16 @@ export const addVault = async (req, res) => {
                 }
                 else if (vaults && vaults.length > 0) {
                     const validVaults = assignVaultParser(vaults)
+                    const encodedPayload = JSON.stringify(validVaults)
+                    const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
+                        iv: CryptoJS.SHA256(sh.generate()).toString(),
+                        mode: CryptoJS.mode.CBC,
+                        padding: CryptoJS.pad.Pkcs7
+                    }).toString()
                     res.status(201).json({
                         message: "Vault Added Successfully",
-                        payload: validVaults
+                        payload: encPayload,
+                        serverPubKey: req.body.serverPubKey
                     })
                 }
             }
@@ -158,9 +165,16 @@ export const vaultUnlockRequest = async (req, res) => {
                 secure: true,
                 httpOnly: true
             })
+            const encodedPayload = JSON.stringify(tokenHash)
+            const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
+                iv: CryptoJS.SHA256(sh.generate()).toString(),
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            }).toString()
             res.status(200).json({
                 message: "Vault Unlock Token Generated",
-                payload: tokenHash
+                payload: encPayload,
+                serverPubKey: req.body.serverPubKey
             })
         }
         else {
@@ -211,9 +225,16 @@ export const getEncVaultKey = async (req, res) => {
                                 })
                             }
                             else if (result && result !== "") {
+                                const encodedPayload = JSON.stringify(result)
+                                const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
+                                    iv: CryptoJS.SHA256(sh.generate()).toString(),
+                                    mode: CryptoJS.mode.CBC,
+                                    padding: CryptoJS.pad.Pkcs7
+                                }).toString()
                                 res.status(200).json({
                                     message: "Vault Encrypted Key Fetched",
-                                    payload: result
+                                    payload: encPayload,
+                                    serverPubKey: req.body.serverPubKey
                                 })
                             }
                         }

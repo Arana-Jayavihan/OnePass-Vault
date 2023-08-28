@@ -63,27 +63,36 @@ export const importPubKey = async (b64EncPubKey) => {
 
 export const initWebSession = async (req, res) => {
     try {
+        const browserDetails = {
+            'platform': req.headers['sec-ch-ua-platform'],
+            'userAgent': req.headers['user-agent'],
+            'isMobile': req.headers['sec-ch-ua-mobile']
+        }
+        const broswserHash = CryptoJS.SHA256(JSON.stringify(browserDetails)).toString()
         let oldWebSessionToken = undefined
         try {
             oldWebSessionToken = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
             const webSessions = Object.values(webSessionList)
             for (let webSession in webSessions) {
-                if (webSessions[webSession].sessionId === oldWebSessionToken.sessionId) {
+                if (webSessions[webSession].sessionId === oldWebSessionToken.sessionId && webSessions[webSession].userSession === undefined) {
                     delete webSessionList[webSessions[webSession].sessionId]
                 }
             }
         } catch (error) {
             console.log("No old sessions")
         }
-
-        // const ip = req.headers['x-forwarded-for']
-        // const webSessions = Object.values(webSessionList)
-        // for (let webSession in webSessions) {
-        //     if (webSessions[webSession].ip === ip) {
-        //         delete webSessionList[webSessions[webSession].sessionId]
-        //     }
-        // }
-        let hours1 = new Date()
+        let flag = false
+        const webSessions = Object.values(webSessionList)
+        for (let webSession in webSessions) {
+            if (webSessions[webSession].browserHash === broswserHash && webSessions[webSession].userSession === undefined) {
+                delete webSessionList[webSessions[webSession].sessionId]
+            }
+            else if (webSessions[webSession].browserHash === broswserHash && webSessions[webSession].userSession !== undefined){
+                flag = true
+            }
+        }
+        if (flag === false){
+            let hours1 = new Date()
         hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
         const serverKeyPair = await webcrypto.subtle.generateKey(
             {
@@ -106,6 +115,8 @@ export const initWebSession = async (req, res) => {
             'secretKey': serverAESKey,
             'lastAccessed': new Date().getTime(),
             'ip': req.headers['x-forwarded-for'],
+            'browserHash': broswserHash,
+            'browserDetails': browserDetails
         }
         webSessionList[webSessionObj.sessionId] = webSessionObj
         console.log(webSessionList, "New Web Session")
@@ -125,10 +136,15 @@ export const initWebSession = async (req, res) => {
         res.status(201).json({
             message: "Web Session Created",
             payload: {
-                serverPubKey: serverPubKey,
-                sessionId: webSessionObj.sessionId
+                serverPubKey: serverPubKey
             }
         })
+        }
+        else if (flag === true) {
+            res.status(200).json({
+                message: "Already Logged In"
+            })
+        }
     } catch (error) {
         console.log(error)
         res.status(500).json({
@@ -171,7 +187,7 @@ const clearWebSessionTokens = () => {
         const currentTime = new Date().getTime()
         let count = 0
         webSessions.forEach(webSession => {
-            if (currentTime - webSession.lastAccessed > 5 * 60 * 1000) {
+            if ((currentTime - webSession.lastAccessed > 5 * 60 * 1000 && webSession.userSession === undefined) || (currentTime - webSession.lastAccessed > 15 * 60 * 1000)) {
                 delete webSessionList[webSession.sessionId]
                 count++
             }
@@ -182,4 +198,4 @@ const clearWebSessionTokens = () => {
     }
 }
 
-setInterval(clearWebSessionTokens, 15 * 60 * 1000)
+setInterval(clearWebSessionTokens, 5 * 60 * 1000)

@@ -725,7 +725,7 @@ const UnlockedVault = () => {
                             </Row>
                             <Row>
                                 <Col md={3}
-                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: isNonMobile ? "75vh" : 'max-content', overflowY: 'scroll' }}
+                                    style={{ backgroundColor: "transparent", borderRadius: '15px', padding: '1rem', height: 'max-content', overflowY: 'scroll' }}
                                 >
                                     <div style={{ backgroundColor: theme.palette.primary[100], borderRadius: '15px', padding: '1rem', height: '80%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                                         <div>
@@ -820,7 +820,7 @@ const UnlockedVault = () => {
                                         </FlexBetween>
                                     </div>
 
-                                    <Col md={12} style={{ overflowX: 'scroll', height: isNonMobile ? "65vh" : 'max-content', overflowY: 'scroll' }}>
+                                    <Col md={12} style={{ overflowX: 'scroll', height: isNonMobile ? 'max-content' : "65vh", overflowY: 'scroll' }}>
                                         {
                                             loginList?.length > 0 ?
                                                 <motion.div

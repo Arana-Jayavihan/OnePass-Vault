@@ -24,7 +24,11 @@ export const decryptRequest = async (req, res, next) => {
             url.includes('/auth/signin') ||
             url.includes('/auth/add-user-data') ||
             url.includes('/auth/genkeys') ||
-            url.includes('/auth/token')
+            url.includes('/auth/token') ||
+            url.includes('/login/add-login') ||
+            url.includes('/vault/add-vault') ||
+            url.includes('/vault/get-vault-unlock-token') ||
+            url.includes('/vault/get-enc-vault-key')
         ) {
             const encSessionToken = req.cookies.sessionId
             const sessionToken = CryptoJS.AES.decrypt(encSessionToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
@@ -34,7 +38,13 @@ export const decryptRequest = async (req, res, next) => {
                     const webSessions = Object.values(webSessionList)
                     const webSession = webSessions.find(webSession => webSession.sessionId === verifiedToken.sessionId)
                     if (webSession) {
-                        if (req.headers['x-forwarded-for'] === webSession.ip) {
+                        const browserDetails = {
+                            'platform': req.headers['sec-ch-ua-platform'],
+                            'userAgent': req.headers['user-agent'],
+                            'isMobile': req.headers['sec-ch-ua-mobile']
+                        }
+                        const broswserHash = CryptoJS.SHA256(JSON.stringify(browserDetails)).toString()
+                        if (broswserHash === webSession.browserHash) {
                             const sessionEncKey = webSession.secretKey
                             try {
                                 const decData = CryptoJS.AES.decrypt(req.body.encData, sessionEncKey).toString(CryptoJS.enc.Utf8)
@@ -61,12 +71,14 @@ export const decryptRequest = async (req, res, next) => {
                                     message: "Request Not Allowed"
                                 })
                             }
+
                         }
                         else {
                             res.status(401).json({
-                                message: "Invalid Web Session IP"
+                                message: "Browser Fingerprint Mistmatch"
                             })
                         }
+
                     }
                     else {
                         res.status(401).json({
@@ -88,7 +100,6 @@ export const decryptRequest = async (req, res, next) => {
         }
         else {
             next()
-
         }
     } catch (error) {
         console.log(error)
@@ -156,7 +167,6 @@ export const checkRequest = (req, res, next) => {
 // checks whether the user have a valid session
 export const requireSignin = (req, res, next) => {
     try {
-        console.log(req.cookies)
         const tokens = Object.values(authTokens)
         const webSessions = Object.values(webSessionList)
         const webSessionToken = jwt.verify(CryptoJS.AES.decrypt(req.cookies.sessionId, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8), publicKey, { algorithms: ['ES512'] })
@@ -222,44 +232,3 @@ export const requireSignin = (req, res, next) => {
         })
     }
 }
-
-// export const requireSignin = (req, res, next) => {
-//     try {
-//         const tokens = Object.values(authTokens)
-//         if (req.headers.authorization) {
-//             const token = req.headers.authorization
-//             const authToken = tokens.find(authToken => authToken.token === token)
-//             console.log(authToken)
-//             const encToken = req.body.encToken
-//             const decToken = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
-//             if (decToken === token) {
-//                 const user = jwt.verify(token, process.env.JWT_SECRET)
-//                 req.user = user
-//                 if (req.user.ip !== req.headers['x-forwarded-for']) {
-//                     return res.status(400).json({
-//                         message: "Invalid Session"
-//                     })
-//                 }
-//             }
-//             else {
-//                 return res.status(401).json({
-//                     message: "Potential Malicious Atempt"
-//                 })
-//             }
-//         }
-//         else {
-//             return res.status(400).json({
-//                 message: "Authorization Required!"
-//             })
-//         }
-
-//         next()
-//     }
-//     catch (error) {
-//         console.log(error)
-//         res.status(401).json({
-//             message: "Session Expired",
-//             payload: error
-//         })
-//     }
-// }

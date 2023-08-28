@@ -99,7 +99,7 @@ const SignIn = () => {
     }
 
     if (authenticated) {
-        return <Navigate to={`/${sessionId}/vaults`} />
+        return <Navigate to={`/vaults`} />
     }
 
     const renderSignin = () => {

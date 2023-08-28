@@ -26,7 +26,6 @@ export const keyExchange = () => {
             }
 
             const res = await axiosInstance.post('/webSession/init', form)
-            console.log(res)
             if (res.status === 201) {
                 const serverPubKey = await window.crypto.subtle.importKey(
                     'raw',
@@ -54,16 +53,22 @@ export const keyExchange = () => {
                 const webAESKey = byteArrayToB64(await window.crypto.subtle.exportKey("raw", requestEncKey))
                 sessionStorage.setItem('requestEncKey', webAESKey)
                 dispatch({
-                    type: generalConstatnts.KEY_EXCHANGE_SUCCESS,
-                    payload: res.data.payload.sessionId
+                    type: generalConstatnts.KEY_EXCHANGE_SUCCESS
                 })
                 return true
+            }
+            else if (res.status === 200) {
+                toast.error("Already logged in", {id: 'ali'})
+                dispatch({
+                    type: generalConstatnts.KEY_LOGGED
+                })
             }
             else if (res.response) {
                 sessionStorage.setItem('requestEncKey', null)
                 dispatch({
                     type: generalConstatnts.KEY_EXCHANGE_FAILED
                 })
+                return true
             }
         } catch (error) {
             sessionStorage.setItem('requestEncKey', null)
@@ -162,7 +167,6 @@ export const signInReq = (form) => {
         if (res.status === 200) {
             const decData = await decryptRequest(res.data.payload, res.data.serverPubKey, privateKey, webAESKey)
             if (decData !== false) {
-                console.log(decData)
                 toast.success("User verification success")
                 dispatch({
                     type: authConsts.USER_LOGIN_REQUEST_SUCCESS,

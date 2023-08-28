@@ -1,6 +1,7 @@
 import { addVaultLogin, getAllVaultLogins } from "./contractController.js"
 import { vaultLoginParser } from "../Parsers/parsers.js"
 import shortID from 'shortid'
+import CryptoJS from "crypto-js"
 
 export const addLogin = async (req, res) => {
     try {
@@ -10,7 +11,7 @@ export const addLogin = async (req, res) => {
             let customFields = req.body.customFields
             if (customFields.length > 0) {
                 for (let field of customFields) {
-                    field['id']= shortID.generate()
+                    field['id'] = shortID.generate()
                 }
             }
             const result = await addVaultLogin(req.body.email, req.body.loginName, req.body.loginUrl, req.body.loginUsername, req.body.loginPassword, user.hashPass, req.body.vaultIndex, customFields)
@@ -23,9 +24,16 @@ export const addLogin = async (req, res) => {
                 }
                 else if (logins && logins.length >= 0) {
                     const parsedLogins = vaultLoginParser(logins)
+                    const encodedPayload = JSON.stringify(parsedLogins)
+                    const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
+                        iv: CryptoJS.SHA256(shortID.generate()).toString(),
+                        mode: CryptoJS.mode.CBC,
+                        padding: CryptoJS.pad.Pkcs7
+                    }).toString()
                     res.status(201).json({
                         message: "Login Added Successfully!",
-                        payload: parsedLogins
+                        payload: encPayload,
+                        serverPubKey: req.body.serverPubKey
                     })
                 }
             }
@@ -54,8 +62,14 @@ export const getVaultLogins = async (req, res) => {
     try {
         const vaultIndex = req.body.vaultIndex
         const result = await getAllVaultLogins(vaultIndex)
-        console.log(result, vaultIndex)
         const parsedLogins = vaultLoginParser(result)
+        // const encodedPayload = JSON.stringify(parsedLogins)
+        // const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
+        //     iv: CryptoJS.SHA256(sh.generate()).toString(),
+        //     mode: CryptoJS.mode.CBC,
+        //     padding: CryptoJS.pad.Pkcs7
+        // }).toString()
+
         if (result) {
             res.status(200).json({
                 message: "Vault Logins Fetched",

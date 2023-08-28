@@ -6,7 +6,7 @@ import dotenv from 'dotenv'
 import fs from 'fs'
 dotenv.config()
 
-import {webSessionList} from './webSessionController.js'
+import { webSessionList } from './webSessionController.js'
 
 export let tokenlist = {}
 let privateKey = undefined
@@ -233,14 +233,14 @@ export const signIn = async (req, res) => {
                         webSessionList[req.body.webSessionId]['userSession'] = tokenHash
                         console.log(tokenlist, "New Signin")
                         res.cookie('refreshToken', refreshToken, {
-                            path: `/${sessionId}/vaults/`,
+                            path: `/`,
                             expires: hours1,
                             sameSite: "none",
                             secure: true,
                             httpOnly: true
                         })
                         res.cookie('encToken', encToken, {
-                            path: `/${sessionId}/vaults/`,
+                            path: `/`,
                             expires: thirtyMins,
                             sameSite: "none",
                             secure: true,
@@ -299,46 +299,72 @@ export const signIn = async (req, res) => {
 
 export const isLoggedIn = (req, res) => {
     try {
-        if (req.cookies.encToken) {
-            const tokens = Object.values(tokenlist)
-            const encToken = req.cookies.encToken
-            const token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
-            const tokenHash = CryptoJS.SHA256(token).toString()
-            const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
-            if (authToken) {
-                const user = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
-                if (user) {
-                    if (user.ip !== req.headers['x-forwarded-for'] && user.ip !== authToken.ip) {
-                        return res.status(400).json({
-                            message: "Invalid Session"
-                        })
-                    }
-                    else if (user.email !== req.body.email) {
-                        return res.status(400).json({
-                            message: "Invalid Session"
-                        })
+        if (req.cookies.sessionId) {
+            const webSessionCookie = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
+            const sessionId = webSessionCookie.sessionId
+            const webSessions = Object.values(webSessionList)
+            const webSession = webSessions.find(webSession => webSession.sessionID === sessionId)
+            if (webSession) {
+                if (req.cookies.encToken) {
+                    const tokens = Object.values(tokenlist)
+                    const encToken = req.cookies.encToken
+                    const token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+                    const tokenHash = CryptoJS.SHA256(token).toString()
+                    if (tokenHash === webSession.userSession) {
+                        const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
+                        if (authToken) {
+                            const user = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
+                            if (user) {
+
+                                if (user.ip !== req.headers['x-forwarded-for'] && user.ip !== authToken.ip) {
+                                    return res.status(400).json({
+                                        message: "Invalid Session"
+                                    })
+                                }
+                                else if (user.email !== req.body.email) {
+                                    return res.status(400).json({
+                                        message: "Invalid Session"
+                                    })
+                                }
+                                else {
+                                    res.status(200).json({
+                                        message: "Logged In"
+                                    })
+                                }
+                            }
+                            else {
+                                return res.status(400).json({
+                                    message: "Invalid Token"
+                                })
+                            }
+                        }
+                        else {
+                            res.status(400).json({
+                                message: "Session Expired"
+                            })
+                        }
                     }
                     else {
-                        res.status(200).json({
-                            message: "Logged In"
+                        res.status(401).json({
+                            message: "User and Web sessions mismatch"
                         })
                     }
                 }
                 else {
-                    return res.status(400).json({
-                        message: "Invalid Token"
+                    res.status(400).json({
+                        message: "Not Logged In"
                     })
                 }
             }
             else {
-                res.status(400).json({
-                    message: "Session Expired"
+                res.status(401).json({
+                    messasge: "Invalid Web Session"
                 })
             }
         }
         else {
-            res.status(400).json({
-                message: "Not Logged In"
+            res.status(401).json({
+                message: "Web Session Token Not Found"
             })
         }
     }
@@ -381,14 +407,14 @@ export const tokenRefresh = async (req, res) => {
                                     padding: CryptoJS.pad.Pkcs7
                                 }).toString()
                                 res.cookie('refreshToken', refreshToken, {
-                                    path: `/${sessionId}/vaults/`,
+                                    path: `/`,
                                     expires: hours1,
                                     sameSite: "none",
                                     secure: true,
                                     httpOnly: true
                                 })
                                 res.cookie('encToken', encToken, {
-                                    path: `/${sessionId}/vaults/`,
+                                    path: `/`,
                                     expires: thirtyMins,
                                     sameSite: "none",
                                     secure: true,
@@ -452,18 +478,22 @@ export const tokenRefresh = async (req, res) => {
 }
 
 export const signOut = async (req, res) => {
-    //console.log(jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] }))
     try {
         const refreshToken = req.cookies.refreshToken
         delete tokenlist[refreshToken]
-        const webSessionCookie = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
-        const sessionId = webSessionCookie.sessionId
+        try {
+            const sessionToken = jwt.verify(CryptoJS.AES.decrypt(req.cookies.sessionId, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8), publicKey, { algorithms: ['ES512'] })
+            delete webSessionList[sessionToken.sessionId]
+        } catch (error) {
+            console.log(error)
+        }
+
         console.log(tokenlist, "SignOut")
 
-        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
-        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
-        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
-        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/*` })
+        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none", path: `/` })
+        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none", path: `/` })
+        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none", path: `/` })
+        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none", path: `/` })
         res.status(200).json({
             message: "Signout successfully :)"
         })
@@ -471,12 +501,10 @@ export const signOut = async (req, res) => {
     }
     catch (error) {
         console.log(error)
-        // const webSessionCookie = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
-        // const sessionId = webSessionCookie.sessionId
-        // res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/` })
-        // res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/` })
-        // res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/` })
-        // res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none", path: `/${sessionId}/` })
+        res.clearCookie('refreshToken', { httpOnly: true, secure: true, sameSite: "none", path: `/` })
+        res.clearCookie('encToken', { httpOnly: true, secure: true, sameSite: "none", path: `/` })
+        res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none", path: `/` })
+        res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none", path: `/` })
         res.status(200).json({
             message: "Something Went Wrong!",
             error: error

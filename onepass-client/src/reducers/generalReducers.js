@@ -10,7 +10,7 @@ const initState = {
     mode: mode,
     loading: false,
     keyExTriggered: false,
-    sessionId: undefined
+    logged: false
 }
 export default (state = initState, action) => {
     switch (action.type) {
@@ -70,7 +70,7 @@ export default (state = initState, action) => {
             state = {
                 ...state,
                 keyExTriggered: true,
-                sessionId: action.payload
+                logged: false
             }
             break
         case generalConstatnts.KEY_EXCHANGE_FAILED:
@@ -79,7 +79,13 @@ export default (state = initState, action) => {
                 keyExTriggered: false,
                 loading: false
             }
-        
+        case generalConstatnts.KEY_LOGGED:
+            state = {
+                ...state,
+                logged: true,
+                loading: false
+            }
+            break
         case authConsts.LOGOUT_SUCCESS:
             state = {
                 ...initState

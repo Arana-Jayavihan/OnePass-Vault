@@ -218,12 +218,11 @@ const App = () => {
 		}
 
 	}, [loading]);
-	const sessionId = useSelector(state => state.general.sessionId)
-	const [curSID, setCurSID] = useState(sessionId);
-	useEffect(() => {
-		setCurSID(sessionId)
-	}, [sessionId])
-
+	
+	window.onunload = function (e) {
+		e.preventDefault()
+		dispatch(signout())
+	}
 	return (
 		<>
 			<div className="app">
@@ -239,31 +238,27 @@ const App = () => {
 							}
 						}}
 					/>
-					{
-						curSID !== undefined || curSID !== null ?
-							<Routes>
+					<Routes>
 
-								<Route path={`${curSID}`} element={<SignIn />} />
-								<Route path={`/${curSID}/signup`} element={<Signup />} />
+						<Route path={`/`} element={<SignIn />} />
+						<Route path={`/signup`} element={<Signup />} />
 
-								{/* <Route path="/test" element={<Test />} /> */}
-								{/* <Route path="pw-reset/:token" element={<PassReset />} /> */}
+						{/* <Route path="/test" element={<Test />} /> */}
+						{/* <Route path="pw-reset/:token" element={<PassReset />} /> */}
 
-								<Route element={authenticated ? <Layout /> : <SignIn />}>
-									{/* <Route path="/dashboard" element={<Test />} /> */}
-									<Route path={`/${curSID}/dasboard`} element={<Dashboard />} />
-									<Route path={`/${curSID}/transactions`} element={<Transactions />} />
-									<Route path={`/${curSID}/vaults`} element={<Vaults />} />
-									<Route path={`/${curSID}/billing`} element={<Billing />} />
-									<Route path={`/${curSID}/profile`} element={<Profile />} />
-									<Route path={`/${curSID}/unlock-vault/:id`} element={<UnlockedVault />} />
-									<Route path={`/vault-invite/:token`} element={<VaultInvite />} />
-								</Route>
-								<Route path="*" element={<Redirect />} />
-							</Routes>
+						<Route element={authenticated ? <Layout /> : <SignIn />}>
+							{/* <Route path="/dashboard" element={<Test />} /> */}
+							<Route path={`/dasboard`} element={<Dashboard />} />
+							<Route path={`/transactions`} element={<Transactions />} />
+							<Route path={`/vaults`} element={<Vaults />} />
+							<Route path={`/billing`} element={<Billing />} />
+							<Route path={`/profile`} element={<Profile />} />
+							<Route path={`/unlock-vault/:id`} element={<UnlockedVault />} />
+							<Route path={`/vault-invite/:token`} element={<VaultInvite />} />
+						</Route>
+						<Route path="*" element={<Redirect />} />
+					</Routes>
 
-							: null
-					}
 
 				</ThemeProvider>
 			</div>

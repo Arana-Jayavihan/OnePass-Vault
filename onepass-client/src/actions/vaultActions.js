@@ -5,6 +5,7 @@ import CryptoJS from "crypto-js"
 import axiosInstance from "../helpers/axios"
 import { loginConsts, vaultConsts } from "./constants.js"
 import { decryptAES, decryptRSA, encryptAES, encryptRSA, generateMasterEncryptionKey, importRSAPrivKey, importRSAPubKey } from "../helpers/encrypt"
+import { encryptRequest, decryptRequest } from "./requestActions"
 
 export const getUserAssignedVaults = (form) => {
     return async dispatch => {
@@ -47,8 +48,8 @@ export const addUserVault = (form) => {
                     if (privKeyRes.status === 200) {
                         const encPrivKey = privKeyRes.data.payload
                         const encodedPrivateKey = (await decryptAES(encPrivKey, form.pass)).toString(CryptoJS.enc.Utf8)
-                        const privateKey = await importRSAPrivKey(encodedPrivateKey)
-                        const masterEncKey = await decryptRSA(encMasterKey, privateKey)
+                        const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
+                        const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
 
                         const tempVaultSecret = shortid.generate()
                         const vaultKey = await generateMasterEncryptionKey(tempVaultSecret)
@@ -73,13 +74,16 @@ export const addUserVault = (form) => {
                             vaultKeyHash,
                             "customFields": encCustomFields,
                         }
+                        const webAESKey = sessionStorage.getItem('requestEncKey')
+                        const { encForm, privateKey } = await encryptRequest(form, webAESKey)
 
-                        const res = await axiosInstance.post("/vault/add-vault", form)
+                        const res = await axiosInstance.post("/vault/add-vault", { 'encData': encForm })
                         if (res.status === 201) {
+                            const decData = await decryptRequest(res.data.payload, res.data.serverPubKey, privateKey, webAESKey)
                             toast.success(res.data.message, { id: 'vas' })
                             dispatch({
                                 type: vaultConsts.ADD_USER_VAULT_SUCCESS,
-                                payload: res.data.payload
+                                payload: decData
                             })
                         }
                         else if (res.response) {
@@ -139,18 +143,28 @@ export const unlockUserVault = (form) => {
                     if (privKeyRes.status === 200) {
                         const encPrivKey = privKeyRes.data.payload
                         const encodedPrivateKey = (await decryptAES(encPrivKey, form.pass)).toString(CryptoJS.enc.Utf8)
-                        const privateKey = await importRSAPrivKey(encodedPrivateKey)
-                        const masterEncKey = await decryptRSA(encMasterKey, privateKey)
+                        const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
+                        const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
                         const getVaultKeyForm = {
                             vaultIndex: form.vaultIndex,
                             email: form.email
                         }
-                        const vaultUnlockRes = await axiosInstance.post("/vault/get-vault-unlock-token", getVaultKeyForm)
+                        let webAESKey = sessionStorage.getItem('requestEncKey')
+                        let { encForm, privateKey } = await encryptRequest(getVaultKeyForm, webAESKey)
+                        const privateKey1 = privateKey
+                        const webAESKey1 = webAESKey
+                        const vaultUnlockRes = await axiosInstance.post("/vault/get-vault-unlock-token", { 'encData': encForm })
                         if (vaultUnlockRes.status === 200) {
-                            const tokenHash = vaultUnlockRes.data.payload
-                            const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", getVaultKeyForm)
+                            const decData = await decryptRequest(vaultUnlockRes.data.payload, vaultUnlockRes.data.serverPubKey, privateKey1, webAESKey1)
+                            const tokenHash = decData
+                            let webAESKey = sessionStorage.getItem('requestEncKey')
+                            let { encForm, privateKey } = await encryptRequest(getVaultKeyForm, webAESKey)
+                            const privateKey2 = privateKey
+                            const webAESKey2 = webAESKey
+                            const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", { 'encData': encForm })
                             if (vaultKeyRes.status === 200) {
-                                const encVaultKey = vaultKeyRes.data.payload
+                                const decData = await decryptRequest(vaultKeyRes.data.payload, vaultKeyRes.data.serverPubKey, privateKey2, webAESKey2)
+                                const encVaultKey = decData
                                 const vaultKey = (await decryptAES(encVaultKey, masterEncKey)).toString(CryptoJS.enc.Utf8)
                                 toast.success("Vault Unlocked", { id: 'vus' })
 

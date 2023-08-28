@@ -222,7 +222,7 @@ const Vaults = () => {
     const handleAddCustomFieldButtonClick = () => {
         if (customFieldSize === 0) {
             if (customFieldSize < 2) {
-                const template = <Row style={{ marginTop: isNonMobile ? null : '1rem' }}>
+                const template = <>
                     <Col md={5}>
                         <Typography sx={{ color: theme.palette.primary[500] }}>
                             <Input
@@ -240,11 +240,21 @@ const Vaults = () => {
                         </Typography>
                     </Col>
                     <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <IconButton onClick={() => handleTickClick(customFieldSize)}>
-                            <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
-                        </IconButton>
+                    {
+                            isNonMobile ?
+                                <IconButton onClick={() => handleTickClick(customFieldSize)}>
+                                    <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
+                                </IconButton>
+                                : <motion.button
+                                    className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                    whileHover={{ scale: [1, 1.1] }}
+                                    onClick={() => handleTickClick(customFieldSize)}
+                                >
+                                    Add
+                                </motion.button>
+                        }
                     </Col>
-                </Row>
+                </>
                 setRenderCustomFields([...renderCustomFields, template])
                 setCustomFieldSize(customFieldSize + 1)
             }
@@ -254,7 +264,7 @@ const Vaults = () => {
         }
         else if (customFieldSize > 0 && customFields[customFieldSize - 1]) {
             if (customFieldSize < 2) {
-                const template = <Row style={{ marginTop: isNonMobile ? null : '1rem' }}>
+                const template = <>
                     <Col md={5}>
                         <Typography sx={{ color: theme.palette.primary[500] }}>
                             <Input
@@ -272,11 +282,21 @@ const Vaults = () => {
                         </Typography>
                     </Col>
                     <Col md={2} style={{ height: '5rem', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <IconButton onClick={() => handleTickClick(customFieldSize)}>
-                            <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
-                        </IconButton>
+                        {
+                            isNonMobile ?
+                                <IconButton onClick={() => handleTickClick(customFieldSize)}>
+                                    <MdOutlineDone style={{ color: theme.palette.primary[500] }} />
+                                </IconButton>
+                                : <motion.button
+                                    className='form-control' style={{ width: 'auto', margin: '0 10px', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat', border: 'none', color: '#fff' }}
+                                    whileHover={{ scale: [1, 1.1] }}
+                                    onClick={() => handleTickClick(customFieldSize)}
+                                >
+                                    Add
+                                </motion.button>
+                        }
                     </Col>
-                </Row>
+                </>
                 setRenderCustomFields([...renderCustomFields, template])
                 setCustomFieldSize(customFieldSize + 1)
             }
@@ -360,11 +380,9 @@ const Vaults = () => {
                                 />
                             </Typography>
                         </Col>
-                    </Row>
-                    <Row style={{ marginTop: "1rem", marginBottom: '1rem' }}>
                         {
                             <>
-                                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '1rem'}} >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', marginRight: '' }} >
                                     <Col md={6}>
                                         <Typography variant="h4" fontWeight="bold" sx={{ color: theme.palette.secondary[600], marginBottom: '.5rem' }}>
                                             Custom Fields
@@ -381,7 +399,7 @@ const Vaults = () => {
                                     </Col>
                                 </div>
                                 {
-                                    renderCustomFields.length > 0 ? renderCustomFields : <Row>
+                                    renderCustomFields.length > 0 ? renderCustomFields : <Row style={{ marginBottom: '1rem' }}>
                                         <Col md={12}>
                                             <Typography sx={{ color: theme.palette.primary[500], textAlign: 'center' }} >
                                                 No Custom Fields Added
@@ -391,8 +409,6 @@ const Vaults = () => {
                                 }
                             </>
                         }
-                    </Row>
-                    <Row>
                         <Col md={6} style={{ display: 'flex', alignItems: "center" }}>
                             <Typography sx={{ color: theme.palette.primary[500] }} >
                                 <Input
@@ -413,6 +429,7 @@ const Vaults = () => {
                             </IconButton>
                         </Col>
                     </Row>
+
 
                 </>
 
@@ -448,7 +465,6 @@ const Vaults = () => {
         setPassType("password")
         setShowPassword(false)
     }
-    const sessionId = useSelector(state => state.general.sessionId)
     const unlockVault = () => {
         const form = {
             vaultIndex: selectedVault.vaultIndex,
@@ -462,7 +478,7 @@ const Vaults = () => {
                     setPassword(undefined)
                     setPassType("password")
                     setShowPassword(false)
-                    navigate(`/${sessionId}/unlock-vault/${result.tokenHash}`)
+                    navigate(`/unlock-vault/${result.tokenHash}`)
                 }
             })
     }
@@ -483,7 +499,7 @@ const Vaults = () => {
                 ]}
             >
                 <Row>
-                    <Col md={12} style={{ display: 'flex', justifyContent: isNonMobile ? 'space-between': 'space-around', alignItems: "center" }}>
+                    <Col md={12} style={{ display: 'flex', justifyContent: isNonMobile ? 'space-between' : 'space-around', alignItems: "center" }}>
                         <Typography sx={{ color: theme.palette.primary[500] }} >
                             <Input
                                 autoFocus
@@ -544,8 +560,8 @@ const Vaults = () => {
                                 backgroundColor={theme.palette.background.alt}
                                 borderRadius="9px"
                                 gap="3px"
-                                padding={ isNonMobile ? "0.1rem 1.5rem" : null}
-                                paddingLeft={ isNonMobile ? null : "1rem"}
+                                padding={isNonMobile ? "0.1rem 1.5rem" : null}
+                                paddingLeft={isNonMobile ? null : "1rem"}
                             >
                                 <InputBase
                                     placeholder='Search...'

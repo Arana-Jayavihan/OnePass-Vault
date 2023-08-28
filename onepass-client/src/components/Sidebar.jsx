@@ -88,8 +88,9 @@ const Sidebar = (props) => {
             animate={props.isSidebarOpen ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
             transition={{ duration: .75, ease: 'easeInOut' }}
             initial={{ opacity: 0, scale: 0 }}
+            style={{ zIndex: "100" }}
         >
-            <Box component="nav">
+            <Box component="nav" style={{ zIndex: '100' }}>
 
                 <Drawer
                     open={props.isSidebarOpen}
@@ -106,6 +107,7 @@ const Sidebar = (props) => {
                             width: props.drawerWidth,
                             paddingBottom: '1.5rem'
                         },
+                        zIndex: '100'
                     }}
                 >
                     <motion.Box width="100%"
