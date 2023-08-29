@@ -6,6 +6,7 @@ import axiosInstance from "../helpers/axios"
 import { loginConsts, vaultConsts } from "./constants.js"
 import { decryptAES, decryptRSA, encryptAES, encryptRSA, generateMasterEncryptionKey, importRSAPrivKey, importRSAPubKey } from "../helpers/encrypt"
 import { encryptRequest, decryptRequest } from "./requestActions"
+import { keyExchange } from "./authActions"
 
 export const getUserAssignedVaults = (form) => {
     return async dispatch => {
@@ -314,18 +315,29 @@ export const addVaultUser = (form) => {
             }
             const publicKey = await importRSAPubKey(addUserPubKeyRes.data.payload)
             const encVaultKey = await encryptRSA(form.vaultKey, publicKey)
-            const vaultUnlockForm = {
+            const addVaultUserForm = {
                 vaultIndex: form.vaultIndex,
                 email: form.email,
                 addUserEmail: form.addUserEmail,
                 encVaultKey: encVaultKey
             }
-            const res = await axiosInstance.post("/vault/add-vault-user-request", vaultUnlockForm)
+            const webAESKey = sessionStorage.getItem('requestEncKey')
+            const { encForm, privateKey } = await encryptRequest(addVaultUserForm, webAESKey)
+            const res = await axiosInstance.post("/vault/add-vault-user-request", { 'encData': encForm })
             if (res.status === 200) {
-                toast.success(res.data.message, { id: 'vas' })
-                dispatch({
-                    type: vaultConsts.ADD_VAULT_USER_REQUEST_SUCCESS
-                })
+                const decData = await decryptRequest(res.data.payload || undefined, res.data.serverPubKey, privateKey, webAESKey)
+                if (decData !== false) {
+                    toast.success(res.data.message, { id: 'vas' })
+                    dispatch({
+                        type: vaultConsts.ADD_VAULT_USER_REQUEST_SUCCESS
+                    })
+                }
+                else {
+                    dispatch(keyExchange())
+                    dispatch({
+                        type: vaultConsts.ADD_VAULT_USER_REQUEST_FAILED
+                    })
+                }
             }
             else if (res.response) {
                 toast.error(res.response.data.message, { id: 'vaf' })
@@ -393,10 +405,10 @@ export const acceptVaultInvitation = (form) => {
                             const encPrivKey = privKeyRes.data.payload
                             try {
                                 const encodedPrivateKey = (await decryptAES(encPrivKey, form.pass)).toString(CryptoJS.enc.Utf8)
-                                const privateKey = await importRSAPrivKey(encodedPrivateKey)
+                                const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
                                 try {
-                                    const vaultKey = await decryptRSA(form.encVaultKey, privateKey)
-                                    const masterEncKey = await decryptRSA(encMasterKey, privateKey)
+                                    const vaultKey = await decryptRSA(form.encVaultKey, userPrivateKey)
+                                    const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
                                     const encVaultKey = await encryptAES(vaultKey, masterEncKey)
                                     const addVaultUserForm = {
                                         vaultIndex: form.vaultIndex,
@@ -404,13 +416,24 @@ export const acceptVaultInvitation = (form) => {
                                         encVaultKey: encVaultKey,
                                         token: form.token
                                     }
-                                    const res = await axiosInstance.post("/vault/accept-vault-invite", addVaultUserForm)
+                                    const webAESKey = sessionStorage.getItem('requestEncKey')
+                                    const { encForm, privateKey } = await encryptRequest(addVaultUserForm, webAESKey)
+                                    const res = await axiosInstance.post("/vault/accept-vault-invite", { 'encData': encForm })
                                     if (res.status === 201) {
-                                        toast.success(res.data.message, { id: 'vas' })
-                                        dispatch({
-                                            type: vaultConsts.VAULT_INVITE_ACCEPT_SUCCESS
-                                        })
-                                        return true
+                                        const decData = await decryptRequest(res.data.payload || undefined, res.data.serverPubKey, privateKey, webAESKey)
+                                        if (decData !== false) {
+                                            toast.success(res.data.message, { id: 'vas' })
+                                            dispatch({
+                                                type: vaultConsts.VAULT_INVITE_ACCEPT_SUCCESS
+                                            })
+                                            return true
+                                        }
+                                        else {
+                                            dispatch(keyExchange())
+                                            dispatch({
+                                                type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
+                                            })
+                                        }
                                     }
                                     else if (res.response) {
                                         toast.error(res.response.data.message, { id: 'vaf' })

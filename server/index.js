@@ -28,6 +28,7 @@ const day = date.getDate()
 const month = date.getMonth()
 const year = date.getFullYear()
 const fullDate = `${day}-${month}-${year}`
+
 // LOGGER
 if (process.env.ENV === "PROD"){
     const logStream = rfs.createStream(`traffic-${fullDate}.log`, {
@@ -141,30 +142,6 @@ app.use("/api", vaultRoutes)
 app.use("/api", keyRoutes)
 app.use("/api", loginRoutes)
 app.use("/api", webSesionRoutes)
-
-
-// DEFAULT ROUTE
-app.post('/', (req, res) => {
-    res.send(
-        `
-        <html lang="en">
-            <head>
-                <title>OnePass Server</title>
-
-                <meta charset="utf-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1" />
-                <meta name="theme-color" content="#000000" />
-                <link rel="stylesheet" href="/style.css" />
-            </head>
-            <body>
-                <div>
-                    <h1>OnePass Server SAYS HELLOOOO</h1>
-                </div>
-            </body>
-        </html>
-        `
-    )
-})
 
 // LISTNER
 const PORT = process.env.PORT || 9000

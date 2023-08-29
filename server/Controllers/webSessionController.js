@@ -6,6 +6,8 @@ import CryptoJS from 'crypto-js';
 import dotenv from 'dotenv'
 dotenv.config()
 
+import { tokenlist as authTokens } from './authController.js';
+
 export let webSessionList = {}
 let privateKey = undefined
 
@@ -178,6 +180,43 @@ export const updateWebSession = async (webSessionId, webPubKey) => {
     } catch (error) {
         console.log(error)
         return false
+    }
+}
+
+export const resetWebSessions = async (req, res) => {
+    try {
+        const ip = req.headers['x-forwarded-for']
+        const browserDetails = {
+            'platform': req.headers['sec-ch-ua-platform'],
+            'userAgent': req.headers['user-agent'],
+            'isMobile': req.headers['sec-ch-ua-mobile']
+        }
+        const broswserHash = CryptoJS.SHA256(JSON.stringify(browserDetails)).toString()
+        const webSessions = Object.values(webSessionList)
+        const userSessions = Object.values(authTokens)
+        
+        for (let webSession of webSessions){
+            if (webSession.browserHash === broswserHash && webSession.ip === ip){
+                let sessionId = webSession.sessionId
+                delete webSessionList[sessionId]
+                const userSession = userSessions.find(userSession => userSession.webSessionId === sessionId)
+                if (userSession){
+                    delete authTokens[userSession]
+                }
+            }
+        }
+        const chkSession = webSessions.find(webSession => (webSession.broswserHash === broswserHash && webSession.ip === ip))
+        if (!chkSession){
+            res.status(200).json({
+                message: "Web Session Reset Success"
+            })
+        }
+        
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: "Something Went Wrong"
+        })
     }
 }
 

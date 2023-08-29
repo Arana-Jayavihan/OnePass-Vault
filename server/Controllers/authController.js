@@ -225,6 +225,7 @@ export const signIn = async (req, res) => {
                             padding: CryptoJS.pad.Pkcs7
                         }).toString()
                         tokenlist[refreshToken] = {
+                            'webSessionId': req.body.webSessionId,
                             'refreshToken': refreshToken,
                             'hashPass': hashPass,
                             'tokenHash': tokenHash,

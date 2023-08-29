@@ -130,7 +130,7 @@ const App = () => {
 								</Typography>
 								{
 									Math.floor(remaining / 60) > 0 ?
-										<p style={{ color: theme.palette.primary[100] }} >Logging out in {Math.floor(remaining / 60)} minutes and {remaining % 60} seconds.</p>
+										<p style={{ color: theme.palette.primary[100] }} >Logging out in {Math.floor(remaining / 60)} minute and {remaining % 60} seconds.</p>
 										:
 										<p style={{ color: theme.palette.primary[100] }} >Logging out in {remaining % 60} seconds.</p>
 
@@ -218,10 +218,12 @@ const App = () => {
 		}
 
 	}, [loading]);
-	
+
 	window.onunload = function (e) {
 		e.preventDefault()
-		dispatch(signout())
+		if (authenticated) {
+			dispatch(signout())
+		}
 	}
 	return (
 		<>

@@ -378,6 +378,11 @@ export const getVaultData = async (req, res) => {
             res.status(401).json({
                 message: "Unauthorized"
             })
+            try {
+                delete vaultUnlockTokens[decoded.id]
+            } catch (error) {
+                console.log(error)
+            }
         }
     } catch (error) {
         res.clearCookie('encVaultUnlockToken', { httpOnly: true, secure: true, sameSite: "none" })
@@ -386,6 +391,11 @@ export const getVaultData = async (req, res) => {
             message: "Something Went Wrong!",
             error: error
         })
+        try {
+            delete vaultUnlockTokens[decoded.id]
+        } catch (error) {
+            console.log(error)
+        }
     }
 }
 
@@ -393,86 +403,102 @@ export const addVaultUserRequest = async (req, res) => {
     try {
         const body = req.body
         const user = req.user
-        if (body.email === user.email) {
-            const result = await getVault(body.vaultIndex)
-            if (result && result.length > 0) {
-                const parsedVaultData = vaultDataParser(result)
-                if (parsedVaultData && parsedVaultData.ownerEmail !== body.email && parsedVaultData.ownerEmail !== user.email) {
-                    res.status(400).json({
-                        message: "You Are Not The Owner Of This Vault"
-                    })
-                }
-                else {
-                    let token = {
-                        email: body.email,
-                        vaultIndex: body.vaultIndex,
-                        id: shortID.generate(),
-                        addUserEmail: body.addUserEmail,
-                        encVaultKey: body.encVaultKey,
-                    }
-                    const addedUser = await getUser(body.addUserEmail)
-                    if (addedUser === false) {
-                        res.status(500).json({
-                            message: "Something Went Wrong!"
+        const inviteList = Object.values(addVaultUserTokens)
+        const matchingInvite = inviteList.find(inviteToken => (inviteToken.vaultIndex === body.vaultIndex && inviteToken.addUserEmail === body.addUserEmail))
+        if (!matchingInvite) {
+            if (body.email === user.email) {
+                const result = await getVault(body.vaultIndex)
+                if (result && result.length > 0) {
+                    const parsedVaultData = vaultDataParser(result)
+                    if (parsedVaultData && parsedVaultData.ownerEmail !== body.email && parsedVaultData.ownerEmail !== user.email) {
+                        res.status(401).json({
+                            message: "You Are Not The Owner Of This Vault"
                         })
                     }
-                    else if (addedUser === []) {
-                        res.status(400).json({
-                            message: "User Not Found"
-                        })
-                    }
-                    else if (addedUser && addedUser.length > 0) {
-                        const assignedVaults = assignVaultParser(addedUser[4])
-                        const vault = assignedVaults.find(vault => vault.vaultIndex === body.vaultIndex)
-                        if (vault) {
-                            res.status(400).json({
-                                message: "User Already Assigned To Vault"
+                    else {
+                        let token = {
+                            email: body.email,
+                            vaultIndex: body.vaultIndex,
+                            id: shortID.generate(),
+                            addUserEmail: body.addUserEmail,
+                            encVaultKey: body.encVaultKey,
+                        }
+                        const addedUser = await getUser(body.addUserEmail)
+                        if (addedUser === false) {
+                            res.status(500).json({
+                                message: "Something Went Wrong!"
                             })
                         }
-                        else if (vault === undefined) {
-                            const addVaultUserToken = jwt.sign({ vaultIndex: body.vaultIndex, email: body.email, id: token.id, addUserEmail: body.addUserEmail, hashPass: user.hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '6h' })
-                            const encToken = CryptoJS.AES.encrypt(addVaultUserToken, process.env.AES_SECRET, {
-                                iv: CryptoJS.SHA256(sh.generate()).toString(),
-                                mode: CryptoJS.mode.CBC,
-                                padding: CryptoJS.pad.Pkcs7
-                            }).toString()
-                            const b64EncToken = Buffer.from(encToken).toString('base64')
-                            const URL = `https://onepass-vault-v3.netlify.app/vault-invite/${b64EncToken}`
-                            const URL1 = `https://localhost:3000/vault-invite/${b64EncToken}`
-                            token['addVaultUserToken'] = addVaultUserToken
-                            addVaultUserTokens[token.id] = token
-                            console.log(addVaultUserTokens, "new vault user add request")
-                            const mailData = {
-                                to: body.addUserEmail,
-                                subject: "New Vault Invitation",
-                                html: vaultInvite(URL, body.email),
-                                attachments: [],
-                                body: ``
-                            }
-                            const result = sendMails(mailData)
-                            if (result) {
-                                res.status(200).json({
-                                    message: "Vault Invitation Sent"
+                        else if (addedUser === []) {
+                            res.status(404).json({
+                                message: "User Not Found"
+                            })
+                        }
+                        else if (addedUser && addedUser.length > 0) {
+                            const assignedVaults = assignVaultParser(addedUser[4])
+                            const vault = assignedVaults.find(vault => vault.vaultIndex === body.vaultIndex)
+                            if (vault) {
+                                res.status(400).json({
+                                    message: "User Already Assigned To Vault"
                                 })
                             }
-                            else {
-                                res.status(500).json({
-                                    message: "Something Went Wrong!"
-                                })
+                            else if (vault === undefined) {
+                                const addVaultUserToken = jwt.sign({ vaultIndex: body.vaultIndex, email: body.email, id: token.id, addUserEmail: body.addUserEmail, hashPass: user.hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '6h' })
+                                const encToken = CryptoJS.AES.encrypt(addVaultUserToken, process.env.AES_SECRET, {
+                                    iv: CryptoJS.SHA256(sh.generate()).toString(),
+                                    mode: CryptoJS.mode.CBC,
+                                    padding: CryptoJS.pad.Pkcs7
+                                }).toString()
+                                const b64EncToken = Buffer.from(encToken).toString('base64')
+                                let URL = undefined
+                                if (process.env.ENV === "DEV"){
+                                    URL = `https://localhost:3000/vault-invite/${b64EncToken}`
+                                }
+                                else if (process.env.ENV === "PROD"){
+                                    URL = `https://onepass-vault-v3.netlify.app/vault-invite/${b64EncToken}`
+                                }
+                                token['addVaultUserToken'] = addVaultUserToken
+                                addVaultUserTokens[token.id] = token
+                                console.log(addVaultUserTokens, "new vault user add request")
+                                const mailData = {
+                                    to: body.addUserEmail,
+                                    subject: "New Vault Invitation",
+                                    html: vaultInvite(URL, body.email),
+                                    attachments: [],
+                                    body: ``
+                                }
+                                const result = sendMails(mailData)
+                                if (result) {
+                                    res.status(200).json({
+                                        message: "Vault Invitation Sent",
+                                        serverPubKey: req.body.serverPubKey
+                                    })
+                                }
+                                else {
+                                    res.status(500).json({
+                                        message: "Something Went Wrong!"
+                                    })
+                                }
                             }
                         }
                     }
                 }
+                else if (result === false) {
+                    res.status(500).json({
+                        message: "Something Went Wrong!"
+                    })
+                }
             }
-            else if (result === false) {
-                res.status(500).json({
-                    message: "Something Went Wrong!"
+            else {
+                res.status(401).json({
+                    message: "Unauthorized"
                 })
             }
         }
         else {
-            res.status(401).json({
-                message: "Unauthorized"
+            res.status(200).json({
+                message: "Invite already sent",
+                serverPubKey: req.body.serverPubKey
             })
         }
     } catch (error) {
@@ -493,8 +519,8 @@ export const getInviteData = async (req, res) => {
         const decToken = CryptoJS.AES.decrypt(fromB64, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
         const decoded = jwt.verify(decToken, publicKey, { algorithms: ['ES512'] })
         if (decoded) {
-            if (addVaultUserTokens[decoded.id].addUserEmail === req.user.email) {
-                if (addVaultUserTokens[decoded.id]) {
+            if (addVaultUserTokens[decoded.id]) {
+                if (addVaultUserTokens[decoded.id].addUserEmail === req.user.email) {
                     const result = await getVault(decoded.vaultIndex)
                     if (result && result.length > 0) {
                         const vault = vaultDataParser(result)
@@ -529,13 +555,13 @@ export const getInviteData = async (req, res) => {
                 }
                 else {
                     res.status(400).json({
-                        message: "Invalid Invite Token"
-                    })
+                        message: "This Invitation Is Not For You!"
+                    })                    
                 }
             }
             else {
                 res.status(400).json({
-                    message: "This Invitation Is Not For You!"
+                    message: "Invalid Invite Token"
                 })
             }
         }
@@ -572,7 +598,7 @@ export const acceptVaultInvite = async (req, res) => {
                     }
                     else if (result === "User Not Found") {
                         res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
-                        res.status(400).json({
+                        res.status(404).json({
                             message: "User Not Found"
                         })
                     }
@@ -592,7 +618,8 @@ export const acceptVaultInvite = async (req, res) => {
                         delete addVaultUserTokens[decoded.id]
                         res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
                         res.status(201).json({
-                            message: "Vault Invitation Accepted"
+                            message: "Vault Invitation Accepted",
+                            serverPubKey: req.body.serverPubKey
                         })
                     }
                 }
@@ -605,14 +632,14 @@ export const acceptVaultInvite = async (req, res) => {
             }
             else {
                 res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
-                res.status(400).json({
+                res.status(401).json({
                     message: "This Invitation Is Not For You!"
                 })
             }
         }
         else {
             res.clearCookie('addVaultUserToken', { httpOnly: true, secure: true, sameSite: "none" })
-            res.status(400).json({
+            res.status(401).json({
                 message: "Invalid Invite Token"
             })
         }

@@ -23,6 +23,7 @@ const VaultInvite = () => {
     const inviteData = useSelector(state => state.vault.invite)
     const email = useSelector(state => state.auth.user.email)
     const [validInvite, setValidInvite] = useState(false);
+    const [invalidMsg, setInvalidMsg] = useState('Sorry, This Invite is not for you!');
     const isNonMobile = useMediaQuery("(min-width: 600px)");
 
     const form = {
@@ -36,7 +37,12 @@ const VaultInvite = () => {
     }, []);
 
     useEffect(() => {
-        if (email === inviteData.addUserEmail) {
+        console.log(inviteData.addUserEmail)
+        if (inviteData.addUserEmail === undefined) {
+            setValidInvite(false)
+            setInvalidMsg('Invite seems to be expired!')
+        }
+        else if (email === inviteData.addUserEmail) {
             setValidInvite(true)
         }
     }, [inviteData]);
@@ -136,7 +142,7 @@ const VaultInvite = () => {
                             />
 
                         </Typography>
-                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} onClick={() => showPasswords()} >
+                        <IconButton sx={{ width: 'fit-content', height: 'fit-content', marginTop: '1rem' }} tabIndex='-1' onClick={() => showPasswords()} >
                             {
                                 showPassword ?
                                     <AiFillEye style={{ fontSize: '25px', color: theme.palette.secondary[400] }} />
@@ -246,7 +252,7 @@ const VaultInvite = () => {
                                 :
                                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', marginBottom: '5px' }} >
                                     <Typography variant="h1" fontWeight="bold" sx={{ textAlign: 'center', color: 'transparent', backgroundImage: 'linear-gradient(to left, #cc00ee , #6d4aff)', backgroundSize: '100%', backgroundClip: 'text', backgroundRepeat: 'repeat' }} >
-                                        Sorry, This Invite is not for you!
+                                        {invalidMsg}
                                     </Typography>
                                 </div>
                     }

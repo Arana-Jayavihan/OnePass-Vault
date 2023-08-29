@@ -80,6 +80,19 @@ export const keyExchange = () => {
     }
 }
 
+export const resetSessions = () => {
+    return async dispatch => {
+        const res = await axiosInstance.post('/webSession/reset')
+        if (res.status === 200){
+            dispatch(keyExchange())
+            return true
+        }
+        else if (res.response){
+            dispatch(keyExchange())
+        }
+    }
+}
+
 export const genKeys = (form) => {
     return async dispatch => {
         dispatch({

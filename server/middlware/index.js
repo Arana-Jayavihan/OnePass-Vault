@@ -28,7 +28,8 @@ export const decryptRequest = async (req, res, next) => {
             url.includes('/login/add-login') ||
             url.includes('/vault/add-vault') ||
             url.includes('/vault/get-vault-unlock-token') ||
-            url.includes('/vault/get-enc-vault-key')
+            url.includes('/vault/get-enc-vault-key') || 
+            url.includes('/vault/accept-vault-invite')
         ) {
             const encSessionToken = req.cookies.sessionId
             const sessionToken = CryptoJS.AES.decrypt(encSessionToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
@@ -43,8 +44,8 @@ export const decryptRequest = async (req, res, next) => {
                             'userAgent': req.headers['user-agent'],
                             'isMobile': req.headers['sec-ch-ua-mobile']
                         }
-                        const broswserHash = CryptoJS.SHA256(JSON.stringify(browserDetails)).toString()
-                        if (broswserHash === webSession.browserHash) {
+                        const browserHash = CryptoJS.SHA256(JSON.stringify(browserDetails)).toString()
+                        if (browserHash === webSession.browserHash) {
                             const sessionEncKey = webSession.secretKey
                             try {
                                 const decData = CryptoJS.AES.decrypt(req.body.encData, sessionEncKey).toString(CryptoJS.enc.Utf8)
