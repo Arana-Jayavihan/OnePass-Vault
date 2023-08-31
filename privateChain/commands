@@ -1,0 +1,5 @@
+signer1
+    start: geth --bootnodes enode://fa427ac2daeb14e259fc045509aa37ad0acf970f74eed7da1a00d101ea40de5e0197ef534885834a34e5a4ebec45a1d80c5ede1433b2eb9a87f5fde4293dc1b6@127.0.0.1:0?discport=30301 --networkid 210555 --datadir ./signerNode1 --miner.etherbase 0x00011ae13085dfbe3e52fc1ed5bdedf5c94ac5af --unlock 0x00011ae13085dfbe3e52fc1ed5bdedf5c94ac5af --password ./pwSignerNode1 --port 30304 --ipcdisable --syncmode 'full' --http --allow-insecure-unlock --http.corsdomain “*” --http.port 8547 --authrpc.port 8552
+
+signer2
+    start: geth --bootnodes enode://fa427ac2daeb14e259fc045509aa37ad0acf970f74eed7da1a00d101ea40de5e0197ef534885834a34e5a4ebec45a1d80c5ede1433b2eb9a87f5fde4293dc1b6@127.0.0.1:0?discport=30301 --networkid 210555 --datadir ./signerNode2 --miner.etherbase 0x000243d8b2adaf4b76f6cc44e7416fd25477de3c --unlock 0x000243d8b2adaf4b76f6cc44e7416fd25477de3c --password ./pwSignerNode2 --port 30305 --ipcdisable --syncmode 'full' --http --allow-insecure-unlock --http.corsdomain “*” --http.port 8548 --authrpc.port 8553 
