@@ -1,5 +1,12 @@
-signer1
-    start: geth --bootnodes enode://fa427ac2daeb14e259fc045509aa37ad0acf970f74eed7da1a00d101ea40de5e0197ef534885834a34e5a4ebec45a1d80c5ede1433b2eb9a87f5fde4293dc1b6@127.0.0.1:0?discport=30301 --networkid 210555 --datadir ./signerNode1 --miner.etherbase 0x00011ae13085dfbe3e52fc1ed5bdedf5c94ac5af --unlock 0x00011ae13085dfbe3e52fc1ed5bdedf5c94ac5af --password ./pwSignerNode1 --port 30304 --ipcdisable --syncmode 'full' --http --allow-insecure-unlock --http.corsdomain “*” --http.port 8547 --authrpc.port 8552
+bootnode
+	start: bootnode -nodekey bootnode.key -addr 127.0.0.1:30301 -verbosity 5
 
-signer2
-    start: geth --bootnodes enode://fa427ac2daeb14e259fc045509aa37ad0acf970f74eed7da1a00d101ea40de5e0197ef534885834a34e5a4ebec45a1d80c5ede1433b2eb9a87f5fde4293dc1b6@127.0.0.1:0?discport=30301 --networkid 210555 --datadir ./signerNode2 --miner.etherbase 0x000243d8b2adaf4b76f6cc44e7416fd25477de3c --unlock 0x000243d8b2adaf4b76f6cc44e7416fd25477de3c --password ./pwSignerNode2 --port 30305 --ipcdisable --syncmode 'full' --http --allow-insecure-unlock --http.corsdomain “*” --http.port 8548 --authrpc.port 8553 
+node1
+	start: geth --datadir node1 --port 30305 --bootnodes enode://0640fc4be49ba347989ce48efe0edb76b9a99512a120b5dc70606a61282f6d8e143d1a9aa77f6ec181d02790db1b654090904d53e2e1b3ef66a27991a3dc8fda@127.0.0.1:0?discport=30301 --networkid 210567 --unlock 0x8D1FAC7491874acaCa19a34a6ac3633b6b850cdC --password node1/pass --syncmode full --ipcdisable --http --http.addr 0.0.0.0 --http.api admin,eth,miner,net,txpool,personal,web3 --http.corsdomain "moz-extension://11e3b75b-dc64-464e-b880-2133201ef249" --http.vhosts "*" --http.port 8979 --allow-insecure-unlock --authrpc.addr 0.0.0.0 --authrpc.port 8551 --authrpc.vhosts "*" console
+
+node2 
+	start: geth --datadir node2 --port 30306 --bootnodes enode://0640fc4be49ba347989ce48efe0edb76b9a99512a120b5dc70606a61282f6d8e143d1a9aa77f6ec181d02790db1b654090904d53e2e1b3ef66a27991a3dc8fda@127.0.0.1:0?discport=30301 --networkid 210567 --unlock 0x19Ad41200EF7532754e1a79b09A8AD3D9D72330a --password node2/pass --syncmode full --authrpc.port 8552
+
+node3
+	start: geth --datadir node3 --port 30307 --bootnodes enode://0640fc4be49ba347989ce48efe0edb76b9a99512a120b5dc70606a61282f6d8e143d1a9aa77f6ec181d02790db1b654090904d53e2e1b3ef66a27991a3dc8fda@127.0.0.1:0?discport=30301 --networkid 210567 --unlock 0x5C23445F19B1020E41e2d43f9f28aD74D362fE25 --password node3/pass --syncmode full --authrpc.port 8553
+
