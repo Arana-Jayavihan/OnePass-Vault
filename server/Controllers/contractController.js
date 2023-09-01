@@ -8,28 +8,30 @@ let contract = undefined
 try {
     sdk = ThirdwebSDK.fromPrivateKey(process.env.PRIVATE_KEY, Sepolia);
     // contract = await sdk.getContract("0xc5E051b2bEB84F6b3103eA4b6e9c32E63F29796f");
-    contract = await sdk.getContract("0xE3ce0898d3DdE79651782Aa3bb49018FB1E246a4")
+    //contract = await sdk.getContract("0xE3ce0898d3DdE79651782Aa3bb49018FB1E246a4")
+    contract = await sdk.getContract("0xcFD6A7656038960348F9B613fAC59f407dbb3222")
+    InitiateContract()
 } catch (error) {
     console.log(error)
 }
 
-// export const InitiateContract = async (req, res) => {
+export const InitiateContract = async (req, res) => {
 
-//     const result = await contract.call("InitiateContract", [process.env.AES_SECRET])
+    const result = await contract.call("InitiateContract", [process.env.AES_SECRET])
 
-//     console.log(result)
-//     if (result.receipt.confirmations != 0) {
-//         res.status(201).json({
-//             message: 'Contract Initiated'
-//         })
-//     }
-//     else {
-//         res.status(500).json({
-//             message: 'Contract Initialization Failed',
-//             error: result
-//         })
-//     }
-// }
+    console.log(result)
+    if (result.receipt.confirmations != 0) {
+        res.status(201).json({
+            message: 'Contract Initiated'
+        })
+    }
+    else {
+        res.status(500).json({
+            message: 'Contract Initialization Failed',
+            error: result
+        })
+    }
+}
 
 // User Functions
 export const addUserKeys = async (user) => {
