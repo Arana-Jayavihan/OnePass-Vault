@@ -1,0 +1,12 @@
+.modal-content {
+    background-color: #eee;
+}
+
+::-webkit-scrollbar{
+    display: none;
+}
+
+.modal-backdrop.show {
+    opacity: 0;
+    z-index: -10;
+}

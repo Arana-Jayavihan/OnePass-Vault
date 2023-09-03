@@ -1,0 +1,21 @@
+.card {
+    width: fit-content;
+    background-color: #0d1136cf;
+    height: auto;
+    border-radius: 15px;
+    padding: 2rem;
+  }
+  
+  @media screen and (max-width: 620px) {
+    .card {
+      width: 80vw;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+  
+  @media screen and (max-height: 670px) {
+    .card {
+      height: auto;
+    }
+  }

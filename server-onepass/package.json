@@ -1,0 +1,40 @@
+{
+  "name": "onepass_server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@thirdweb-dev/sdk": "^3.10.10",
+    "body-parser": "^1.20.1",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "crypto-js": "^4.1.1",
+    "dotenv": "^16.0.3",
+    "ethers": "^5.7.2",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
+    "express-validator": "^6.14.3",
+    "fs": "^0.0.1-security",
+    "helmet": "^6.0.1",
+    "jsonwebtoken": "^9.0.0",
+    "method-override": "^3.0.0",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.9.4",
+    "nodemon": "^3.0.1",
+    "path": "^0.12.7",
+    "rotating-file-stream": "^3.1.1",
+    "sanitize": "^2.1.2",
+    "shortid": "^2.2.16",
+    "url": "^0.11.1",
+    "validator": "^13.9.0"
+  }
+}
