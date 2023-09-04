@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux'
-import { keyExchange, resetSessions } from "./actions/authActions"
+import { keyExchange, resetSessions } from "./actions/webSessionActions"
 import { useCallback, useEffect, useState } from 'react'
 import { Typography, useMediaQuery } from '@mui/material'
 import { useNavigate } from 'react-router-dom'

@@ -8,6 +8,7 @@ import sh from 'shortid'
 dotenv.config()
 
 import { updateWebSession, webSessionList } from '../Controllers/webSessionController.js'
+import { decryptAES, encryptAES } from '../Controllers/encryptController.js'
 let publicKey = undefined
 
 try {
@@ -48,15 +49,11 @@ export const decryptRequest = async (req, res, next) => {
                         if (browserHash === webSession.browserHash) {
                             const sessionEncKey = webSession.secretKey
                             try {
-                                const decData = CryptoJS.AES.decrypt(req.body.encData, sessionEncKey).toString(CryptoJS.enc.Utf8)
+                                const decData = await decryptAES(req.body.encData, sessionEncKey)
                                 req.body = JSON.parse(decData)
                                 const result = await updateWebSession(webSession.sessionId, req.body.webPubKey)
                                 if (result) {
-                                    const encServerPubKey = CryptoJS.AES.encrypt(result.serverPubKey, sessionEncKey, {
-                                        iv: CryptoJS.SHA256(sh.generate()).toString(),
-                                        mode: CryptoJS.mode.CBC,
-                                        padding: CryptoJS.pad.Pkcs7
-                                    }).toString()
+                                    const encServerPubKey = await encryptAES(result.serverPubKey, sessionEncKey)
                                     req.body['serverPubKey'] = encServerPubKey
                                     req.body['newServerAESKey'] = result.newServerAESKey
                                     req.body['webSessionId'] = webSession.sessionId
@@ -68,7 +65,9 @@ export const decryptRequest = async (req, res, next) => {
                                     })
                                 }
                             } catch (error) {
+                                console.log(error)
                                 res.status(401).json({
+                                    
                                     message: "Request Not Allowed"
                                 })
                             }

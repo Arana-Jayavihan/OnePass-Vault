@@ -2,6 +2,7 @@ import { addVaultLogin, getAllVaultLogins } from "./contractController.js"
 import { vaultLoginParser } from "../Parsers/parsers.js"
 import shortID from 'shortid'
 import CryptoJS from "crypto-js"
+import { encryptAES } from "./encryptController.js"
 
 export const addLogin = async (req, res) => {
     try {
@@ -25,11 +26,7 @@ export const addLogin = async (req, res) => {
                 else if (logins && logins.length >= 0) {
                     const parsedLogins = vaultLoginParser(logins)
                     const encodedPayload = JSON.stringify(parsedLogins)
-                    const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
-                        iv: CryptoJS.SHA256(shortID.generate()).toString(),
-                        mode: CryptoJS.mode.CBC,
-                        padding: CryptoJS.pad.Pkcs7
-                    }).toString()
+                    const encPayload = await encryptAES(encodedPayload, req.body.newServerAESKey)
                     res.status(201).json({
                         message: "Login Added Successfully!",
                         payload: encPayload,

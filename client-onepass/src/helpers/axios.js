@@ -2,7 +2,8 @@ import axios from "axios";
 import { api } from "../helpers/urlConfigs";
 import store from "../store/index";
 import { toast } from "react-hot-toast";
-import { keyExchange, signout } from "../actions/authActions";
+import { signout } from "../actions/authActions";
+import { keyExchange } from "../actions/webSessionActions"
 
 const abortController = new AbortController()
 const timeout = setTimeout(() => {

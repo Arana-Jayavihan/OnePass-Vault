@@ -3,7 +3,7 @@ import axiosInstance from "../helpers/axios.js"
 import { vaultConsts } from "./constants.js"
 import { encryptAES } from "../helpers/encrypt.js"
 import { decryptVaultLogins } from "./vaultActions.js"
-import { decryptRequest, encryptRequest } from "./requestActions.js"
+import { decryptRequest, encryptRequest } from "./webSessionActions.js"
 
 export const addUserLogin = (form) => {
     return async dispatch => {

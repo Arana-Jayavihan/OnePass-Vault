@@ -29,7 +29,8 @@ export default (state = initState, action) => {
         case authConsts.USER_LOGIN_REQUEST_FAILED:
             state = {
                 ...state,
-                verifying: false
+                verifying: false,
+                hashPass: false
             }
             break
         case authConsts.LOGIN_REQUEST:
@@ -44,14 +45,16 @@ export default (state = initState, action) => {
                 ...state,
                 user: action.payload.user,
                 authenticated: true,
-                authenticating: false
+                authenticating: false,
+                hashPass: undefined
             }
             break
 
         case authConsts.LOGIN_FALIURE:
             state = {
                 ...state,
-                authenticating: false
+                authenticating: false,
+                hashPass: undefined
             }
             break
 

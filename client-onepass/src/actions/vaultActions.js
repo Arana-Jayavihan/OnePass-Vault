@@ -4,9 +4,8 @@ import CryptoJS from "crypto-js"
 
 import axiosInstance from "../helpers/axios"
 import { loginConsts, vaultConsts } from "./constants.js"
-import { decryptAES, decryptRSA, encryptAES, encryptRSA, generateMasterEncryptionKey, importRSAPrivKey, importRSAPubKey } from "../helpers/encrypt"
-import { encryptRequest, decryptRequest } from "./requestActions"
-import { keyExchange } from "./authActions"
+import { decryptAES, decryptRSA, generateHighEntropyKey, encryptAES, encryptRSA, importRSAPrivKey, importRSAPubKey } from "../helpers/encrypt"
+import { encryptRequest, decryptRequest, keyExchange } from "./webSessionActions"
 
 export const getUserAssignedVaults = (form) => {
     return async dispatch => {
@@ -41,21 +40,22 @@ export const addUserVault = (form) => {
         const hashRes = await axiosInstance.post("/keys/get-user-hash-pass", getKeysForm)
         if (hashRes.status === 200) {
             const userHashPass = hashRes.data.payload
-            if (CryptoJS.SHA512(form.pass).toString(CryptoJS.enc.Base64) === userHashPass) {
+            const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
+            if (CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64) === userHashPass) {
                 const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
                 if (masterKeyRes.status === 200) {
                     const encMasterKey = masterKeyRes.data.payload
                     const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
                     if (privKeyRes.status === 200) {
                         const encPrivKey = privKeyRes.data.payload
-                        const encodedPrivateKey = (await decryptAES(encPrivKey, form.pass)).toString(CryptoJS.enc.Utf8)
+                        const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
                         const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
                         const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
 
                         const tempVaultSecret = shortid.generate()
-                        const vaultKey = await generateMasterEncryptionKey(tempVaultSecret)
+                        const vaultKey = await generateHighEntropyKey(tempVaultSecret, true)
                         const encVaultKey = await encryptAES(vaultKey, masterEncKey)
-                        const vaultKeyHash = CryptoJS.SHA512(vaultKey).toString()
+                        const vaultKeyHash = CryptoJS.SHA512(vaultKey).toString(CryptoJS.enc.Base64)
 
                         let encCustomFields = []
                         for (let field of form.customFields) {
@@ -136,14 +136,15 @@ export const unlockUserVault = (form) => {
         const hashRes = await axiosInstance.post("/keys/get-user-hash-pass", getKeysForm)
         if (hashRes.status === 200) {
             const userHashPass = hashRes.data.payload
-            if (CryptoJS.SHA512(form.pass).toString(CryptoJS.enc.Base64) === userHashPass) {
+            const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
+            if (CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64) === userHashPass) {
                 const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
                 if (masterKeyRes.status === 200) {
                     const encMasterKey = masterKeyRes.data.payload
                     const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
                     if (privKeyRes.status === 200) {
                         const encPrivKey = privKeyRes.data.payload
-                        const encodedPrivateKey = (await decryptAES(encPrivKey, form.pass)).toString(CryptoJS.enc.Utf8)
+                        const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
                         const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
                         const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
                         const getVaultKeyForm = {
@@ -166,7 +167,7 @@ export const unlockUserVault = (form) => {
                             if (vaultKeyRes.status === 200) {
                                 const decData = await decryptRequest(vaultKeyRes.data.payload, vaultKeyRes.data.serverPubKey, privateKey2, webAESKey2)
                                 const encVaultKey = decData
-                                const vaultKey = (await decryptAES(encVaultKey, masterEncKey)).toString(CryptoJS.enc.Utf8)
+                                const vaultKey = await decryptAES(encVaultKey, masterEncKey)
                                 toast.success("Vault Unlocked", { id: 'vus' })
 
                                 dispatch({
@@ -396,7 +397,8 @@ export const acceptVaultInvitation = (form) => {
             const hashRes = await axiosInstance.post("/keys/get-user-hash-pass", getKeysForm)
             if (hashRes.status === 200) {
                 const userHashPass = hashRes.data.payload
-                if (CryptoJS.SHA512(form.pass).toString(CryptoJS.enc.Base64) === userHashPass) {
+                const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
+                if (CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64) === userHashPass) {
                     const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
                     if (masterKeyRes.status === 200) {
                         const encMasterKey = masterKeyRes.data.payload
@@ -404,7 +406,7 @@ export const acceptVaultInvitation = (form) => {
                         if (privKeyRes.status === 200) {
                             const encPrivKey = privKeyRes.data.payload
                             try {
-                                const encodedPrivateKey = (await decryptAES(encPrivKey, form.pass)).toString(CryptoJS.enc.Utf8)
+                                const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
                                 const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
                                 try {
                                     const vaultKey = await decryptRSA(form.encVaultKey, userPrivateKey)
@@ -512,8 +514,8 @@ export const decryptCustomFields = async (customFields, vaultKey) => {
         let customFieldsArr = []
         if (customFields.length > 0) {
             for (let field in customFields) {
-                const name = (await decryptAES(customFields[field].name, vaultKey)).toString(CryptoJS.enc.Utf8)
-                const value = (await decryptAES(customFields[field].value, vaultKey)).toString(CryptoJS.enc.Utf8)
+                const name = await decryptAES(customFields[field].name, vaultKey)
+                const value = await decryptAES(customFields[field].value, vaultKey)
                 customFieldsArr.push({
                     name,
                     value
@@ -535,10 +537,10 @@ export const decryptVaultLogins = async (logins, vaultKey) => {
         let loginArr = []
         for (let i = 0; i < logins.length; i++) {
             const login = {}
-            login["loginName"] = (await decryptAES(logins[i].loginName, vaultKey)).toString(CryptoJS.enc.Utf8)
-            login["loginUrl"] = (await decryptAES(logins[i].loginUrl, vaultKey)).toString(CryptoJS.enc.Utf8)
-            login["loginUsername"] = (await decryptAES(logins[i].loginUsername, vaultKey)).toString(CryptoJS.enc.Utf8)
-            login["loginPassword"] = (await decryptAES(logins[i].loginPassword, vaultKey)).toString(CryptoJS.enc.Utf8)
+            login["loginName"] = await decryptAES(logins[i].loginName, vaultKey)
+            login["loginUrl"] = await decryptAES(logins[i].loginUrl, vaultKey)
+            login["loginUsername"] = await decryptAES(logins[i].loginUsername, vaultKey)
+            login["loginPassword"] = await decryptAES(logins[i].loginPassword, vaultKey)
             login["customFields"] = await decryptCustomFields(logins[i].customFields, vaultKey)
             loginArr.push(login)
         }

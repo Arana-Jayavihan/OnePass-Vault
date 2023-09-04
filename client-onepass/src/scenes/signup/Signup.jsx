@@ -10,7 +10,7 @@ import '../signin/signin.css'
 import Card from "../../components/Card/Card";
 import { genKeys, addData, login } from "../../actions/authActions";
 import { AiFillEyeInvisible, AiFillEye } from 'react-icons/ai'
-import { encryptRSA, genRSAKeyPair, encryptAES, generateMasterEncryptionKey } from '../../helpers/encrypt';
+import { encryptAES } from '../../helpers/encrypt';
 
 const Signup = () => {
     const loading = useSelector(state => state.auth.loading)
@@ -51,6 +51,9 @@ const Signup = () => {
     const [password, setPassword] = useState(undefined);
     const [confirmPassword, setConfirmPassword] = useState(undefined);
     const [masterEncKey, setMasterEncKey] = useState(undefined);
+    const [highEntropyKey, setHighEntropyKey] = useState(undefined);
+    const [hashPassword, setHashPassword] = useState(undefined);
+    const [hashPasswordAlt, setHashPasswordAlt] = useState(undefined);
 
     const dispatch = useDispatch()
     const theme = useTheme()
@@ -70,28 +73,12 @@ const Signup = () => {
     const generateKeys = async () => {
         try {
             if (password === confirmPassword) {
-                const { privExpB64, pubExpB64, keyPair } = await genRSAKeyPair()
-                const encPrivate = await encryptAES(privExpB64, password)
-
-                const masterEncryptionKey = await generateMasterEncryptionKey(password)
-                const encryptedMasterEncKey = await encryptRSA(masterEncryptionKey, keyPair.publicKey)
-
-                setMasterEncKey(masterEncryptionKey)
-
-                const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
-                const hashPasswordAlt = CryptoJS.SHA256(password).toString(CryptoJS.enc.Base64)
-
-                const form = {
-                    'email': email,
-                    'encPrivateKey': encPrivate,
-                    'encPublicKey': pubExpB64,
-                    'masterEncKey': encryptedMasterEncKey,
-                    'hashPass': hashPassword,
-                    'hashPassAlt': hashPasswordAlt
-                }
-                console.log(form)
-                dispatch(genKeys(form)).then(result => {
+                dispatch(genKeys(password, email)).then(result => {
                     if (result) {
+                        setHighEntropyKey(result.derivedHighEntropyPassword)
+                        setMasterEncKey(result.masterEncryptionKey)
+                        setHashPassword(result.hashPassword)
+                        setHashPasswordAlt(result.hashPasswordAlt)
                         setKeyGenMode(false)
                     }
                 })
@@ -106,20 +93,14 @@ const Signup = () => {
     const userSignup = async () => {
         try {
             if (password === confirmPassword) {
-                const encFirstName = await encryptAES(firstName, masterEncKey)
-                const encLastName = await encryptAES(lastName, masterEncKey)
-                const encContact = await encryptAES(contact, masterEncKey)
-                const hashPassword = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
-                const hashPasswordAlt = CryptoJS.SHA256(password).toString(CryptoJS.enc.Base64)
-
                 const form = {
                     'email': email,
-                    'firstName': encFirstName,
-                    'lastName': encLastName,
-                    'contact': encContact,
+                    'firstName': firstName,
+                    'lastName': lastName,
+                    'contact': contact,
                     'passwordHash': hashPassword,
                 }
-                dispatch(addData(form)).then(result => {
+                dispatch(addData(form, masterEncKey)).then(result => {
                     if (result) {
                         const form = {
                             'hashEmail': email,
@@ -135,6 +116,10 @@ const Signup = () => {
                 setContact(undefined)
                 setPassword(undefined)
                 setConfirmPassword(undefined)
+                setMasterEncKey(undefined)
+                setHighEntropyKey(undefined)
+                setHashPassword(undefined)
+                setHashPasswordAlt(undefined)
             }
             else {
                 toast.error("Passwords Mismatch")

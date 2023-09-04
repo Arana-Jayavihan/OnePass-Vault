@@ -10,6 +10,7 @@ import CryptoJS from "crypto-js";
 import './signin.css'
 import Card from "../../components/Card/Card";
 import { passResetRequest, login, signInReq } from "../../actions/authActions";
+import { generateHighEntropyKey } from "../../helpers/encrypt";
 
 const SignIn = () => {
     const theme = useTheme()
@@ -22,7 +23,7 @@ const SignIn = () => {
     const authenticated = useSelector(state => state.auth.authenticated)
     const hashPass = useSelector(state => state.auth.hashPass)
 
-    const userLoginReq = () => {
+    const userLoginReq = async () => {
         if (email === '' || email === undefined) {
             toast.error("Please provide an Email...")
         }
@@ -38,14 +39,15 @@ const SignIn = () => {
         }
     }
 
-    const userLogin = () => {
+    const userLogin = async () => {
         if (password === '' || password === undefined) {
             toast.error("Please enter your password")
         }
         else {
             try {
-                const passwordHash = CryptoJS.SHA512(password).toString(CryptoJS.enc.Base64)
-                const passwordHashAlt = CryptoJS.SHA256(password).toString(CryptoJS.enc.Base64)
+                const derivedHighEntropyPassword = await generateHighEntropyKey(password)
+                const passwordHash = CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
+                const passwordHashAlt = CryptoJS.SHA256(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
                 if (passwordHash === hashPass) {
                     const form = {
                         'hashEmail': email,

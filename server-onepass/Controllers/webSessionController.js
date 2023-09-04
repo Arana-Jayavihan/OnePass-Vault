@@ -7,6 +7,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 import { tokenlist as authTokens } from './authController.js';
+import { deriveSecretKey, byteArrayToB64, importPubKey } from './encryptController.js'
 
 export let webSessionList = {}
 let privateKey = undefined
@@ -15,52 +16,6 @@ try {
     privateKey = fs.readFileSync('ecdsaPrivKey.pem', 'utf-8')
 } catch (error) {
     console.log(error)
-}
-
-const deriveSecretKey = (privateKey, publicKey) => {
-    return webcrypto.subtle.deriveKey(
-        {
-            name: "ECDH",
-            public: publicKey,
-        },
-        privateKey,
-        {
-            name: "AES-CBC",
-            length: 256,
-        },
-        true,
-        ["encrypt", "decrypt"],
-    );
-}
-
-export const byteArrayToB64 = (byteArray) => {
-    return btoa(String.fromCharCode.apply(null, new Uint8Array(byteArray)))
-}
-
-export const b64ToByteArray = (b64EncStr) => {
-    const str = atob(b64EncStr)
-    const buf = new ArrayBuffer(str.length);
-    const bufView = new Uint8Array(buf);
-    for (let i = 0, strLen = str.length; i < strLen; i++) {
-        bufView[i] = str.charCodeAt(i);
-    }
-    return buf;
-}
-
-export const importPubKey = async (b64EncPubKey) => {
-    const binaryData = b64ToByteArray(b64EncPubKey)
-
-    const publicKey = await webcrypto.subtle.importKey(
-        'raw',
-        binaryData,
-        {
-            name: "ECDH",
-            namedCurve: "P-384"
-        },
-        false,
-        []
-    )
-    return publicKey
 }
 
 export const initWebSession = async (req, res) => {

@@ -92,9 +92,11 @@ const App = () => {
 
 	useEffect(() => {
 		const interval = setInterval(() => {
-			setRemaining(Math.ceil(getRemainingTime() / 1000))
-			if (remaining <= 120) {
-				setBlur(blur + 0.1)
+			if (authenticated) {
+				setRemaining(Math.ceil(getRemainingTime() / 1000))
+				if (remaining <= 120) {
+					setBlur(blur + 0.1)
+				}
 			}
 		}, 100)
 
@@ -151,11 +153,12 @@ const App = () => {
 		)
 	}
 
-	useEffect(() => {
-		if (!authenticated) {
-			dispatch(isLoggedIn());
-		}
-	}, []);
+	// useEffect(() => {
+	// 	if (!authenticated) {
+	// 		console.log(true)
+	// 		dispatch(isLoggedIn());
+	// 	}
+	// }, []);
 
 	useEffect(() => {
 		if (!location.pathname.includes("/unlock-vault")) {

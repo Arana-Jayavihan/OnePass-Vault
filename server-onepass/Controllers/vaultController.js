@@ -9,6 +9,7 @@ import fs from 'fs'
 import { sendMails } from "./mailController.js"
 import { vaultInvite } from "../emails/vaultInvite.js"
 import dotenv from 'dotenv'
+import { encryptAES } from "./encryptController.js"
 dotenv.config()
 
 let vaultUnlockTokens = {}
@@ -68,11 +69,7 @@ export const addVault = async (req, res) => {
                 else if (vaults && vaults.length > 0) {
                     const validVaults = assignVaultParser(vaults)
                     const encodedPayload = JSON.stringify(validVaults)
-                    const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
-                        iv: CryptoJS.SHA256(sh.generate()).toString(),
-                        mode: CryptoJS.mode.CBC,
-                        padding: CryptoJS.pad.Pkcs7
-                    }).toString()
+                    const encPayload = await encryptAES(encodedPayload, req.body.newServerAESKey)
                     res.status(201).json({
                         message: "Vault Added Successfully",
                         payload: encPayload,
@@ -166,11 +163,7 @@ export const vaultUnlockRequest = async (req, res) => {
                 httpOnly: true
             })
             const encodedPayload = JSON.stringify(tokenHash)
-            const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
-                iv: CryptoJS.SHA256(sh.generate()).toString(),
-                mode: CryptoJS.mode.CBC,
-                padding: CryptoJS.pad.Pkcs7
-            }).toString()
+            const encPayload = await encryptAES(encodedPayload, req.body.newServerAESKey)
             res.status(200).json({
                 message: "Vault Unlock Token Generated",
                 payload: encPayload,
@@ -226,11 +219,7 @@ export const getEncVaultKey = async (req, res) => {
                             }
                             else if (result && result !== "") {
                                 const encodedPayload = JSON.stringify(result)
-                                const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
-                                    iv: CryptoJS.SHA256(sh.generate()).toString(),
-                                    mode: CryptoJS.mode.CBC,
-                                    padding: CryptoJS.pad.Pkcs7
-                                }).toString()
+                                const encPayload = await encryptAES(encodedPayload, req.body.newServerAESKey)
                                 res.status(200).json({
                                     message: "Vault Encrypted Key Fetched",
                                     payload: encPayload,

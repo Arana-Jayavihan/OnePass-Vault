@@ -1,103 +1,36 @@
 import { toast } from "react-hot-toast"
 import axiosInstance from "../helpers/axios.js"
-import { authConsts, generalConstatnts } from "./constants.js"
-import { decryptAES, decryptRSA, importRSAPrivKey, byteArrayToB64, b64ToByteArray } from "../helpers/encrypt.js"
+import { authConsts } from "./constants.js"
+import { decryptAES, decryptRSA, importRSAPrivKey, generateHighEntropyKey, genRSAKeyPair, encryptAES, encryptRSA } from "../helpers/encrypt.js"
+import { decryptRequest, encryptRequest } from "./webSessionActions.js"
 import CryptoJS from "crypto-js"
-import { decryptRequest, encryptRequest } from "./requestActions.js"
+import { keyExchange } from "./webSessionActions.js"
 
-export const keyExchange = () => {
-    return async (dispatch) => {
-        try {
-            dispatch({
-                type: generalConstatnts.KEY_EXCHANGE_REQUEST
-            })
-            sessionStorage.setItem('requestEncKey', null)
-            const sessionKeyPair = await window.crypto.subtle.generateKey(
-                {
-                    name: "ECDH",
-                    namedCurve: "P-384",
-                },
-                false,
-                ["deriveKey"],
-            );
-            const webPubKey = byteArrayToB64(await window.crypto.subtle.exportKey("raw", sessionKeyPair.publicKey))
-            const form = {
-                "webPubKey": webPubKey
-            }
-
-            const res = await axiosInstance.post('/webSession/init', form)
-            if (res.status === 201) {
-                const serverPubKey = await window.crypto.subtle.importKey(
-                    'raw',
-                    b64ToByteArray(res.data.payload.serverPubKey),
-                    {
-                        name: "ECDH",
-                        namedCurve: "P-384"
-                    },
-                    false,
-                    []
-                )
-                const requestEncKey = await window.crypto.subtle.deriveKey(
-                    {
-                        name: "ECDH",
-                        public: serverPubKey,
-                    },
-                    sessionKeyPair.privateKey,
-                    {
-                        name: "AES-CBC",
-                        length: 256,
-                    },
-                    true,
-                    ["encrypt", "decrypt"],
-                );
-                const webAESKey = byteArrayToB64(await window.crypto.subtle.exportKey("raw", requestEncKey))
-                sessionStorage.setItem('requestEncKey', webAESKey)
-                dispatch({
-                    type: generalConstatnts.KEY_EXCHANGE_SUCCESS
-                })
-                return true
-            }
-            else if (res.status === 200) {
-                toast.error("Already logged in", {id: 'ali'})
-                dispatch({
-                    type: generalConstatnts.KEY_LOGGED
-                })
-            }
-            else if (res.response) {
-                sessionStorage.setItem('requestEncKey', null)
-                dispatch({
-                    type: generalConstatnts.KEY_EXCHANGE_FAILED
-                })
-                return true
-            }
-        } catch (error) {
-            sessionStorage.setItem('requestEncKey', null)
-            console.log(error)
-            dispatch({
-                type: generalConstatnts.KEY_EXCHANGE_FAILED
-            })
-        }
-    }
-}
-
-export const resetSessions = () => {
-    return async dispatch => {
-        const res = await axiosInstance.post('/webSession/reset')
-        if (res.status === 200){
-            dispatch(keyExchange())
-            return true
-        }
-        else if (res.response){
-            dispatch(keyExchange())
-        }
-    }
-}
-
-export const genKeys = (form) => {
+export const genKeys = (password, email) => {
     return async dispatch => {
         dispatch({
             type: authConsts.KEY_GEN_REQUEST
         })
+
+        const derivedHighEntropyPassword = await generateHighEntropyKey(password)
+        const { privExpB64, pubExpB64, keyPair } = await genRSAKeyPair()
+        const encPrivate = await encryptAES(privExpB64, derivedHighEntropyPassword)
+
+        const masterEncryptionKey = await generateHighEntropyKey(derivedHighEntropyPassword, true)
+        const encryptedMasterEncKey = await encryptRSA(masterEncryptionKey, keyPair.publicKey)
+
+        const hashPassword = CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
+        const hashPasswordAlt = CryptoJS.SHA256(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
+
+        const form = {
+            'email': email,
+            'encPrivateKey': encPrivate,
+            'encPublicKey': pubExpB64,
+            'masterEncKey': encryptedMasterEncKey,
+            'hashPass': hashPassword,
+            'hashPassAlt': hashPasswordAlt
+        }
+
         const webAESKey = sessionStorage.getItem('requestEncKey')
         const { encForm, privateKey } = await encryptRequest(form, webAESKey)
         const res = await axiosInstance.post("/auth/genkeys", { 'encData': encForm })
@@ -109,7 +42,14 @@ export const genKeys = (form) => {
                 dispatch({
                     type: authConsts.KEY_GEN_SUCCESS
                 })
-                return true
+                const result = {
+                    status: true,
+                    derivedHighEntropyPassword,
+                    masterEncryptionKey,
+                    hashPassword,
+                    hashPasswordAlt
+                }
+                return result
             }
             else {
                 toast.error("Something Went Wrong")
@@ -131,13 +71,25 @@ export const genKeys = (form) => {
     }
 }
 
-export const addData = (form) => {
+export const addData = (form, masterEncKey) => {
     return async dispatch => {
         dispatch({
             type: authConsts.USER_DATA_ADD_REQUEST
         })
+        const encFirstName = await encryptAES(form.firstName, masterEncKey)
+        const encLastName = await encryptAES(form.lastName, masterEncKey)
+        const encContact = await encryptAES(form.contact, masterEncKey)
+
+        const form1 = {
+            'email': form.email,
+            'firstName': encFirstName,
+            'lastName': encLastName,
+            'contact': encContact,
+            'passwordHash': form.passwordHash,
+        }
+
         const webAESKey = sessionStorage.getItem('requestEncKey')
-        const { encForm, privateKey } = await encryptRequest(form, webAESKey)
+        const { encForm, privateKey } = await encryptRequest(form1, webAESKey)
         const res = await axiosInstance.post("/auth/add-user-data", { 'encData': encForm })
         if (res.status === 201) {
             const decData = await decryptRequest(res.data.payload || undefined, res.data.serverPubKey, privateKey, webAESKey)
@@ -210,6 +162,7 @@ export const login = (form, password) => {
     return async (dispatch) => {
         try {
             dispatch({ type: authConsts.LOGIN_REQUEST })
+            const derivedHighEntropyPassword = await generateHighEntropyKey(password)
             const webAESKey = sessionStorage.getItem('requestEncKey')
             const { encForm, privateKey } = await encryptRequest(form, webAESKey)
             const res = await axiosInstance.post('/auth/signin', { 'encData': encForm })
@@ -218,13 +171,13 @@ export const login = (form, password) => {
                 if (decData !== false) {
                     const user = decData.user
 
-                    const decPrivate = (await decryptAES(user.privateKey, password)).toString(CryptoJS.enc.Utf8)
+                    const decPrivate = await decryptAES(user.privateKey, derivedHighEntropyPassword)
                     const importedPrivKey = await importRSAPrivKey(decPrivate)
 
                     const masterKey = await decryptRSA(user.masterKey, importedPrivKey)
-                    const firstName = (await decryptAES(user.firstName, masterKey)).toString(CryptoJS.enc.Utf8)
-                    const lastName = (await decryptAES(user.lastName, masterKey)).toString(CryptoJS.enc.Utf8)
-                    const contact = (await decryptAES(user.contact, masterKey)).toString(CryptoJS.enc.Utf8)
+                    const firstName = await decryptAES(user.firstName, masterKey)
+                    const lastName = await decryptAES(user.lastName, masterKey)
+                    const contact = await decryptAES(user.contact, masterKey)
 
                     const decUser = {
                         'firstName': firstName,

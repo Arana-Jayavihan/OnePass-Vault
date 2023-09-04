@@ -7,6 +7,7 @@ import fs from 'fs'
 dotenv.config()
 
 import { webSessionList } from './webSessionController.js'
+import { encryptAES } from './encryptController.js';
 
 export let tokenlist = {}
 let privateKey = undefined
@@ -146,11 +147,7 @@ export const signInRequest = async (req, res) => {
                     'hashPass': hashPass
                 }
                 const encodedPayload = JSON.stringify(payload)
-                const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
-                    iv: CryptoJS.SHA256(sh.generate()).toString(),
-                    mode: CryptoJS.mode.CBC,
-                    padding: CryptoJS.pad.Pkcs7
-                }).toString()
+                const encPayload = await encryptAES(encodedPayload, req.body.newServerAESKey)
 
                 res.status(200).json({
                     message: "User Hash Fetch Success",
@@ -259,11 +256,7 @@ export const signIn = async (req, res) => {
                             }
                         }
                         const encodedPayload = JSON.stringify(payload)
-                        const encPayload = CryptoJS.AES.encrypt(encodedPayload, req.body.newServerAESKey, {
-                            iv: CryptoJS.SHA256(sh.generate()).toString(),
-                            mode: CryptoJS.mode.CBC,
-                            padding: CryptoJS.pad.Pkcs7
-                        }).toString()
+                        const encPayload = await encryptAES(encodedPayload, req.body.newServerAESKey)
                         res.status(200).json({
                             message: "Authentication successful",
                             payload: encPayload,
