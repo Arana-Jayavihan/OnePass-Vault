@@ -8,37 +8,36 @@ let contract = undefined
 let network = undefined
 let privateKey = undefined
 
-if (process.env.ENV === "DEV"){
-    privateKey = process.env.PRIVATE_KEY_STANDALONE
-    network = {
-        chainId: 210567,
-        rpc: ["http://127.0.0.1:8979"],
-        nativeCurrency: {
-          decimals: 30,
-          name: "OnePass ETH",
-          symbol: "OPETH",
-        },
-        shortName: "onepass",
-        slug: "onepass",
-        testnet: false,
-        chain: "OnePass",
-        name: "OnePass PrivateNet",
-      }
-}
-else if (process.env.ENV === "PROD"){
-    privateKey = process.env.PRIVATE_KEY_ONLINE
-    network = Sepolia
+try {
+    if (process.env.ENV === "DEV") {
+        privateKey = process.env.PRIVATE_KEY_STANDALONE
+        network = {
+            chainId: process.env.NETWORKID,
+            rpc: [process.env.RPCHOST],
+            nativeCurrency: {
+                decimals: 30,
+                name: "OnePass ETH",
+                symbol: "OPETH",
+            },
+            shortName: "onepass",
+            slug: "onepass",
+            testnet: false,
+            chain: "OnePass",
+            name: "OnePass PrivateNet",
+        }
+    }
+    else if (process.env.ENV === "PROD") {
+        privateKey = process.env.PRIVATE_KEY_ONLINE
+        network = Sepolia
+    }
+} catch (error) {
+    console.log(error)
 }
 
 try {
     sdk = ThirdwebSDK.fromPrivateKey(privateKey, network);
-    if (process.env.ENV === "DEV"){
-        contract = await sdk.getContract("0x33A6D9F2A9902016f62Ec02120cc996DD7D1F0D6")
-    }
-    else {
-        contract = await sdk.getContract("0xE3ce0898d3DdE79651782Aa3bb49018FB1E246a4")
-    }
-    
+    contract = await sdk.getContract(process.env.CONTRACT)
+
 } catch (error) {
     console.log(error)
 }
@@ -74,7 +73,7 @@ export const addUserKeys = async (user) => {
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -90,7 +89,7 @@ export const addUserData = async (user) => {
             addTransactionHash(user.email, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -98,7 +97,7 @@ export const addUserData = async (user) => {
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -113,7 +112,7 @@ export const getUser = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -128,7 +127,7 @@ export const getAssignVaults = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -143,7 +142,7 @@ export const getUserHashPass = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -158,7 +157,7 @@ export const getUserHashPassAlt = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -173,7 +172,7 @@ export const getPrivateKey = async (email, hashPass) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -188,7 +187,7 @@ export const getPublicKey = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -203,7 +202,7 @@ export const getMasterEncKey = async (email, hashPass) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -223,7 +222,7 @@ export const addTransactionHash = async (email, txnHash) => {
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -238,7 +237,7 @@ export const getUserTransactionHash = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -254,7 +253,7 @@ export const removeUser = async (email, hashPass) => {
             addTransactionHash(email, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -262,7 +261,7 @@ export const removeUser = async (email, hashPass) => {
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -279,7 +278,7 @@ export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyH
             addTransactionHash(email, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -287,7 +286,7 @@ export const createVault = async (email, vaultName, note, encVaultKey, vaultKeyH
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -303,7 +302,7 @@ export const updateVault = async (vaultIndex, ownerEmail, hashPass, vaultName, n
             addTransactionHash(ownerEmail, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -311,7 +310,7 @@ export const updateVault = async (vaultIndex, ownerEmail, hashPass, vaultName, n
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -327,7 +326,7 @@ export const addVaultUser = async (vaultIndex, ownerEmail, addUserEmail, encVaul
             addTransactionHash(ownerEmail, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -335,7 +334,7 @@ export const addVaultUser = async (vaultIndex, ownerEmail, addUserEmail, encVaul
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -351,7 +350,7 @@ export const removeVaultUser = async (email, hashPass, vaultIndex, userIndex) =>
             addTransactionHash(email, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -359,7 +358,7 @@ export const removeVaultUser = async (email, hashPass, vaultIndex, userIndex) =>
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -375,7 +374,7 @@ export const removeVault = async (ownerEmail, hashPass, vaultIndex) => {
             addTransactionHash(ownerEmail, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -383,7 +382,7 @@ export const removeVault = async (ownerEmail, hashPass, vaultIndex) => {
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -398,7 +397,7 @@ export const getUserVaults = async (email) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -413,7 +412,7 @@ export const getVault = async (vaultIndex) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -428,7 +427,7 @@ export const getUserVaultEncKey = async (email, hashPass, vaultIndex) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -445,7 +444,7 @@ export const addVaultLogin = async (email, loginName, url, userName, password, h
             addTransactionHash(email, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -453,7 +452,7 @@ export const addVaultLogin = async (email, loginName, url, userName, password, h
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -469,7 +468,7 @@ export const updateVaultLogin = async (loginIndex, vaultIndex, ownerEmail, hashP
             addTransactionHash(ownerEmail, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -477,7 +476,7 @@ export const updateVaultLogin = async (loginIndex, vaultIndex, ownerEmail, hashP
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -493,7 +492,7 @@ export const removeVaultLogin = async (ownerEmail, hashPass, vaultIndex, loginIn
             addTransactionHash(ownerEmail, result.receipt.transactionHash)
             return result
         }
-        else if (!result.receipt){
+        else if (!result.receipt) {
             return result
         }
         else {
@@ -501,7 +500,7 @@ export const removeVaultLogin = async (ownerEmail, hashPass, vaultIndex, loginIn
         }
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
@@ -516,7 +515,7 @@ export const getAllVaultLogins = async (vaultIndex) => {
         return result
     } catch (error) {
         console.log(error)
-        if (error.reason){
+        if (error.reason) {
             return error.reason
         }
         else {
