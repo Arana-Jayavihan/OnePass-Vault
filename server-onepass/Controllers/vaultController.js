@@ -9,7 +9,7 @@ import fs from 'fs'
 import { sendMails } from "./mailController.js"
 import { vaultInvite } from "../emails/vaultInvite.js"
 import dotenv from 'dotenv'
-import { encryptAES } from "./encryptController.js"
+import { decryptAES, encryptAES } from "./encryptController.js"
 dotenv.config()
 
 let vaultUnlockTokens = {}
@@ -146,11 +146,7 @@ export const vaultUnlockRequest = async (req, res) => {
                 ip: ip
             }
             const vaultUnlockToken = jwt.sign({ vaultIndex: vaultIndex, email: email, id: id }, privateKey, { algorithm: 'ES512', expiresIn: '5m' })
-            const encVaultUnlockToken = CryptoJS.AES.encrypt(vaultUnlockToken, process.env.AES_SECRET, {
-                iv: CryptoJS.SHA256(sh.generate()).toString(),
-                mode: CryptoJS.mode.CBC,
-                padding: CryptoJS.pad.Pkcs7
-            }).toString()
+            const encVaultUnlockToken = await encryptAES(vaultUnlockToken, process.env.AES_SECRET)
             const tokenHash = CryptoJS.SHA256(encVaultUnlockToken).toString()
             token['vaultUnlockToken'] = vaultUnlockToken
             vaultUnlockTokens[id] = token
@@ -197,7 +193,7 @@ export const getEncVaultKey = async (req, res) => {
                 })
             }
             else {
-                const decVaultUnlockToken = CryptoJS.AES.decrypt(encVaultUnlockToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+                const decVaultUnlockToken = await decryptAES(encVaultUnlockToken, process.env.AES_SECRET)
                 const ip = req.headers['x-forwarded-for']
                 const decoded = jwt.verify(decVaultUnlockToken, publicKey, { algorithms: ['ES512'] })
                 const vaultUnlockToken = vaultUnlockTokens[decoded.id].vaultUnlockToken
@@ -293,7 +289,7 @@ export const getVaultData = async (req, res) => {
                 })
             }
             else {
-                const decVaultUnlockToken = CryptoJS.AES.decrypt(encVaultUnlockToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+                const decVaultUnlockToken = await decryptAES(encVaultUnlockToken, process.env.AES_SECRET)
                 const decoded = jwt.verify(decVaultUnlockToken, publicKey, { algorithms: ['ES512'] })
                 const vaultUnlockToken = vaultUnlockTokens[decoded.id].vaultUnlockToken
                 if (vaultUnlockToken && decVaultUnlockToken === vaultUnlockToken) {
@@ -433,11 +429,7 @@ export const addVaultUserRequest = async (req, res) => {
                             }
                             else if (vault === undefined) {
                                 const addVaultUserToken = jwt.sign({ vaultIndex: body.vaultIndex, email: body.email, id: token.id, addUserEmail: body.addUserEmail, hashPass: user.hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '6h' })
-                                const encToken = CryptoJS.AES.encrypt(addVaultUserToken, process.env.AES_SECRET, {
-                                    iv: CryptoJS.SHA256(sh.generate()).toString(),
-                                    mode: CryptoJS.mode.CBC,
-                                    padding: CryptoJS.pad.Pkcs7
-                                }).toString()
+                                const encToken = await encryptAES(addVaultUserToken, process.env.AES_SECRET)
                                 const b64EncToken = Buffer.from(encToken).toString('base64')
                                 let URL = undefined
                                 if (process.env.ENV === "DEV"){
@@ -505,7 +497,7 @@ export const getInviteData = async (req, res) => {
         fiveMins.setTime(fiveMins.getTime() + (5 * 60 * 1000))
         const token = req.body.token
         const fromB64 = Buffer.from(token, 'base64').toString('ascii')
-        const decToken = CryptoJS.AES.decrypt(fromB64, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+        const decToken = await decryptAES(fromB64, process.env.AES_SECRET)
         const decoded = jwt.verify(decToken, publicKey, { algorithms: ['ES512'] })
         if (decoded) {
             if (addVaultUserTokens[decoded.id]) {
@@ -573,7 +565,7 @@ export const acceptVaultInvite = async (req, res) => {
         const body = req.body
         const token = req.cookies.addVaultUserToken
         const fromB64 = Buffer.from(token, 'base64').toString('ascii')
-        const decToken = CryptoJS.AES.decrypt(fromB64, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+        const decToken = await decryptAES(fromB64, process.env.AES_SECRET)
         const decoded = jwt.verify(decToken, publicKey, { algorithms: ['ES512'] })
         if (decoded) {
             if (addVaultUserTokens[decoded.id].addUserEmail === req.user.email && addVaultUserTokens[decoded.id].addUserEmail === body.email) {

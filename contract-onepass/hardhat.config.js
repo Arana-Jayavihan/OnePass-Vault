@@ -10,14 +10,14 @@ module.exports = {
         
       },
       onepass: {
-        url: 'http://localhost:8551',
+        url: 'http://localhost:8979',
         accounts: [`0x${process.env.PRIVATE_KEY_STANDALONE}`]
       }
     },
     settings: {
       optimizer: {
         enabled: true,
-        runs: 500,
+        runs: 200,
       },
     },
   },

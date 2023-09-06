@@ -57,7 +57,7 @@ export const importAESKey = async (key) => {
     return importedKey
 }
 
-export const exportAESKey = async (key) => {
+export const exportKey = async (key) => {
     return byteArrayToB64(await (webcrypto.subtle.exportKey("raw", key)))
 }
 
@@ -125,6 +125,17 @@ export const generateHighEntropyKey = async (password, salt) => {
         ["encrypt", "decrypt"]
     );
     
-    return byteArrayToB64(await webcrypto.subtle.exportKey("raw", AESKey))
+    return await exportKey(AESKey)
+}
+
+export const generateECDHKeyPair = async () => {
+    return await webcrypto.subtle.generateKey(
+        {
+            name: "ECDH",
+            namedCurve: "P-384"
+        },
+        false,
+        ["deriveKey"],
+    );
 }
 

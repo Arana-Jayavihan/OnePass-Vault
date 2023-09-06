@@ -7,7 +7,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 import { tokenlist as authTokens } from './authController.js';
-import { deriveSecretKey, byteArrayToB64, importPubKey } from './encryptController.js'
+import { deriveSecretKey, importPubKey, generateECDHKeyPair, exportKey, encryptAES, decryptAES } from './encryptController.js'
 
 export let webSessionList = {}
 let privateKey = undefined
@@ -28,7 +28,7 @@ export const initWebSession = async (req, res) => {
         const broswserHash = CryptoJS.SHA256(JSON.stringify(browserDetails)).toString()
         let oldWebSessionToken = undefined
         try {
-            oldWebSessionToken = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
+            oldWebSessionToken = jwt.verify((await decryptAES(req.cookies.sessionId, process.env.AES_SECRET)), publicKey, { algorithms: ['ES512'] })
             const webSessions = Object.values(webSessionList)
             for (let webSession in webSessions) {
                 if (webSessions[webSession].sessionId === oldWebSessionToken.sessionId && webSessions[webSession].userSession === undefined) {
@@ -51,22 +51,15 @@ export const initWebSession = async (req, res) => {
         if (flag === false) {
             let hours1 = new Date()
             hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
-            const serverKeyPair = await webcrypto.subtle.generateKey(
-                {
-                    name: "ECDH",
-                    namedCurve: "P-384"
-                },
-                false,
-                ["deriveKey"],
-            );
-            const serverPubKey = byteArrayToB64(await webcrypto.subtle.exportKey("raw", serverKeyPair.publicKey))
+            const serverKeyPair = await generateECDHKeyPair()
+            const serverPubKey = await exportKey(serverKeyPair.publicKey)
 
             const importedWebPubKey = await importPubKey(req.body.webPubKey)
             const serverSecretKey = await deriveSecretKey(
                 serverKeyPair.privateKey,
                 importedWebPubKey,
             );
-            const serverAESKey = byteArrayToB64(await webcrypto.subtle.exportKey("raw", serverSecretKey))
+            const serverAESKey = await exportKey(serverSecretKey)
             const webSessionObj = {
                 'sessionId': shortid.generate(),
                 'secretKey': serverAESKey,
@@ -78,11 +71,7 @@ export const initWebSession = async (req, res) => {
             webSessionList[webSessionObj.sessionId] = webSessionObj
             console.log(webSessionList, "New Web Session")
             const webSessionToken = jwt.sign({ "sessionId": webSessionObj.sessionId }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
-            const encWebSessionToken = CryptoJS.AES.encrypt(webSessionToken, process.env.AES_SECRET, {
-                iv: CryptoJS.SHA256(shortid.generate()).toString(),
-                mode: CryptoJS.mode.CBC,
-                padding: CryptoJS.pad.Pkcs7
-            }).toString()
+            const encWebSessionToken = await encryptAES(webSessionToken, process.env.AES_SECRET)
             res.cookie('sessionId', encWebSessionToken, {
                 path: '/',
                 expires: hours1,
@@ -112,24 +101,17 @@ export const initWebSession = async (req, res) => {
 
 export const updateWebSession = async (webSessionId, webPubKey) => {
     try {
-        const serverKeyPair = await webcrypto.subtle.generateKey(
-            {
-                name: "ECDH",
-                namedCurve: "P-384"
-            },
-            false,
-            ["deriveKey"],
-        );
+        const serverKeyPair = await generateECDHKeyPair()
         const importedWebPubKey = await importPubKey(webPubKey)
         const serverSecretKey = await deriveSecretKey(
             serverKeyPair.privateKey,
             importedWebPubKey,
         );
-        const newServerAESKey = byteArrayToB64(await webcrypto.subtle.exportKey("raw", serverSecretKey))
+        const newServerAESKey = await exportKey(serverSecretKey)
         webSessionList[webSessionId].secretKey = newServerAESKey
         webSessionList[webSessionId].lastAccessed = new Date().getTime()
 
-        const serverPubKey = byteArrayToB64(await webcrypto.subtle.exportKey("raw", serverKeyPair.publicKey))
+        const serverPubKey = await exportKey(serverKeyPair.publicKey)
         return { serverPubKey, newServerAESKey }
 
     } catch (error) {

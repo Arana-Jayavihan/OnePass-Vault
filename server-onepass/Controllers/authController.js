@@ -7,7 +7,7 @@ import fs from 'fs'
 dotenv.config()
 
 import { webSessionList } from './webSessionController.js'
-import { encryptAES } from './encryptController.js';
+import { decryptAES, encryptAES } from './encryptController.js';
 
 export let tokenlist = {}
 let privateKey = undefined
@@ -216,11 +216,7 @@ export const signIn = async (req, res) => {
                         const token = jwt.sign({ email: user.hashEmail, ip: IP, hashPass: hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '30m' })
                         const tokenHash = CryptoJS.SHA256(token).toString()
                         const refreshToken = jwt.sign({ tokenHash: tokenHash }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
-                        const encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
-                            iv: CryptoJS.SHA256(sh.generate()).toString(),
-                            mode: CryptoJS.mode.CBC,
-                            padding: CryptoJS.pad.Pkcs7
-                        }).toString()
+                        const encToken = await encryptAES(token, process.env.AES_SECRET)
                         tokenlist[refreshToken] = {
                             'webSessionId': req.body.webSessionId,
                             'refreshToken': refreshToken,
@@ -291,10 +287,10 @@ export const signIn = async (req, res) => {
     }
 }
 
-export const isLoggedIn = (req, res) => {
+export const isLoggedIn = async (req, res) => {
     try {
         if (req.cookies.sessionId) {
-            const webSessionCookie = jwt.verify((CryptoJS.AES.decrypt(req.cookies.sessionId).toString(CryptoJS.enc.Utf8)), publicKey, { algorithms: ['ES512'] })
+            const webSessionCookie = jwt.verify((await decryptAES(req.cookies.sessionId, process.env.AES_SECRET)), publicKey, { algorithms: ['ES512'] })
             const sessionId = webSessionCookie.sessionId
             const webSessions = Object.values(webSessionList)
             const webSession = webSessions.find(webSession => webSession.sessionID === sessionId)
@@ -302,7 +298,7 @@ export const isLoggedIn = (req, res) => {
                 if (req.cookies.encToken) {
                     const tokens = Object.values(tokenlist)
                     const encToken = req.cookies.encToken
-                    const token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+                    const token = await decryptAES(encToken, process.env.AES_SECRET)
                     const tokenHash = CryptoJS.SHA256(token).toString()
                     if (tokenHash === webSession.userSession) {
                         const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
