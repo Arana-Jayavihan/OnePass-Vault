@@ -4,13 +4,11 @@ import { tokenlist as authTokens } from '../Controllers/authController.js'
 import fs from 'fs'
 import dotenv from 'dotenv'
 import vd from 'validator'
-import sh from 'shortid'
 dotenv.config()
 
 import { updateWebSession, webSessionList } from '../Controllers/webSessionController.js'
 import { decryptAES, encryptAES } from '../Controllers/encryptController.js'
 let publicKey = undefined
-
 try {
     publicKey = fs.readFileSync('ecdsaPubKey.pem', 'utf-8')
 } catch (error) {
@@ -33,7 +31,7 @@ export const decryptRequest = async (req, res, next) => {
             url.includes('/vault/accept-vault-invite')
         ) {
             const encSessionToken = req.cookies.sessionId
-            const sessionToken = CryptoJS.AES.decrypt(encSessionToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+            const sessionToken = await decryptAES(encSessionToken, process.env.AES_SECRET)
             if (sessionToken) {
                 const verifiedToken = jwt.verify(sessionToken, publicKey, { algorithms: ['ES512'] })
                 if (verifiedToken) {
@@ -167,17 +165,18 @@ export const checkRequest = (req, res, next) => {
 }
 
 // checks whether the user have a valid session
-export const requireSignin = (req, res, next) => {
+export const requireSignin = async (req, res, next) => {
     try {
         const tokens = Object.values(authTokens)
         const webSessions = Object.values(webSessionList)
-        const webSessionToken = jwt.verify(CryptoJS.AES.decrypt(req.cookies.sessionId, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8), publicKey, { algorithms: ['ES512'] })
+        const webSessionToken = jwt.verify(await decryptAES(req.cookies.sessionId, process.env.AES_SECRET), publicKey, { algorithms: ['ES512'] })
         const webSession = webSessions.find(webSession => webSession.sessionId === webSessionToken.sessionId)
         if (req.cookies.encToken) {
             const encToken = req.cookies.encToken
-            const token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+            const token = await decryptAES(encToken, process.env.AES_SECRET)
             if (token) {
                 const tokenHash = CryptoJS.SHA256(token).toString()
+                
                 if (tokenHash === webSession.userSession) {
                     const authToken = tokens.find(authToken => authToken.tokenHash === tokenHash)
                     if (authToken) {

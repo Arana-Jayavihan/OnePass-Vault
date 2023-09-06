@@ -225,7 +225,6 @@ export const signIn = async (req, res) => {
                             'ip': IP
                         }
                         webSessionList[req.body.webSessionId]['userSession'] = tokenHash
-                        console.log(tokenlist, "New Signin")
                         res.cookie('refreshToken', refreshToken, {
                             path: `/`,
                             expires: hours1,
@@ -253,6 +252,7 @@ export const signIn = async (req, res) => {
                         }
                         const encodedPayload = JSON.stringify(payload)
                         const encPayload = await encryptAES(encodedPayload, req.body.newServerAESKey)
+                        console.log(tokenlist, "New Signin")
                         res.status(200).json({
                             message: "Authentication successful",
                             payload: encPayload,
@@ -375,7 +375,7 @@ export const tokenRefresh = async (req, res) => {
         hours1.setTime(hours1.getTime() + (1 * 60 * 60 * 1000))
         let refreshToken = req.cookies.refreshToken
         let encToken = req.cookies.encToken
-        let token = CryptoJS.AES.decrypt(encToken, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8)
+        let token = await decryptAES(encToken, process.env.AES_SECRET)
         if (token) {
             const decodedToken = jwt.verify(token, publicKey, { algorithms: ['ES512'] })
             let tokenHash = CryptoJS.SHA256(token).toString()
@@ -391,11 +391,7 @@ export const tokenRefresh = async (req, res) => {
                                 token = jwt.sign({ email: email, ip: ip, hashPass: decodedToken.hashPass }, privateKey, { algorithm: 'ES512', expiresIn: '30m' })
                                 tokenHash = CryptoJS.SHA256(token).toString()
                                 refreshToken = jwt.sign({ tokenHash: tokenHash }, privateKey, { algorithm: 'ES512', expiresIn: '1h' })
-                                encToken = CryptoJS.AES.encrypt(token, process.env.AES_SECRET, {
-                                    iv: CryptoJS.SHA256(sh.generate()).toString(),
-                                    mode: CryptoJS.mode.CBC,
-                                    padding: CryptoJS.pad.Pkcs7
-                                }).toString()
+                                encToken = await encryptAES(token, process.env.AES_SECRET)
                                 res.cookie('refreshToken', refreshToken, {
                                     path: `/`,
                                     expires: hours1,
@@ -472,7 +468,7 @@ export const signOut = async (req, res) => {
         const refreshToken = req.cookies.refreshToken
         delete tokenlist[refreshToken]
         try {
-            const sessionToken = jwt.verify(CryptoJS.AES.decrypt(req.cookies.sessionId, process.env.AES_SECRET).toString(CryptoJS.enc.Utf8), publicKey, { algorithms: ['ES512'] })
+            const sessionToken = jwt.verify(await decryptAES(req.cookies.sessionId, process.env.AES_SECRET), publicKey, { algorithms: ['ES512'] })
             delete webSessionList[sessionToken.sessionId]
         } catch (error) {
             console.log(error)
