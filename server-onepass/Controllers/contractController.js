@@ -5,12 +5,32 @@ dotenv.config()
 
 let sdk = undefined
 let contract = undefined
+let envContract = undefined
 let network = undefined
 let privateKey = undefined
 
 try {
     if (process.env.ENV === "DEV") {
+        envContract = process.env.CONTRACT
         privateKey = process.env.PRIVATE_KEY_STANDALONE
+        network = {
+            chainId: process.env.NETWORKID,
+            rpc: [process.env.RPCHOST],
+            nativeCurrency: {
+                decimals: 30,
+                name: "OnePass ETH",
+                symbol: "OPETH",
+            },
+            shortName: "onepass",
+            slug: "onepass",
+            testnet: false,
+            chain: "OnePass",
+            name: "OnePass PrivateNet",
+        }
+    }
+    if (process.env.ENV === "DOCKER") {
+        envContract = process.env.CONTRACT_DOCKER
+        privateKey = process.env.PRIVATE_KEY_DOCKER
         network = {
             chainId: process.env.NETWORKID,
             rpc: [process.env.RPCHOST],
@@ -30,14 +50,9 @@ try {
         privateKey = process.env.PRIVATE_KEY_ONLINE
         network = Sepolia
     }
-} catch (error) {
-    console.log(error)
-}
 
-try {
     sdk = ThirdwebSDK.fromPrivateKey(privateKey, network);
-    contract = await sdk.getContract(process.env.CONTRACT)
-
+    contract = await sdk.getContract(envContract)
 } catch (error) {
     console.log(error)
 }
