@@ -1,12 +1,18 @@
 #!/usr/bin/bash
 
-# INITIALIZE THE PRIVATE ETHEREUM NETWORK 
+############################################
+#					   #
+# INITIALIZE THE PRIVATE ETHEREUM NETWORK  #
+#					   #
+############################################
 
+mkdir privateChainDocker
+
+# Creating the bootnode
 bootnode --genkey privateChainDocker/bootNode.key
 bootNodeEnode=$(bootnode -nodekey privateChainDocker/bootNode.key -writeaddress)
 
-rm -rf node*
-
+# Creating directories for blockchain nodes
 mkdir privateChainDocker/node1 privateChainDocker/node2 privateChainDocker/node3 privateChainDocker/node4
 gpg --gen-random --armor 2 32 > privateChainDocker/node1/passNode1
 gpg --gen-random --armor 2 32 > privateChainDocker/node2/passNode2
@@ -15,9 +21,11 @@ gpg --gen-random --armor 2 32 > privateChainDocker/node4/passNode4
 gpg --gen-random --armor 2 32 > privateChainDocker/node1/passAccount1
 gpg --gen-random --armor 2 32 > privateChainDocker/node1/passAccount2
 
+CHAINID=210567
+printf "chainId: $CHAINID\n\n" > chainInfo
+
+# Account creation and genesis configuration
 signers=''
-printf "" > chainInfo
-printf "chainId: 210567\n\n" > chainInfo
 
 geth account new --datadir privateChainDocker/node1/ --password privateChainDocker/node1/passNode1
 files=(privateChainDocker/node1/keystore/*)
@@ -58,28 +66,30 @@ pass=$(cat privateChainDocker/node1/passAccount2)
 keyStore=$(cat "${files[2]}")
 printf "account2\n\tpublicKey: $pubKeyAcc2\n\tpass: $pass\n\tkeystore: $keyStore\n\n" >> chainInfo
 
+# Genesis block configuration
 extraData="0x0000000000000000000000000000000000000000000000000000000000000000"
 extraData+="$signers"
 extraData+="0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 
-cp privateChainDocker/genesisTemplate.json privateChainDocker/genesisTemplate.json.tmp
-sed -i "s/"SIGNERS"/$extraData/" privateChainDocker/genesisTemplate.json.tmp
-sed -i "s/"PREFUNDACC1"/$pubKeyAcc1/" privateChainDocker/genesisTemplate.json.tmp
-sed -i "s/"PREFUNDACC2"/$pubKeyAcc2/" privateChainDocker/genesisTemplate.json.tmp
-mv privateChainDocker/genesisTemplate.json.tmp privateChainDocker/genesis.json
+cp genesisTemplate.json privateChainDocker/
+sed -i "s/"CHAINID"/$CHAINID/" privateChainDocker/genesisTemplate.json
+sed -i "s/"SIGNERS"/$extraData/" privateChainDocker/genesisTemplate.json
+sed -i "s/"PREFUNDACC1"/$pubKeyAcc1/" privateChainDocker/genesisTemplate.json
+sed -i "s/"PREFUNDACC2"/$pubKeyAcc2/" privateChainDocker/genesisTemplate.json
+mv privateChainDocker/genesisTemplate.json privateChainDocker/genesis.json
 
-cp envTemplate envTemplate.tmp
+# Enivironment variable configuration
 currentDir=$(pwd)
+cp envTemplate privateChainDocker/.env
+sed -i "s/"CHAINID"/$CHAINID/" privateChainDocker/.env
+sed -i "s/"NODE1_ACC_PUB"/0x$pubKey1/" privateChainDocker/.env
+sed -i "s/"NODE2_ACC_PUB"/0x$pubKey2/" privateChainDocker/.env
+sed -i "s/"NODE3_ACC_PUB"/0x$pubKey3/" privateChainDocker/.env
+sed -i "s/"NODE4_ACC_PUB"/0x$pubKey4/" privateChainDocker/.env
+sed -i "s/"BOOTNODE_PUB_KEY"/$bootNodeEnode/" privateChainDocker/.env
+sed -i "s@"CURRENT_WORK_DIR"@$currentDir@" privateChainDocker/.env
 
-cat envTemplate.tmp
-sed -i "s/"NODE1_ACC_PUB"/0x$pubKey1/" envTemplate.tmp
-sed -i "s/"NODE2_ACC_PUB"/0x$pubKey2/" envTemplate.tmp
-sed -i "s/"NODE3_ACC_PUB"/0x$pubKey3/" envTemplate.tmp
-sed -i "s/"NODE4_ACC_PUB"/0x$pubKey4/" envTemplate.tmp
-sed -i "s/"BOOTNODE_PUB_KEY"/$bootNodeEnode/" envTemplate.tmp
-sed -i "s@"CURRENT_WORK_DIR"@$currentDir@" envTemplate.tmp
-mv envTemplate.tmp .env
-
+# Initialize nodes with genesis state
 geth init --datadir privateChainDocker/node1 privateChainDocker/genesis.json
 printf "Initialized Node 1\n\n"
 geth init --datadir privateChainDocker/node2 privateChainDocker/genesis.json
