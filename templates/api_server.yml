@@ -1,0 +1,24 @@
+  api-server:
+    hostname: onepass-server
+    env_file:
+      - server-onepass/.env
+    build:
+      context: ./server-onepass
+    image: node-js
+    command:
+      --PRIVATE_KEY_DOCKER=${PRIVATE_KEY_DOCKER}
+      --CONTRACT_DOCKER=${CONTRACT_DOCKER}
+      --MAIL_UESR_NAME=${MAIL_UESR_NAME}
+      --MAIL_USER_PASS=${MAIL_USER_PASS}
+      --AES_SECRET=${AES_SECRET}
+      --NETWIRKID=${NETWORK_ID}
+      --RPCHOST=${RPCHOST}
+      --PORT=${PORT}
+      --ENV=DOCKER
+      --node
+      --index.js
+    ports:
+      - ${PORT}:${PORT}/tcp
+    networks:
+      onepass-vnet:
+        ipv4_address: 172.16.254.9

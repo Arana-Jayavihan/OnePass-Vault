@@ -1,24 +1,10 @@
 version: '3.7'
 
 services:
-  api-server:
-    hostname: onepass-server
-    env_file:
-      - nodeEnv
-    build:
-      context: ./server-onepass
-    command:
-      --PRIVATE_KEY_DOCKER=${DOCKER_PRIV_KEY}
-      --AES_SECRET=${AES_SECRET}
-      --RPCHOST="http://172.16.254.7:8979"
-      --NETWIRKID=210567
-    ports:
-      - "9000:9000/tcp"
-
   geth-bootnode:
     hostname: geth-bootnode
     env_file:
-      - ./privateChainDocker/.env
+      - privateChainDocker/.env
     image: geth-client
     build:
       context: ./privateChainDocker
@@ -39,7 +25,7 @@ services:
   geth-rpc-client-endpoint:
     hostname: geth-rpc-client-endpoint
     env_file:
-      - ./privateChainDocker/.env
+      - privateChainDocker/.env
     image: geth-client
     build:
       context: ./privateChainDocker
@@ -56,7 +42,7 @@ services:
       --ipcdisable
       --networkid=${NETWORK_ID}
       --http
-      --http.port=8980
+      --http.port=8979
       --http.addr=0.0.0.0
       --http.api="eth,web3,net,txpool"
       --http.corsdomain="*"
@@ -66,6 +52,7 @@ services:
     expose:
       - "30307/udp"
       - "30307/tcp"
+      - "8979/tcp"
     volumes:
       - ${PWD}/privateChainDocker/node1:/usr/src/node/node1
     networks:
@@ -75,8 +62,8 @@ services:
   geth-rpc-admin-endpoint:
     hostname: geth-rpc-admin-endpoint
     env_file:
-      - ./privateChainDocker/.env
-    image: geth-client
+      - privateChainDocker/.env
+    image: geth-admin
     build:
       context: ./privateChainDocker
     depends_on:
@@ -113,7 +100,7 @@ services:
   geth-miner-1:
     hostname: geth-miner-1
     env_file:
-      - ./privateChainDocker/.env
+      - privateChainDocker/.env
     image: geth-client
     build:
       context: ./privateChainDocker
@@ -143,7 +130,7 @@ services:
   geth-miner-2:
     hostname: geth-miner-2
     env_file:
-      - ./privateChainDocker/.env
+      - privateChainDocker/.env
     image: geth-client
     build:
       context: ./privateChainDocker

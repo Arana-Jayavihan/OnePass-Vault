@@ -7,6 +7,7 @@
 ############################################
 
 mkdir privateChainDocker
+cp templates/gethDockerFile privateChainDocker/Dockerfile
 
 # Creating the bootnode
 bootnode --genkey privateChainDocker/bootNode.key
@@ -71,7 +72,7 @@ extraData="0x0000000000000000000000000000000000000000000000000000000000000000"
 extraData+="$signers"
 extraData+="0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 
-cp genesisTemplate.json privateChainDocker/
+cp templates/genesisTemplate.json privateChainDocker/
 sed -i "s/"CHAINID"/$CHAINID/" privateChainDocker/genesisTemplate.json
 sed -i "s/"SIGNERS"/$extraData/" privateChainDocker/genesisTemplate.json
 sed -i "s/"PREFUNDACC1"/$pubKeyAcc1/" privateChainDocker/genesisTemplate.json
@@ -80,7 +81,7 @@ mv privateChainDocker/genesisTemplate.json privateChainDocker/genesis.json
 
 # Enivironment variable configuration
 currentDir=$(pwd)
-cp envTemplate privateChainDocker/.env
+cp templates/envTemplate privateChainDocker/.env
 sed -i "s/"CHAINID"/$CHAINID/" privateChainDocker/.env
 sed -i "s/"NODE1_ACC_PUB"/0x$pubKey1/" privateChainDocker/.env
 sed -i "s/"NODE2_ACC_PUB"/0x$pubKey2/" privateChainDocker/.env
@@ -100,3 +101,19 @@ geth init --datadir privateChainDocker/node4 privateChainDocker/genesis.json
 printf "Initialized Node 4\n\n"
 
 rm privateChainDocker/node*/geth/nodekey 
+
+
+#################################################
+#						#
+#	INITIALIZE NODE SERVER ENV		#
+#						#
+#################################################
+
+PORT=9000
+AES_SECRET=$(gpg --gen-random --armor 2 32)
+cp templates/nodeEnv server-onepass/.env
+sed -i "s/"PORT_VALUE"/$PORT/" server-onepass/.env
+sed -i "s/"NETWORKID_VALUE"/$CHAINID/" server-onepass/.env
+sed -i "s/"AES_SERCRET_VALUE"/$AES_SECRET/" server-onepass/.env
+sed -i "s@"RPCHOST_VALUE"@"http://172.16.254.7:8979"@" server-onepass/.env
+
