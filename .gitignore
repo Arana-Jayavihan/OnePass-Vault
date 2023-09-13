@@ -1,3 +1,4 @@
 thirdwebAPIKey.txt 
-privatechain-onepass
-truffle*
+.env
+chainInfo
+privateChainDocker/
