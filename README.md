@@ -1,4 +1,2 @@
-# OnePass Vault
-Blockchain based password manager that utilizes the ethereum blockchain (currently Sepolia test network) to store and access the encrypted passwords via smart contract
-
-Live Site - https://onepass-vault-v3.netlify.app
+# OnePass Vault - Standalone
+Standalone deployment is developed to fulfill the Enterprise Password Management as a Service (PMaaS) requirement utilizing private blockchains. A managed service provider can sell the product to client organizations as a one-time deployment and post-deployment support.
