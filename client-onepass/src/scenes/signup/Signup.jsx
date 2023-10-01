@@ -53,7 +53,6 @@ const Signup = () => {
     const [masterEncKey, setMasterEncKey] = useState(undefined);
     const [highEntropyKey, setHighEntropyKey] = useState(undefined);
     const [hashPassword, setHashPassword] = useState(undefined);
-    const [hashPasswordAlt, setHashPasswordAlt] = useState(undefined);
 
     const dispatch = useDispatch()
     const theme = useTheme()
@@ -78,7 +77,6 @@ const Signup = () => {
                         setHighEntropyKey(result.derivedHighEntropyPassword)
                         setMasterEncKey(result.masterEncryptionKey)
                         setHashPassword(result.hashPassword)
-                        setHashPasswordAlt(result.hashPasswordAlt)
                         setKeyGenMode(false)
                     }
                 })
@@ -102,12 +100,7 @@ const Signup = () => {
                 }
                 dispatch(addData(form, masterEncKey)).then(result => {
                     if (result) {
-                        const form = {
-                            'hashEmail': email,
-                            'hashPass': hashPassword,
-                            'hashPassAlt': hashPasswordAlt
-                        }
-                        dispatch(login(form, password))
+                        dispatch(login(email, password))
                     }
                 })
                 setEmail(undefined)
@@ -119,7 +112,6 @@ const Signup = () => {
                 setMasterEncKey(undefined)
                 setHighEntropyKey(undefined)
                 setHashPassword(undefined)
-                setHashPasswordAlt(undefined)
             }
             else {
                 toast.error("Passwords Mismatch")

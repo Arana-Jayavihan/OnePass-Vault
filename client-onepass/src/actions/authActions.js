@@ -20,7 +20,6 @@ export const genKeys = (password, email) => {
         const encryptedMasterEncKey = await encryptRSA(masterEncryptionKey, keyPair.publicKey)
 
         const hashPassword = CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
-        const hashPasswordAlt = CryptoJS.SHA256(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
 
         const form = {
             'email': email,
@@ -28,7 +27,6 @@ export const genKeys = (password, email) => {
             'encPublicKey': pubExpB64,
             'masterEncKey': encryptedMasterEncKey,
             'hashPass': hashPassword,
-            'hashPassAlt': hashPasswordAlt
         }
 
         const webAESKey = sessionStorage.getItem('requestEncKey')
@@ -46,8 +44,7 @@ export const genKeys = (password, email) => {
                     status: true,
                     derivedHighEntropyPassword,
                     masterEncryptionKey,
-                    hashPassword,
-                    hashPasswordAlt
+                    hashPassword
                 }
                 return result
             }
@@ -134,8 +131,7 @@ export const signInReq = (form) => {
             if (decData !== false) {
                 toast.success("User verification success")
                 dispatch({
-                    type: authConsts.USER_LOGIN_REQUEST_SUCCESS,
-                    payload: decData.hashPass
+                    type: authConsts.USER_LOGIN_REQUEST_SUCCESS
                 })
                 return true
             }
@@ -158,12 +154,17 @@ export const signInReq = (form) => {
     }
 }
 
-export const login = (form, password) => {
+export const login = (email, password) => {
     return async (dispatch) => {
         try {
             dispatch({ type: authConsts.LOGIN_REQUEST })
             const derivedHighEntropyPassword = await generateHighEntropyKey(password)
+            const passwordHash = CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
             const webAESKey = sessionStorage.getItem('requestEncKey')
+            const form = {
+                email: email,
+                hashPass: passwordHash
+            }
             const { encForm, privateKey } = await encryptRequest(form, webAESKey)
             const res = await axiosInstance.post('/auth/signin', { 'encData': encForm })
             if (res.status === 200) {

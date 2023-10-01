@@ -1,4 +1,4 @@
-import { getMasterEncKey, getPublicKey, getPrivateKey, getUserHashPass } from "./contractController.js"
+import { getMasterEncKey, getPublicKey, getPrivateKey, validateHashPass } from "./contractController.js"
 
 export const getPrivKey = async (req, res) => {
     try {
@@ -115,42 +115,64 @@ export const getPubKey = async (req, res) => {
     }
 }
 
-export const getUserHashPassword = async (req, res) => {
+export const validateUserPassword = async (req, res) => {
     try {
-        const email = req.body.email
-        const user = req.user
-        if (email === user.email) {
-            const result = await getUserHashPass(email)
-            if (result === "User Not Found") {
-                res.status(400).json({
-                    message: "User Not Found"
-                })
-            }
-            else if (result === false) {
-                res.status(500).json({
-                    message: "No User Found!"
-                })
-            }
-            else if (result) {
-                res.status(200).json({
-                    message: "User Hash Fetched",
-                    payload: result
-                })
-            }
+        const validated = await validateHashPass(req.body.email, req.body.hashPass);
+        if (validated){
+            res.status(200).json({
+                message: "Password Validated"
+            })
         }
         else {
-            res.status(401).json({
-                message: "Unauthorized"
+            res.status(400).json({
+                message: "Invalid Password"
             })
         }
     } catch (error) {
         console.log(error)
-        res.status(500).json({
-            message: "Something Went Wrong!",
-            error: error
-        })
+         res.status(500).json({
+             message: "Something Went Wrong!",
+             error: error
+         })
     }
 }
+
+// export const getUserHashPassword = async (req, res) => {
+//     try {
+//         const email = req.body.email
+//         const user = req.user
+//         if (email === user.email) {
+//             const result = await getUserHashPass(email)
+//             if (result === "User Not Found") {
+//                 res.status(400).json({
+//                     message: "User Not Found"
+//                 })
+//             }
+//             else if (result === false) {
+//                 res.status(500).json({
+//                     message: "No User Found!"
+//                 })
+//             }
+//             else if (result) {
+//                 res.status(200).json({
+//                     message: "User Hash Fetched",
+//                     payload: result
+//                 })
+//             }
+//         }
+//         else {
+//             res.status(401).json({
+//                 message: "Unauthorized"
+//             })
+//         }
+//     } catch (error) {
+//         console.log(error)
+//         res.status(500).json({
+//             message: "Something Went Wrong!",
+//             error: error
+//         })
+//     }
+// }
 
 // export const getUserAltHashPassword = async (req, res) => {
 //     try {

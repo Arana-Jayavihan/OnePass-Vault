@@ -53,14 +53,7 @@ if (process.env.ENV === "PROD") {
 }
 else if (process.env.ENV === "DEV") {
     corsOptions = {
-        origin: ["https://onepass-vault-v3.netlify.app", "https://localhost:3000"],
-        credentials: true,
-    }
-}
-
-else if (process.env.ENV === "DOCKER") {
-    corsOptions = {
-        origin: ["https://localhost:3000"],
+        origin: ["https://onepass-vault-v3.netlify.app", "https://127.0.0.1:3000"],
         credentials: true,
     }
 }

@@ -34,90 +34,81 @@ export const addUserVault = (form) => {
         dispatch({
             type: vaultConsts.ADD_USER_VAULT_REQUEST
         })
+        const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
         const getKeysForm = {
-            email: form.email
+            email: form.email,
+            hashPass: CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
         }
-        const hashRes = await axiosInstance.post("/keys/get-user-hash-pass", getKeysForm)
-        if (hashRes.status === 200) {
-            const userHashPass = hashRes.data.payload
-            const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
-            if (CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64) === userHashPass) {
-                const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
-                if (masterKeyRes.status === 200) {
-                    const encMasterKey = masterKeyRes.data.payload
-                    const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
-                    if (privKeyRes.status === 200) {
-                        const encPrivKey = privKeyRes.data.payload
-                        const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
-                        const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
-                        const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
+        const validateReq = await axiosInstance.post("/keys/validate-user-pass", getKeysForm)
+        if (validateReq.status === 200) {
+            const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
+            if (masterKeyRes.status === 200) {
+                const encMasterKey = masterKeyRes.data.payload
+                const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
+                if (privKeyRes.status === 200) {
+                    const encPrivKey = privKeyRes.data.payload
+                    const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
+                    const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
+                    const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
 
-                        const tempVaultSecret = shortid.generate()
-                        const vaultKey = await generateHighEntropyKey(tempVaultSecret, true)
-                        const encVaultKey = await encryptAES(vaultKey, masterEncKey)
-                        const vaultKeyHash = CryptoJS.SHA512(vaultKey).toString(CryptoJS.enc.Base64)
+                    const tempVaultSecret = shortid.generate()
+                    const vaultKey = await generateHighEntropyKey(tempVaultSecret, true)
+                    const encVaultKey = await encryptAES(vaultKey, masterEncKey)
+                    const vaultKeyHash = CryptoJS.SHA512(vaultKey).toString(CryptoJS.enc.Base64)
 
-                        let encCustomFields = []
-                        for (let field of form.customFields) {
-                            const encFieldName = await encryptAES(field.name, vaultKey)
-                            const encFieldValue = await encryptAES(field.value, vaultKey)
-                            encCustomFields.push({
-                                name: encFieldName,
-                                value: encFieldValue
-                            })
-                        }
-
-                        form = {
-                            email: form.email,
-                            vName: form.vName,
-                            vDesc: form.vDesc,
-                            encVaultKey,
-                            vaultKeyHash,
-                            "customFields": encCustomFields,
-                        }
-                        const webAESKey = sessionStorage.getItem('requestEncKey')
-                        const { encForm, privateKey } = await encryptRequest(form, webAESKey)
-
-                        const res = await axiosInstance.post("/vault/add-vault", { 'encData': encForm })
-                        if (res.status === 201) {
-                            const decData = await decryptRequest(res.data.payload, res.data.serverPubKey, privateKey, webAESKey)
-                            toast.success(res.data.message, { id: 'vas' })
-                            dispatch({
-                                type: vaultConsts.ADD_USER_VAULT_SUCCESS,
-                                payload: decData
-                            })
-                        }
-                        else if (res.response) {
-                            toast.error(res.response.data.message, { id: 'vaf' })
-                            dispatch({
-                                type: vaultConsts.ADD_USER_VAULT_FAILED
-                            })
-                        }
+                    let encCustomFields = []
+                    for (let field of form.customFields) {
+                        const encFieldName = await encryptAES(field.name, vaultKey)
+                        const encFieldValue = await encryptAES(field.value, vaultKey)
+                        encCustomFields.push({
+                            name: encFieldName,
+                            value: encFieldValue
+                        })
                     }
-                    else if (privKeyRes.response) {
-                        toast.error(privKeyRes.response.data.message, { id: 'vaf' })
+
+                    form = {
+                        email: form.email,
+                        vName: form.vName,
+                        vDesc: form.vDesc,
+                        encVaultKey,
+                        vaultKeyHash,
+                        "customFields": encCustomFields,
+                    }
+                    const webAESKey = sessionStorage.getItem('requestEncKey')
+                    const { encForm, privateKey } = await encryptRequest(form, webAESKey)
+
+                    const res = await axiosInstance.post("/vault/add-vault", { 'encData': encForm })
+                    if (res.status === 201) {
+                        const decData = await decryptRequest(res.data.payload, res.data.serverPubKey, privateKey, webAESKey)
+                        toast.success(res.data.message, { id: 'vas' })
+                        dispatch({
+                            type: vaultConsts.ADD_USER_VAULT_SUCCESS,
+                            payload: decData
+                        })
+                    }
+                    else if (res.response) {
+                        toast.error(res.response.data.message, { id: 'vaf' })
                         dispatch({
                             type: vaultConsts.ADD_USER_VAULT_FAILED
                         })
                     }
                 }
-                else if (masterKeyRes.response) {
-                    toast.error(masterKeyRes.response.data.message, { id: 'vaf' })
+                else if (privKeyRes.response) {
+                    toast.error(privKeyRes.response.data.message, { id: 'vaf' })
                     dispatch({
                         type: vaultConsts.ADD_USER_VAULT_FAILED
                     })
                 }
             }
-            else {
-                toast.error("Incorrect Password", { id: 'icp' })
+            else if (masterKeyRes.response) {
+                toast.error(masterKeyRes.response.data.message, { id: 'vaf' })
                 dispatch({
                     type: vaultConsts.ADD_USER_VAULT_FAILED
                 })
             }
-
         }
-        else if (hashRes.response) {
-            toast.error(hashRes.response.data.message, { id: 'vaf' })
+        else if (validateReq.response) {
+            toast.error(validateReq.response.data.message, { id: 'vaf' })
             dispatch({
                 type: vaultConsts.ADD_USER_VAULT_FAILED
             })
@@ -127,103 +118,93 @@ export const addUserVault = (form) => {
 
 export const unlockUserVault = (form) => {
     return async dispatch => {
-        const getKeysForm = {
-            email: form.email
-        }
         dispatch({
             type: vaultConsts.UNLOCK_VAULT_REQUEST
         })
-        const hashRes = await axiosInstance.post("/keys/get-user-hash-pass", getKeysForm)
-        if (hashRes.status === 200) {
-            const userHashPass = hashRes.data.payload
-            const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
-            if (CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64) === userHashPass) {
-                const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
-                if (masterKeyRes.status === 200) {
-                    const encMasterKey = masterKeyRes.data.payload
-                    const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
-                    if (privKeyRes.status === 200) {
-                        const encPrivKey = privKeyRes.data.payload
-                        const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
-                        const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
-                        const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
-                        const getVaultKeyForm = {
-                            vaultIndex: form.vaultIndex,
-                            email: form.email
-                        }
+        const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
+        const getKeysForm = {
+            email: form.email,
+            hashPass: CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
+        }
+        const validateReq = await axiosInstance.post("/keys/validate-user-pass", getKeysForm)
+        if (validateReq.status === 200) {
+            const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
+            if (masterKeyRes.status === 200) {
+                const encMasterKey = masterKeyRes.data.payload
+                const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
+                if (privKeyRes.status === 200) {
+                    const encPrivKey = privKeyRes.data.payload
+                    const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
+                    const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
+                    const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
+                    const getVaultKeyForm = {
+                        vaultIndex: form.vaultIndex,
+                        email: form.email
+                    }
+                    let webAESKey = sessionStorage.getItem('requestEncKey')
+                    let { encForm, privateKey } = await encryptRequest(getVaultKeyForm, webAESKey)
+                    const privateKey1 = privateKey
+                    const webAESKey1 = webAESKey
+                    const vaultUnlockRes = await axiosInstance.post("/vault/get-vault-unlock-token", { 'encData': encForm })
+                    if (vaultUnlockRes.status === 200) {
+                        const decData = await decryptRequest(vaultUnlockRes.data.payload, vaultUnlockRes.data.serverPubKey, privateKey1, webAESKey1)
+                        const tokenHash = decData
                         let webAESKey = sessionStorage.getItem('requestEncKey')
                         let { encForm, privateKey } = await encryptRequest(getVaultKeyForm, webAESKey)
-                        const privateKey1 = privateKey
-                        const webAESKey1 = webAESKey
-                        const vaultUnlockRes = await axiosInstance.post("/vault/get-vault-unlock-token", { 'encData': encForm })
-                        if (vaultUnlockRes.status === 200) {
-                            const decData = await decryptRequest(vaultUnlockRes.data.payload, vaultUnlockRes.data.serverPubKey, privateKey1, webAESKey1)
-                            const tokenHash = decData
-                            let webAESKey = sessionStorage.getItem('requestEncKey')
-                            let { encForm, privateKey } = await encryptRequest(getVaultKeyForm, webAESKey)
-                            const privateKey2 = privateKey
-                            const webAESKey2 = webAESKey
-                            const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", { 'encData': encForm })
-                            if (vaultKeyRes.status === 200) {
-                                const decData = await decryptRequest(vaultKeyRes.data.payload, vaultKeyRes.data.serverPubKey, privateKey2, webAESKey2)
-                                const encVaultKey = decData
-                                const vaultKey = await decryptAES(encVaultKey, masterEncKey)
-                                toast.success("Vault Unlocked", { id: 'vus' })
+                        const privateKey2 = privateKey
+                        const webAESKey2 = webAESKey
+                        const vaultKeyRes = await axiosInstance.post("/vault/get-enc-vault-key", { 'encData': encForm })
+                        if (vaultKeyRes.status === 200) {
+                            const decData = await decryptRequest(vaultKeyRes.data.payload, vaultKeyRes.data.serverPubKey, privateKey2, webAESKey2)
+                            const encVaultKey = decData
+                            const vaultKey = await decryptAES(encVaultKey, masterEncKey)
+                            toast.success("Vault Unlocked", { id: 'vus' })
 
-                                dispatch({
-                                    type: vaultConsts.UNLOCK_VAULT_SUCCESS,
-                                    payload: vaultKey
-                                })
-                                const result = {
-                                    tokenHash,
-                                    status: true
-                                }
-                                return result
+                            dispatch({
+                                type: vaultConsts.UNLOCK_VAULT_SUCCESS,
+                                payload: vaultKey
+                            })
+                            const result = {
+                                tokenHash,
+                                status: true
+                            }
+                            return result
 
-                            }
-                            else if (vaultKeyRes.response) {
-                                toast.error(vaultKeyRes.response.data.message, { id: 'vuf' })
-                                dispatch({
-                                    type: vaultConsts.UNLOCK_VAULT_FAILED
-                                })
-                                return false
-                            }
                         }
-                        else if (vaultUnlockRes.response) {
-                            toast.error(vaultUnlockRes.response.data.message, { id: 'vuf' })
+                        else if (vaultKeyRes.response) {
+                            toast.error(vaultKeyRes.response.data.message, { id: 'vuf' })
                             dispatch({
                                 type: vaultConsts.UNLOCK_VAULT_FAILED
                             })
                             return false
                         }
                     }
-                    else if (privKeyRes.response) {
-                        toast.error(privKeyRes.response.data.message, { id: 'vuf' })
+                    else if (vaultUnlockRes.response) {
+                        toast.error(vaultUnlockRes.response.data.message, { id: 'vuf' })
                         dispatch({
                             type: vaultConsts.UNLOCK_VAULT_FAILED
                         })
                         return false
                     }
                 }
-                else if (masterKeyRes.response) {
-                    toast.error(masterKeyRes.response.data.message, { id: 'vuf' })
+                else if (privKeyRes.response) {
+                    toast.error(privKeyRes.response.data.message, { id: 'vuf' })
                     dispatch({
                         type: vaultConsts.UNLOCK_VAULT_FAILED
                     })
                     return false
                 }
             }
-            else {
-                toast.error("Incorrect Password", { id: 'icp' })
+            else if (masterKeyRes.response) {
+                toast.error(masterKeyRes.response.data.message, { id: 'vuf' })
                 dispatch({
                     type: vaultConsts.UNLOCK_VAULT_FAILED
                 })
                 return false
             }
-
         }
-        else if (hashRes.response) {
-            toast.error(hashRes.response.data.message, { id: 'vuf' })
+        else if (validateReq.response) {
+            toast.error(validateReq.response.data.message, { id: 'vuf' })
             dispatch({
                 type: vaultConsts.UNLOCK_VAULT_FAILED
             })
@@ -391,98 +372,89 @@ export const acceptVaultInvitation = (form) => {
             dispatch({
                 type: vaultConsts.VAULT_INVITE_ACCEPT_REQUEST
             })
+            const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
             const getKeysForm = {
-                email: form.email
+                email: form.email,
+                hashPass: CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64)
             }
-            const hashRes = await axiosInstance.post("/keys/get-user-hash-pass", getKeysForm)
-            if (hashRes.status === 200) {
-                const userHashPass = hashRes.data.payload
-                const derivedHighEntropyPassword = await generateHighEntropyKey(form.pass)
-                if (CryptoJS.SHA512(derivedHighEntropyPassword).toString(CryptoJS.enc.Base64) === userHashPass) {
-                    const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
-                    if (masterKeyRes.status === 200) {
-                        const encMasterKey = masterKeyRes.data.payload
-                        const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
-                        if (privKeyRes.status === 200) {
-                            const encPrivKey = privKeyRes.data.payload
+            const validateReq = await axiosInstance.post("/keys/validate-user-pass", getKeysForm)
+            if (validateReq.status === 200) {
+                const masterKeyRes = await axiosInstance.post("/keys/get-master-key", getKeysForm)
+                if (masterKeyRes.status === 200) {
+                    const encMasterKey = masterKeyRes.data.payload
+                    const privKeyRes = await axiosInstance.post("/keys/get-priv-key", getKeysForm)
+                    if (privKeyRes.status === 200) {
+                        const encPrivKey = privKeyRes.data.payload
+                        try {
+                            const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
+                            const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
                             try {
-                                const encodedPrivateKey = await decryptAES(encPrivKey, derivedHighEntropyPassword)
-                                const userPrivateKey = await importRSAPrivKey(encodedPrivateKey)
-                                try {
-                                    const vaultKey = await decryptRSA(form.encVaultKey, userPrivateKey)
-                                    const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
-                                    const encVaultKey = await encryptAES(vaultKey, masterEncKey)
-                                    const addVaultUserForm = {
-                                        vaultIndex: form.vaultIndex,
-                                        email: form.email,
-                                        encVaultKey: encVaultKey,
-                                        token: form.token
+                                const vaultKey = await decryptRSA(form.encVaultKey, userPrivateKey)
+                                const masterEncKey = await decryptRSA(encMasterKey, userPrivateKey)
+                                const encVaultKey = await encryptAES(vaultKey, masterEncKey)
+                                const addVaultUserForm = {
+                                    vaultIndex: form.vaultIndex,
+                                    email: form.email,
+                                    encVaultKey: encVaultKey,
+                                    token: form.token
+                                }
+                                const webAESKey = sessionStorage.getItem('requestEncKey')
+                                const { encForm, privateKey } = await encryptRequest(addVaultUserForm, webAESKey)
+                                const res = await axiosInstance.post("/vault/accept-vault-invite", { 'encData': encForm })
+                                if (res.status === 201) {
+                                    const decData = await decryptRequest(res.data.payload || undefined, res.data.serverPubKey, privateKey, webAESKey)
+                                    if (decData !== false) {
+                                        toast.success(res.data.message, { id: 'vas' })
+                                        dispatch({
+                                            type: vaultConsts.VAULT_INVITE_ACCEPT_SUCCESS
+                                        })
+                                        return true
                                     }
-                                    const webAESKey = sessionStorage.getItem('requestEncKey')
-                                    const { encForm, privateKey } = await encryptRequest(addVaultUserForm, webAESKey)
-                                    const res = await axiosInstance.post("/vault/accept-vault-invite", { 'encData': encForm })
-                                    if (res.status === 201) {
-                                        const decData = await decryptRequest(res.data.payload || undefined, res.data.serverPubKey, privateKey, webAESKey)
-                                        if (decData !== false) {
-                                            toast.success(res.data.message, { id: 'vas' })
-                                            dispatch({
-                                                type: vaultConsts.VAULT_INVITE_ACCEPT_SUCCESS
-                                            })
-                                            return true
-                                        }
-                                        else {
-                                            dispatch(keyExchange())
-                                            dispatch({
-                                                type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
-                                            })
-                                        }
-                                    }
-                                    else if (res.response) {
-                                        toast.error(res.response.data.message, { id: 'vaf' })
+                                    else {
+                                        dispatch(keyExchange())
                                         dispatch({
                                             type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
                                         })
                                     }
-                                } catch (error) {
-                                    toast.error('Incorrect Private Key', { id: 'vuf' })
+                                }
+                                else if (res.response) {
+                                    toast.error(res.response.data.message, { id: 'vaf' })
                                     dispatch({
                                         type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
                                     })
                                 }
                             } catch (error) {
-                                toast.error("Incorrect Password", { id: 'icp' })
+                                toast.error('Incorrect Private Key', { id: 'vuf' })
                                 dispatch({
                                     type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
                                 })
-                                return false
                             }
-                        }
-                        else if (privKeyRes.response) {
-                            toast.error(privKeyRes.response.data.message, { id: 'vuf' })
+                        } catch (error) {
+                            toast.error("Incorrect Password", { id: 'icp' })
                             dispatch({
                                 type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
                             })
                             return false
                         }
                     }
-                    else if (masterKeyRes.response) {
-                        toast.error(masterKeyRes.response.data.message, { id: 'vuf' })
+                    else if (privKeyRes.response) {
+                        toast.error(privKeyRes.response.data.message, { id: 'vuf' })
                         dispatch({
                             type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
                         })
                         return false
                     }
                 }
-                else {
-                    toast.error("Incorrect Password", { id: 'icp' })
+                else if (masterKeyRes.response) {
+                    toast.error(masterKeyRes.response.data.message, { id: 'vuf' })
                     dispatch({
                         type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
                     })
                     return false
                 }
             }
-            else if (hashRes.response) {
-                toast.error(hashRes.response.data.message, { id: 'vuf' })
+            else if (validateReq.response) {
+                toast.error(validateReq.response.data.message, { id: 'vuf' })
                 dispatch({
                     type: vaultConsts.VAULT_INVITE_ACCEPT_FAILED
                 })
