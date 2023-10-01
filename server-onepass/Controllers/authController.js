@@ -10,7 +10,6 @@ import {
     validateHashPass,
 } from "./contractController.js";
 import CryptoJS from "crypto-js";
-import sh from "shortid";
 import dotenv from "dotenv";
 import fs from "fs";
 dotenv.config();
