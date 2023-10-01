@@ -396,7 +396,7 @@ contract OnePass {
     ) public returns (bool success) {
         requireOwner();
         authenticate(contPass);
-        authenticateUser(addUserEmail, hashPass);
+        authenticateUser(userEmail, hashPass);
         require(compareStrings(users[addUserEmail].email, "") == false, "User Not Found");
         require(findVaultUser(addUserEmail, vaultIndex) == false, "User Already Assigned");
         requireObjOwner(userEmail, vaults[vaultIndex].owner);

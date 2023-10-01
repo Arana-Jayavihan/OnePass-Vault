@@ -39,10 +39,36 @@ export const userKeyGeneration = async (req, res) => {
             masterEncKey: req.body.masterEncKey,
             hashPass: req.body.hashPass,
         };
+        const IP = req.headers['x-forwarded-for']
         const chkUser = await getUser(user.email);
         if (chkUser[0] !== user.email) {
             const result = await addUserKeys(user);
             if (result.receipt.confirmations !== 0) {
+                let fiveMins = new Date();
+                fiveMins.setTime(fiveMins.getTime() + (1 / 12) * 60 * 60 * 1000);
+                const tokenHash = CryptoJS.SHA256({
+                    email: user.email,
+                    ip: IP,
+                    webSession: req.body.webSessionId
+                }).toString(CryptoJS.enc.Base64)
+                const signReqToken = jwt.sign({
+                    tokenHash
+                },
+                    privateKey,
+                    { algorithm: "ES512", expiresIn: "5m" }
+                );
+                const encSignReqToken = await encryptAES(
+                    signReqToken,
+                    process.env.AES_SECRET
+                );
+                signInReqTokenList[tokenHash] = tokenHash
+                res.cookie("signInToken", encSignReqToken, {
+                    path: `/`,
+                    expires: fiveMins,
+                    sameSite: "none",
+                    secure: true,
+                    httpOnly: true,
+                })
                 res.status(201).json({
                     message: "User Key Generation Success",
                     serverPubKey: req.body.serverPubKey,

@@ -433,7 +433,7 @@ export const addVaultUserRequest = async (req, res) => {
                                 const b64EncToken = Buffer.from(encToken).toString('base64')
                                 let URL = undefined
                                 if (process.env.ENV === "DEV"){
-                                    URL = `https://localhost:3000/vault-invite/${b64EncToken}`
+                                    URL = `https://127.0.0.1:3000/vault-invite/${b64EncToken}`
                                 }
                                 else if (process.env.ENV === "PROD"){
                                     URL = `https://onepass-vault-v3.netlify.app/vault-invite/${b64EncToken}`
