@@ -49,7 +49,6 @@ export const addUserKeys = async (user) => {
 			contractPass
         ]);
         if (result.receipt.confirmations != 0) {
-            addTransactionHash(user.email, result.receipt.transactionHash);
             return result;
         } else {
             return false;
